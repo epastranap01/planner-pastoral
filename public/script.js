@@ -236,6 +236,8 @@ if (form) {
 // Funciones globales para onclick
 // Función para cambiar estado (CON ANIMACIÓN RECUPERADA)
 window.cambiarEstado = async (id, nuevoEstado) => {
+    console.log("Intentando cambiar estado...", id, new Date().toISOString()); // <--- ESTO NOS AYUDARÁ A VER SI CARGÓ EL NUEVO SCRIPT
+
     try {
         await fetch(`/api/actividades/${id}`, {
             method: 'PUT',
@@ -246,7 +248,7 @@ window.cambiarEstado = async (id, nuevoEstado) => {
             body: JSON.stringify({ completado: nuevoEstado })
         });
 
-        // --- AQUÍ ESTÁ LA ANIMACIÓN QUE FALTABA ---
+        // Animación SweetAlert
         const Toast = Swal.mixin({ 
             toast: true, 
             position: 'top-end', 
@@ -256,19 +258,10 @@ window.cambiarEstado = async (id, nuevoEstado) => {
         });
 
         if (nuevoEstado) {
-            Toast.fire({ 
-                icon: 'success', 
-                title: '¡Gloria a Dios!', 
-                text: 'Actividad completada' 
-            });
+            Toast.fire({ icon: 'success', title: '¡Gloria a Dios!', text: 'Actividad completada' });
         } else {
-            Toast.fire({ 
-                icon: 'info', 
-                title: 'Pendiente', 
-                text: 'Actividad reactivada' 
-            });
+            Toast.fire({ icon: 'info', title: 'Pendiente', text: 'Actividad reactivada' });
         }
-        // ------------------------------------------
 
         cargarActividades();
     } catch (error) { 
