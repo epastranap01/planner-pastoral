@@ -205,6 +205,17 @@ app.delete('/api/usuarios/:id', verificarToken, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// --- RUTA COMODÍN PARA ARREGLAR EL "NOT FOUND" ---
+// Si entran a la raíz y falla lo automático, forzamos la entrada al login
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/login.html');
+});
+
+// Para cualquier otra ruta desconocida, redirigir al login
+app.get('*', (req, res) => {
+    res.sendFile(__dirname + '/public/login.html');
+});
 app.listen(port, () => {
     console.log(`Servidor seguro corriendo en http://localhost:${port}`);
 });
