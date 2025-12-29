@@ -211,3 +211,7 @@ app.delete('/api/usuarios/:id', verificarToken, async (req, res) => {
 app.get(/.*/, (req, res) => {
     res.sendFile(__dirname + '/public/login.html');
 });
+
+app.listen(port, () => {
+    console.log(`Servidor seguro corriendo en el puerto ${port}`);
+});
