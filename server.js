@@ -208,7 +208,7 @@ app.delete('/api/usuarios/:id', verificarToken, async (req, res) => {
 
 // --- RUTA COMODÍN PARA ARREGLAR EL "NOT FOUND" ---
 // Si entran a la raíz y falla lo automático, forzamos la entrada al login
-app.get('/', (req, res) => {
+app.get(/(.*)/, (req, res) => {
     res.sendFile(__dirname + '/public/login.html');
 });
 
