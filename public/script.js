@@ -234,13 +234,47 @@ if (form) {
 }
 
 // Funciones globales para onclick
+// Función para cambiar estado (CON ANIMACIÓN RECUPERADA)
 window.cambiarEstado = async (id, nuevoEstado) => {
-    await fetch(`/api/actividades/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': token },
-        body: JSON.stringify({ completado: nuevoEstado })
-    });
-    cargarActividades();
+    try {
+        await fetch(`/api/actividades/${id}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': token 
+            },
+            body: JSON.stringify({ completado: nuevoEstado })
+        });
+
+        // --- AQUÍ ESTÁ LA ANIMACIÓN QUE FALTABA ---
+        const Toast = Swal.mixin({ 
+            toast: true, 
+            position: 'top-end', 
+            showConfirmButton: false, 
+            timer: 3000, 
+            timerProgressBar: true 
+        });
+
+        if (nuevoEstado) {
+            Toast.fire({ 
+                icon: 'success', 
+                title: '¡Gloria a Dios!', 
+                text: 'Actividad completada' 
+            });
+        } else {
+            Toast.fire({ 
+                icon: 'info', 
+                title: 'Pendiente', 
+                text: 'Actividad reactivada' 
+            });
+        }
+        // ------------------------------------------
+
+        cargarActividades();
+    } catch (error) { 
+        console.error(error);
+        Swal.fire('Error', 'Error al actualizar', 'error'); 
+    }
 };
 
 window.eliminarActividad = async (id) => {
