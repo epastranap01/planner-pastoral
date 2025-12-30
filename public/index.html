@@ -194,9 +194,9 @@
                     <input type="text" id="mNombre" class="form-control" required>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label text-muted small fw-bold">Edad</label>
-                    <input type="number" id="mEdad" class="form-control" required>
-                </div>
+        <label class="form-label text-muted small fw-bold">F. Nacimiento</label>
+        <input type="date" id="mFecha" class="form-control" required>
+    </div>
                 <div class="col-md-3">
                     <label class="form-label text-muted small fw-bold">Congregación</label>
                     <input type="text" id="mCongregacion" class="form-control" placeholder="Ej: Central">
@@ -267,6 +267,48 @@
                     
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-custom">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalEditarMiembro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white"> <h5 class="modal-title fw-bold"><i class="bi bi-person-gear me-2"></i>Editar Miembro</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formEditarMiembro">
+                    <input type="hidden" id="editMemId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre Completo</label>
+                        <input type="text" id="editMemNombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Fecha de Nacimiento</label>
+                        <input type="date" id="editMemFecha" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Congregación</label>
+                        <input type="text" id="editMemCongregacion" class="form-control">
+                    </div>
+
+                    <div class="d-flex justify-content-around mb-4 border p-2 rounded bg-light">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editMemBautizado">
+                            <label class="form-check-label">Bautizado</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editMemConfirmado">
+                            <label class="form-check-label">Confirmado</label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-custom">Guardar Cambios</button>
                     </div>
                 </form>
             </div>
