@@ -68,8 +68,8 @@
             </div>
             
             <button id="btnSalir" class="btn btn-outline-light btn-sm px-3 rounded-pill">
-    <i class="bi bi-box-arrow-right me-1"></i> Salir
-</button>
+                <i class="bi bi-box-arrow-right me-1"></i> Salir
+            </button>
         </div>
     </div>
 
@@ -84,11 +84,11 @@
                     <i class="bi bi-people-fill me-2"></i>Usuarios
                 </button>
                 <button onclick="cambiarVista('miembros')" class="btn btn-light rounded-pill px-4" id="btnMiembros">
-    <i class="bi bi-person-vcard-fill me-2"></i>Miembros
-</button>
-<button onclick="cambiarVista('equipo')" class="btn btn-light rounded-pill px-4" id="btnEquipo">
-    <i class="bi bi-diagram-3-fill me-2"></i>Equipo
-</button>
+                    <i class="bi bi-person-vcard-fill me-2"></i>Miembros
+                </button>
+                <button onclick="cambiarVista('equipo')" class="btn btn-light rounded-pill px-4" id="btnEquipo">
+                    <i class="bi bi-diagram-3-fill me-2"></i>Equipo
+                </button>
             </div>
         </div>
 
@@ -186,147 +186,149 @@
                         </div>
                     </div>
                 </div>
+
                 <div id="vistaMiembros" class="card main-card mb-5" style="display:none;">
-                    <div id="vistaEquipo" class="mb-5" style="display:none;">
-    <div class="text-center mb-5">
-        <h3 class="fw-bold text-primary">Organigrama Eclesiástico</h3>
-        <p class="text-muted">Estructura de Liderazgo y Servicio</p>
-    </div>
+                    <div class="card-body p-4 p-md-5">
+                        <h5 class="text-primary mb-4 fw-bold"><i class="bi bi-person-lines-fill me-2"></i>Nuevo Miembro</h5>
+                        
+                        <form id="miembroForm">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label text-muted small fw-bold">Nombre Completo</label>
+                                    <input type="text" id="mNombre" class="form-control" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label text-muted small fw-bold">F. Nacimiento</label>
+                                    <input type="date" id="mFecha" class="form-control" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label text-muted small fw-bold">Congregación</label>
+                                    <input type="text" id="mCongregacion" class="form-control" placeholder="Ej: Central">
+                                </div>
+                                
+                                <div class="col-md-3 d-flex align-items-center justify-content-around pt-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="mBautizado">
+                                        <label class="form-check-label small">Bautizado</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="mConfirmado">
+                                        <label class="form-check-label small">Confirmado</label>
+                                    </div>
+                                </div>
 
-    <div id="contenedorEquipo" class="d-flex flex-column align-items-center gap-4"></div>
-</div>
-    <div class="card-body p-4 p-md-5">
-        <h5 class="text-primary mb-4 fw-bold"><i class="bi bi-person-lines-fill me-2"></i>Nuevo Miembro</h5>
-        
-        <form id="miembroForm">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label text-muted small fw-bold">Nombre Completo</label>
-                    <input type="text" id="mNombre" class="form-control" required>
-                </div>
-                <div class="col-md-2">
-        <label class="form-label text-muted small fw-bold">F. Nacimiento</label>
-        <input type="date" id="mFecha" class="form-control" required>
-    </div>
-                <div class="col-md-3">
-                    <label class="form-label text-muted small fw-bold">Congregación</label>
-                    <input type="text" id="mCongregacion" class="form-control" placeholder="Ej: Central">
-                </div>
-                
-                <div class="col-md-3 d-flex align-items-center justify-content-around pt-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="mBautizado">
-                        <label class="form-check-label small">Bautizado</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="mConfirmado">
-                        <label class="form-check-label small">Confirmado</label>
-                    </div>
-                </div>
+                                <div class="col-12 text-end mt-3">
+                                    <button type="submit" class="btn btn-success btn-custom px-4">Agregar Fiel</button>
+                                </div>
+                            </div>
+                        </form>
 
-                <div class="col-12 text-end mt-3">
-                    <button type="submit" class="btn btn-success btn-custom px-4">Agregar Fiel</button>
-                </div>
-            </div>
-        </form>
+                        <hr class="my-5 opacity-25">
 
-        <hr class="my-5 opacity-25">
-
-        <h5 class="text-dark mb-4 fw-bold"><i class="bi bi-list-columns-reverse me-2"></i>Directorio de la Congregación</h5>
-        <div class="table-responsive">
-            <table class="table table-custom table-hover text-center">
-                <thead>
-                    <tr>
-                        <th class="text-start">Nombre</th>
-                        <th>Edad</th>
-                        <th>Congregación</th>
-                        <th>Bautizado</th>
-                        <th>Confirmado</th>
-                        <th class="text-end">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaMiembros"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-            </div>
-        </div>
-    </div>
-<div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar Actividad</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="formEditar">
-                    <input type="hidden" id="editId"> <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">Fecha</label>
-                        <input type="date" id="editFecha" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">Actividad</label>
-                        <input type="text" id="editActividad" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">Detalles</label>
-                        <textarea id="editDetalles" class="form-control" rows="2"></textarea>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-custom">Guardar Cambios</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="modalEditarMiembro" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-success text-white"> <h5 class="modal-title fw-bold"><i class="bi bi-person-gear me-2"></i>Editar Miembro</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="formEditarMiembro">
-                    <input type="hidden" id="editMemId">
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Nombre Completo</label>
-                        <input type="text" id="editMemNombre" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Fecha de Nacimiento</label>
-                        <input type="date" id="editMemFecha" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Congregación</label>
-                        <input type="text" id="editMemCongregacion" class="form-control">
-                    </div>
-
-                    <div class="d-flex justify-content-around mb-4 border p-2 rounded bg-light">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="editMemBautizado">
-                            <label class="form-check-label">Bautizado</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="editMemConfirmado">
-                            <label class="form-check-label">Confirmado</label>
+                        <h5 class="text-dark mb-4 fw-bold"><i class="bi bi-list-columns-reverse me-2"></i>Directorio de la Congregación</h5>
+                        <div class="table-responsive">
+                            <table class="table table-custom table-hover text-center">
+                                <thead>
+                                    <tr>
+                                        <th class="text-start">Nombre</th>
+                                        <th>Edad</th>
+                                        <th>Congregación</th>
+                                        <th>Bautizado</th>
+                                        <th>Confirmado</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaMiembros"></tbody>
+                            </table>
                         </div>
                     </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success btn-custom">Guardar Cambios</button>
+                </div> <div id="vistaEquipo" class="mb-5" style="display:none;">
+                    <div class="text-center mb-5">
+                        <h3 class="fw-bold text-primary">Organigrama Eclesiástico</h3>
+                        <p class="text-muted">Estructura de Liderazgo y Servicio</p>
                     </div>
-                </form>
+
+                    <div id="contenedorEquipo" class="d-flex flex-column align-items-center gap-4"></div>
+                </div> </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar Actividad</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formEditar">
+                        <input type="hidden" id="editId"> 
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Fecha</label>
+                            <input type="date" id="editFecha" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Actividad</label>
+                            <input type="text" id="editActividad" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Detalles</label>
+                            <textarea id="editDetalles" class="form-control" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-custom">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="script.js?v=4"></script>
-</body>
+
+    <div class="modal fade" id="modalEditarMiembro" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-success text-white"> 
+                    <h5 class="modal-title fw-bold"><i class="bi bi-person-gear me-2"></i>Editar Miembro</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formEditarMiembro">
+                        <input type="hidden" id="editMemId">
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Nombre Completo</label>
+                            <input type="text" id="editMemNombre" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Fecha de Nacimiento</label>
+                            <input type="date" id="editMemFecha" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Congregación</label>
+                            <input type="text" id="editMemCongregacion" class="form-control">
+                        </div>
+
+                        <div class="d-flex justify-content-around mb-4 border p-2 rounded bg-light">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="editMemBautizado">
+                                <label class="form-check-label">Bautizado</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="editMemConfirmado">
+                                <label class="form-check-label">Confirmado</label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-custom">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js?v=5"></script> </body>
 </html>
