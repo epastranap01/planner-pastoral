@@ -368,10 +368,11 @@ window.eliminarMiembro = async (id) => {
     }
 };
 
-// --- 8. GESTIÓN DE EQUIPO PASTORAL ---
+// --- GESTIÓN DE EQUIPO PASTORAL (ACTUALIZADO CON NIVEL 6) ---
 async function cargarEquipo() {
     const contenedor = document.getElementById('contenedorEquipo');
     if(!contenedor) return;
+    
     contenedor.innerHTML = '<div class="spinner-border text-primary"></div>';
 
     try {
@@ -380,25 +381,38 @@ async function cargarEquipo() {
         contenedor.innerHTML = '';
 
         const niveles = {
-            1: { titulo: '', color: 'border-warning border-3', bg: 'bg-warning bg-opacity-10', icon: 'bi-star-fill text-warning' },
-            2: { titulo: '', color: 'border-primary border-2', bg: 'bg-white', icon: 'bi-shield-fill text-primary' },
-            3: { titulo: 'Directiva', color: 'border-secondary', bg: 'bg-white', icon: 'bi-briefcase-fill text-secondary' },
-            4: { titulo: 'Coordinadores', color: 'border-success', bg: 'bg-white', icon: 'bi-people-fill text-success' },
-            5: { titulo: 'Vocales y Apoyo', color: 'border-info', bg: 'bg-white', icon: 'bi-mic-fill text-info' }
+            1: { titulo: '', color: 'border-warning border-3', bg: 'bg-warning bg-opacity-10', icon: 'bi-star-fill text-warning' }, // Pastores
+            2: { titulo: '', color: 'border-primary border-2', bg: 'bg-white', icon: 'bi-shield-fill text-primary' }, // Presidente
+            3: { titulo: 'Directiva', color: 'border-secondary', bg: 'bg-white', icon: 'bi-briefcase-fill text-secondary' }, // Directiva
+            4: { titulo: 'Coordinadores', color: 'border-success', bg: 'bg-white', icon: 'bi-people-fill text-success' }, // Coords
+            5: { titulo: 'Vocales', color: 'border-info', bg: 'bg-white', icon: 'bi-mic-fill text-info' }, // Vocales (AHORA SOLO 3)
+            6: { titulo: 'Soporte y Logística', color: 'border-dark', bg: 'bg-light', icon: 'bi-tools text-dark' } // NUEVO NIVEL
         };
 
-        for (let i = 1; i <= 5; i++) {
+        // AHORA EL CICLO VA HASTA 6
+        for (let i = 1; i <= 6; i++) {
             const grupo = data.filter(d => d.nivel === i);
             if(grupo.length === 0) continue;
+
             const estilo = niveles[i];
             
             let htmlFila = `<div class="row g-4 justify-content-center w-100 animate__animated animate__fadeInUp">`;
-            if(estilo.titulo) htmlFila += `<h6 class="text-muted text-uppercase small fw-bold mt-4 mb-2 border-bottom pb-2 w-75 text-center">${estilo.titulo}</h6>`;
+            
+            // Título de sección
+            if(estilo.titulo) {
+                htmlFila += `<h6 class="text-muted text-uppercase small fw-bold mt-4 mb-2 border-bottom pb-2 w-75 text-center">${estilo.titulo}</h6>`;
+            }
 
             grupo.forEach(item => {
-                const btnEdit = userRol === 'admin' ? `<button onclick="editarCargo(${item.id}, '${item.cargo}', '${item.nombre}')" class="btn btn-sm btn-light border position-absolute top-0 end-0 m-2"><i class="bi bi-pencil-fill small"></i></button>` : '';
+                const btnEdit = userRol === 'admin' 
+                    ? `<button onclick="editarCargo(${item.id}, '${item.cargo}', '${item.nombre}')" class="btn btn-sm btn-light border position-absolute top-0 end-0 m-2"><i class="bi bi-pencil-fill small"></i></button>` 
+                    : '';
+
+                // Lógica de columnas: Si son 3 (Vocales), usa col-md-4 para que queden centrados y grandes.
+                const colSize = grupo.length === 1 ? '6' : (grupo.length === 3 ? '4' : '3');
+
                 htmlFila += `
-                    <div class="col-md-${grupo.length === 1 ? '6' : (grupo.length > 3 ? '3' : '4')}">
+                    <div class="col-md-${colSize}">
                         <div class="card h-100 shadow-sm ${estilo.color} position-relative text-center">
                             ${btnEdit}
                             <div class="card-body">
@@ -407,11 +421,13 @@ async function cargarEquipo() {
                                 <h5 class="card-title fw-bold text-dark mb-0">${item.nombre}</h5>
                             </div>
                         </div>
-                    </div>`;
+                    </div>
+                `;
             });
             htmlFila += `</div>`;
             contenedor.innerHTML += htmlFila;
         }
+
     } catch (error) { console.error(error); }
 }
 
