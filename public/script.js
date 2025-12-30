@@ -344,47 +344,33 @@ window.eliminarUsuario = async (id) => {
     }
 };
 
-// --- LÓGICA DE MIEMBROS ---
+/// --- LÓGICA DE MIEMBROS (MEJORADA) ---
 
 const vistaMiembros = document.getElementById('vistaMiembros');
 const tablaMiembros = document.getElementById('tablaMiembros');
+let miembrosActuales = []; // Para guardar datos y poder editar
 
-// Actualizamos la función cambiarVista para incluir 'miembros'
-window.cambiarVista = (vista) => {
-    const btnPlanner = document.getElementById('btnPlanner');
-    const btnUsuarios = document.getElementById('btnUsuarios');
-    const btnMiembros = document.getElementById('btnMiembros'); // Nuevo
-
-    // Ocultar todo primero
-    vistaPlanner.style.display = 'none';
-    vistaUsuarios.style.display = 'none';
-    if(vistaMiembros) vistaMiembros.style.display = 'none';
-
-    // Resetear botones
-    btnPlanner.classList.replace('btn-primary', 'btn-light');
-    if(btnUsuarios) btnUsuarios.classList.replace('btn-primary', 'btn-light');
-    if(btnMiembros) btnMiembros.classList.replace('btn-primary', 'btn-light');
-
-    // Mostrar el seleccionado
-    if (vista === 'planner') {
-        vistaPlanner.style.display = 'block';
-        btnPlanner.classList.replace('btn-light', 'btn-primary');
-    } else if (vista === 'usuarios') {
-        vistaUsuarios.style.display = 'block';
-        btnUsuarios.classList.replace('btn-light', 'btn-primary');
-        cargarUsuarios();
-    } else if (vista === 'miembros') {
-        vistaMiembros.style.display = 'block';
-        btnMiembros.classList.replace('btn-light', 'btn-primary');
-        cargarMiembros(); // Cargar lista al entrar
+// Función para calcular edad exacta
+function calcularEdad(fechaNacimiento) {
+    if (!fechaNacimiento) return "-";
+    const hoy = new Date();
+    const cumpleanos = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - cumpleanos.getFullYear();
+    const m = hoy.getMonth() - cumpleanos.getMonth();
+    
+    // Ajuste si aún no ha cumplido años este mes
+    if (m < 0 || (m === 0 && hoy.getDate() < cumpleanos.getDate())) {
+        edad--;
     }
-};
+    return edad;
+}
 
 // Cargar Miembros
 async function cargarMiembros() {
     try {
         const res = await fetch('/api/miembros', { headers: { 'Authorization': token } });
         const data = await res.json();
+        miembrosActuales = data; // Guardamos en memoria
         
         tablaMiembros.innerHTML = '';
         if(data.length === 0) {
@@ -393,18 +379,21 @@ async function cargarMiembros() {
         }
 
         data.forEach(m => {
-            // Usamos iconos Check/Equis como pediste
-            const iconBautizado = m.bautizado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-x-circle text-muted fs-5"></i>';
-            const iconConfirmado = m.confirmado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-x-circle text-muted fs-5"></i>';
+            const edad = calcularEdad(m.fecha_nacimiento);
+            const iconBautizado = m.bautizado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-circle text-muted opacity-25 fs-5"></i>';
+            const iconConfirmado = m.confirmado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-circle text-muted opacity-25 fs-5"></i>';
 
             tablaMiembros.innerHTML += `
                 <tr>
                     <td class="text-start fw-bold">${m.nombre}</td>
-                    <td>${m.edad}</td>
-                    <td><span class="badge bg-light text-dark border">${m.congregacion || '-'}</span></td>
+                    <td><span class="badge bg-primary bg-opacity-10 text-primary">${edad} años</span></td>
+                    <td>${m.congregacion || '-'}</td>
                     <td>${iconBautizado}</td>
                     <td>${iconConfirmado}</td>
                     <td class="text-end">
+                        <button onclick="abrirModalEditarMiembro(${m.id})" class="btn btn-outline-primary btn-sm me-1">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
                         <button onclick="eliminarMiembro(${m.id})" class="btn btn-outline-danger btn-sm">
                             <i class="bi bi-trash"></i>
                         </button>
@@ -415,7 +404,7 @@ async function cargarMiembros() {
     } catch (error) { console.error(error); }
 }
 
-// Agregar Miembro
+// Agregar Miembro (POST)
 const formMiembro = document.getElementById('miembroForm');
 if(formMiembro) {
     formMiembro.addEventListener('submit', async (e) => {
@@ -423,7 +412,7 @@ if(formMiembro) {
         
         const nuevoMiembro = {
             nombre: document.getElementById('mNombre').value,
-            edad: document.getElementById('mEdad').value,
+            fecha_nacimiento: document.getElementById('mFecha').value,
             congregacion: document.getElementById('mCongregacion').value,
             bautizado: document.getElementById('mBautizado').checked,
             confirmado: document.getElementById('mConfirmado').checked
@@ -437,13 +426,67 @@ if(formMiembro) {
             });
 
             if(res.ok) {
-                Swal.fire('Guardado', 'Miembro agregado a la base de datos', 'success');
+                Swal.fire('Guardado', 'Miembro agregado', 'success');
                 formMiembro.reset();
                 cargarMiembros();
             } else {
                 Swal.fire('Error', 'No se pudo guardar', 'error');
             }
         } catch (error) { Swal.fire('Error', 'Fallo de conexión', 'error'); }
+    });
+}
+
+// --- EDICIÓN DE MIEMBROS ---
+
+// Abrir Modal
+window.abrirModalEditarMiembro = (id) => {
+    const miembro = miembrosActuales.find(m => m.id === id);
+    if (!miembro) return;
+
+    document.getElementById('editMemId').value = miembro.id;
+    document.getElementById('editMemNombre').value = miembro.nombre;
+    document.getElementById('editMemCongregacion').value = miembro.congregacion || '';
+    document.getElementById('editMemBautizado').checked = miembro.bautizado;
+    document.getElementById('editMemConfirmado').checked = miembro.confirmado;
+
+    if(miembro.fecha_nacimiento) {
+        const fechaObj = new Date(miembro.fecha_nacimiento);
+        document.getElementById('editMemFecha').value = fechaObj.toISOString().split('T')[0];
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('modalEditarMiembro'));
+    modal.show();
+};
+
+// Guardar Edición (PUT)
+const formEditarMiembro = document.getElementById('formEditarMiembro');
+if(formEditarMiembro) {
+    formEditarMiembro.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editMemId').value;
+        
+        const datos = {
+            nombre: document.getElementById('editMemNombre').value,
+            fecha_nacimiento: document.getElementById('editMemFecha').value,
+            congregacion: document.getElementById('editMemCongregacion').value,
+            bautizado: document.getElementById('editMemBautizado').checked,
+            confirmado: document.getElementById('editMemConfirmado').checked
+        };
+
+        try {
+            const res = await fetch(`/api/miembros/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                body: JSON.stringify(datos)
+            });
+
+            if(res.ok) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarMiembro'));
+                modal.hide();
+                Swal.fire('Actualizado', 'Datos del miembro modificados', 'success');
+                cargarMiembros();
+            }
+        } catch (error) { console.error(error); }
     });
 }
 
@@ -460,6 +503,5 @@ window.eliminarMiembro = async (id) => {
         Swal.fire('Eliminado', '', 'success');
     }
 };
-
 // Carga Inicial
 cargarActividades();
