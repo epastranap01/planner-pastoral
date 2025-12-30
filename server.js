@@ -150,6 +150,47 @@ app.delete('/api/actividades/:id', verificarToken, async (req, res) => {
     }
 });
 
+// --- GESTIÓN DE MIEMBROS (NUEVO) ---
+
+// 1. Obtener miembros
+app.get('/api/miembros', verificarToken, async (req, res) => {
+    try {
+        const result = await client.query('SELECT * FROM miembros ORDER BY nombre ASC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. Agregar miembro
+app.post('/api/miembros', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Solo admins pueden agregar' });
+
+    const { nombre, edad, congregacion, bautizado, confirmado } = req.body;
+    
+    try {
+        await client.query(
+            'INSERT INTO miembros (nombre, edad, congregacion, bautizado, confirmado) VALUES ($1, $2, $3, $4, $5)', 
+            [nombre, edad, congregacion, bautizado, confirmado]
+        );
+        res.json({ message: 'Miembro agregado' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. Eliminar miembro
+app.delete('/api/miembros/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Solo admins pueden eliminar' });
+
+    const { id } = req.params;
+    try {
+        await client.query('DELETE FROM miembros WHERE id = $1', [id]);
+        res.json({ message: 'Miembro eliminado' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 // --- GESTIÓN DE USUARIOS (SOLO ADMIN) ---
 
 // 1. Obtener lista de usuarios (Sin contraseña)

@@ -83,6 +83,9 @@
                 <button onclick="cambiarVista('usuarios')" class="btn btn-light rounded-pill px-4" id="btnUsuarios">
                     <i class="bi bi-people-fill me-2"></i>Usuarios
                 </button>
+                <button onclick="cambiarVista('miembros')" class="btn btn-light rounded-pill px-4" id="btnMiembros">
+        <i class="bi bi-person-vcard-fill me-2"></i>Miembros
+    </button>
             </div>
         </div>
 
@@ -180,6 +183,62 @@
                         </div>
                     </div>
                 </div>
+                <div id="vistaMiembros" class="card main-card mb-5" style="display:none;">
+    <div class="card-body p-4 p-md-5">
+        <h5 class="text-primary mb-4 fw-bold"><i class="bi bi-person-lines-fill me-2"></i>Nuevo Miembro</h5>
+        
+        <form id="miembroForm">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label text-muted small fw-bold">Nombre Completo</label>
+                    <input type="text" id="mNombre" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-muted small fw-bold">Edad</label>
+                    <input type="number" id="mEdad" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted small fw-bold">Congregación</label>
+                    <input type="text" id="mCongregacion" class="form-control" placeholder="Ej: Central">
+                </div>
+                
+                <div class="col-md-3 d-flex align-items-center justify-content-around pt-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="mBautizado">
+                        <label class="form-check-label small">Bautizado</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="mConfirmado">
+                        <label class="form-check-label small">Confirmado</label>
+                    </div>
+                </div>
+
+                <div class="col-12 text-end mt-3">
+                    <button type="submit" class="btn btn-success btn-custom px-4">Agregar Fiel</button>
+                </div>
+            </div>
+        </form>
+
+        <hr class="my-5 opacity-25">
+
+        <h5 class="text-dark mb-4 fw-bold"><i class="bi bi-list-columns-reverse me-2"></i>Directorio de la Congregación</h5>
+        <div class="table-responsive">
+            <table class="table table-custom table-hover text-center">
+                <thead>
+                    <tr>
+                        <th class="text-start">Nombre</th>
+                        <th>Edad</th>
+                        <th>Congregación</th>
+                        <th>Bautizado</th>
+                        <th>Confirmado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaMiembros"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
             </div>
         </div>
