@@ -246,6 +246,33 @@ app.post('/api/usuarios', verificarToken, async (req, res) => {
         res.status(500).json({ error: 'El usuario ya existe' });
     }
 });
+// --- GESTIÓN DE EQUIPO PASTORAL (TE FALTABA ESTO) ---
+
+// 1. Obtener equipo
+app.get('/api/equipo', async (req, res) => {
+    try {
+        // Ordenamos por nivel (jerarquía) y luego por ID
+        const result = await client.query('SELECT * FROM equipo_pastoral ORDER BY nivel ASC, id ASC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. Asignar nombre (Solo Admin)
+app.put('/api/equipo/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Solo admins pueden editar' });
+
+    const { id } = req.params;
+    const { nombre } = req.body;
+
+    try {
+        await client.query('UPDATE equipo_pastoral SET nombre = $1 WHERE id = $2', [nombre, id]);
+        res.json({ message: 'Cargo actualizado' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // 3. Eliminar usuario
 app.delete('/api/usuarios/:id', verificarToken, async (req, res) => {
