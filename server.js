@@ -150,7 +150,7 @@ app.delete('/api/actividades/:id', verificarToken, async (req, res) => {
     }
 });
 
-// --- GESTIÓN DE MIEMBROS (NUEVO) ---
+/// --- GESTIÓN DE MIEMBROS (ACTUALIZADO) ---
 
 // 1. Obtener miembros
 app.get('/api/miembros', verificarToken, async (req, res) => {
@@ -162,16 +162,17 @@ app.get('/api/miembros', verificarToken, async (req, res) => {
     }
 });
 
-// 2. Agregar miembro
+// 2. Agregar miembro (AHORA CON FECHA DE NACIMIENTO)
 app.post('/api/miembros', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Solo admins pueden agregar' });
 
-    const { nombre, edad, congregacion, bautizado, confirmado } = req.body;
+    // Nota: Ya no pedimos 'edad', la calcularemos en el frontend
+    const { nombre, fecha_nacimiento, congregacion, bautizado, confirmado } = req.body;
     
     try {
         await client.query(
-            'INSERT INTO miembros (nombre, edad, congregacion, bautizado, confirmado) VALUES ($1, $2, $3, $4, $5)', 
-            [nombre, edad, congregacion, bautizado, confirmado]
+            'INSERT INTO miembros (nombre, fecha_nacimiento, congregacion, bautizado, confirmado) VALUES ($1, $2, $3, $4, $5)', 
+            [nombre, fecha_nacimiento, congregacion, bautizado, confirmado]
         );
         res.json({ message: 'Miembro agregado' });
     } catch (err) {
@@ -179,7 +180,25 @@ app.post('/api/miembros', verificarToken, async (req, res) => {
     }
 });
 
-// 3. Eliminar miembro
+// 3. EDITAR MIEMBRO (NUEVA RUTA)
+app.put('/api/miembros/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Solo admins pueden editar' });
+
+    const { id } = req.params;
+    const { nombre, fecha_nacimiento, congregacion, bautizado, confirmado } = req.body;
+
+    try {
+        await client.query(
+            'UPDATE miembros SET nombre = $1, fecha_nacimiento = $2, congregacion = $3, bautizado = $4, confirmado = $5 WHERE id = $6',
+            [nombre, fecha_nacimiento, congregacion, bautizado, confirmado, id]
+        );
+        res.json({ message: 'Miembro actualizado' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. Eliminar miembro
 app.delete('/api/miembros/:id', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Solo admins pueden eliminar' });
 
