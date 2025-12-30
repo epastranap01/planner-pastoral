@@ -289,22 +289,42 @@ if (userRol === 'admin' && navAdmin) {
     navAdmin.style.display = 'flex';
 }
 
+// --- FUNCIÓN DE NAVEGACIÓN ---
 window.cambiarVista = (vista) => {
-    if(!vistaPlanner) return;
+    // 1. Identificamos todos los elementos
     const btnPlanner = document.getElementById('btnPlanner');
     const btnUsuarios = document.getElementById('btnUsuarios');
+    const btnMiembros = document.getElementById('btnMiembros');
+    
+    const divPlanner = document.getElementById('vistaPlanner');
+    const divUsuarios = document.getElementById('vistaUsuarios');
+    const divMiembros = document.getElementById('vistaMiembros');
 
+    // 2. Ocultamos TODO primero (Reset)
+    divPlanner.style.display = 'none';
+    if(divUsuarios) divUsuarios.style.display = 'none';
+    if(divMiembros) divMiembros.style.display = 'none';
+
+    // 3. Quitamos el color azul a TODOS los botones
+    btnPlanner.classList.replace('btn-primary', 'btn-light');
+    if(btnUsuarios) btnUsuarios.classList.replace('btn-primary', 'btn-light');
+    if(btnMiembros) btnMiembros.classList.replace('btn-primary', 'btn-light');
+
+    // 4. Mostramos SOLO lo que pidió el usuario
     if (vista === 'planner') {
-        vistaPlanner.style.display = 'block';
-        vistaUsuarios.style.display = 'none';
+        divPlanner.style.display = 'block';
         btnPlanner.classList.replace('btn-light', 'btn-primary');
-        btnUsuarios.classList.replace('btn-primary', 'btn-light');
-    } else {
-        vistaPlanner.style.display = 'none';
-        vistaUsuarios.style.display = 'block';
-        btnPlanner.classList.replace('btn-primary', 'btn-light');
+    } 
+    else if (vista === 'usuarios') {
+        divUsuarios.style.display = 'block';
         btnUsuarios.classList.replace('btn-light', 'btn-primary');
         cargarUsuarios();
+    } 
+    else if (vista === 'miembros') {
+        // --- AQUÍ ESTABA PROBABLEMENTE EL ERROR ---
+        divMiembros.style.display = 'block'; // Asegúrate que diga divMiembros (o vistaMiembros)
+        btnMiembros.classList.replace('btn-light', 'btn-primary');
+        cargarMiembros(); 
     }
 };
 
