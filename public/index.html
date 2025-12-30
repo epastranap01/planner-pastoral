@@ -13,7 +13,7 @@
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; }
         
-        /* HEADER MEJORADO */
+        /* HEADER */
         .header-bg {
             background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
             color: white;
@@ -29,6 +29,7 @@
             background: white; overflow: hidden;
         }
 
+        /* INPUTS MEJORADOS */
         .form-control, .form-select {
             background-color: #f8f9fa; border: 1px solid #e9ecef;
             border-radius: 10px; padding: 12px;
@@ -43,7 +44,7 @@
         }
         .btn-custom:hover { background-color: #0b5ed7; transform: translateY(-2px); }
 
-        /* ESTILOS DE TABLA (PC) */
+        /* TABLAS EN PC (Normal) */
         .table-custom thead th {
             background-color: #f8f9fa; color: #6c757d; font-weight: 600;
             border: none; text-transform: uppercase; font-size: 0.85rem; padding: 15px;
@@ -57,64 +58,81 @@
             display: inline-block; min-width: 80px; text-align: center;
         }
 
-        /* --- MODO MOVIL (RESPONSIVE) --- */
+        /* --- MODO MÓVIL (CORREGIDO "TIPO FICHA") --- */
         @media (max-width: 768px) {
-            /* 1. Header más compacto */
             .header-bg { padding: 2rem 0; margin-bottom: -2rem; }
             
-            /* 2. Botones del menú se envuelven */
+            /* Botones del menú ajustables */
             .btn-group { flex-wrap: wrap; width: 100%; }
             .btn-group button { flex: 1 1 40%; margin: 2px; font-size: 0.85rem; }
 
-            /* 3. TABLAS CONVERTIDAS EN TARJETAS (MÁGICO) */
-            .table-custom thead { display: none; } /* Ocultar encabezados */
-            .table-custom, .table-custom tbody, .table-custom tr, .table-custom td { display: block; width: 100%; }
+            /* Ocultar cabeceras de tabla */
+            .table-custom thead { display: none; }
             
-            .table-custom tr {
-                margin-bottom: 1rem;
-                border: 1px solid #e0e0e0;
-                border-radius: 15px;
+            /* Convertir filas en TARJETAS */
+            .table-custom tbody tr {
+                display: block;
                 background: white;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-                padding: 15px;
+                border-radius: 15px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                margin-bottom: 1.5rem;
+                padding: 1.5rem;
+                border: 1px solid #f0f0f0;
             }
 
+            /* Convertir celdas en BLOQUES VERTICALES */
             .table-custom td {
-                text-align: right; /* Datos a la derecha */
-                padding-left: 40%;
-                position: relative;
-                border-bottom: 1px solid #f9f9f9;
+                display: flex;
+                flex-direction: column; /* Apilar etiqueta y dato */
+                align-items: flex-start;
+                justify-content: center;
+                text-align: left !important;
+                padding: 0.5rem 0 !important;
+                border: none;
+                width: 100%;
             }
 
-            .table-custom td:last-child { border-bottom: none; }
-
-            /* Etiquetas fingidas (Labels) a la izquierda */
+            /* Estilo de la etiqueta (Label gris arriba) */
             .table-custom td::before {
-                content: attr(data-label); 
-                position: absolute;
-                left: 0;
-                width: 40%;
-                text-align: left;
-                font-weight: bold;
-                color: #6c757d;
-                font-size: 0.85rem;
+                content: attr(data-label);
+                font-size: 0.7rem;
+                color: #adb5bd; /* Gris suave */
+                font-weight: 700;
                 text-transform: uppercase;
+                margin-bottom: 4px;
+                letter-spacing: 1px;
             }
 
-            /* Asignamos los nombres de las columnas manualmente para CSS */
+            /* Inyectar textos manualmente (Igual que antes) */
             /* Tabla Miembros */
             #tablaMiembros td:nth-of-type(1)::before { content: "Nombre"; }
             #tablaMiembros td:nth-of-type(2)::before { content: "Edad"; }
             #tablaMiembros td:nth-of-type(3)::before { content: "Congregación"; }
             #tablaMiembros td:nth-of-type(4)::before { content: "Bautizado"; }
             #tablaMiembros td:nth-of-type(5)::before { content: "Confirmado"; }
-            #tablaMiembros td:nth-of-type(6)::before { content: "Acciones"; }
+            
+            /* Fila de Acciones (Botones) - Diseño Especial */
+            .table-custom td:last-child {
+                flex-direction: row; /* Botones en fila */
+                justify-content: flex-end; /* Alineados a la derecha */
+                border-top: 1px solid #f8f9fa;
+                margin-top: 1rem;
+                padding-top: 1rem !important;
+                gap: 10px;
+            }
+            .table-custom td:last-child::before { display: none; } /* Sin etiqueta para botones */
 
             /* Tabla Actividades */
             #tablaActividades td:nth-of-type(1)::before { content: "Fecha"; }
             #tablaActividades td:nth-of-type(2)::before { content: "Actividad"; }
             #tablaActividades td:nth-of-type(3)::before { content: "Detalles"; }
-            #tablaActividades td:nth-of-type(4)::before { content: "Acciones"; }
+            #tablaActividades td:last-child::before { display: none; }
+            
+            /* Tabla Usuarios */
+            #tablaUsuarios td:nth-of-type(1)::before { content: "ID"; }
+            #tablaUsuarios td:nth-of-type(2)::before { content: "Usuario"; }
+            #tablaUsuarios td:nth-of-type(3)::before { content: "Rol"; }
+            #tablaUsuarios td:last-child::before { display: none; }
         }
     </style>
 </head>
