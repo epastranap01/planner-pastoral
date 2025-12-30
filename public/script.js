@@ -1,5 +1,5 @@
 // --- 1. INICIO Y SEGURIDAD ---
-console.log("Cargando sistema..."); // Para verificar que el script arranca
+console.log("Cargando sistema v5..."); 
 
 const token = localStorage.getItem('token');
 const userRol = localStorage.getItem('rol');
@@ -15,21 +15,18 @@ const tabla = document.getElementById('tablaActividades');
 const loading = document.getElementById('loading');
 const seccionCrear = document.getElementById('seccionCrear');
 let actividadesActuales = [];
+let miembrosActuales = []; 
 
 // Ocultar formulario a invitados
 if (seccionCrear && userRol !== 'admin') {
     seccionCrear.style.display = 'none';
 }
 
-// --- 2. SISTEMA DE LOGOUT (NUEVO MÉTODO DIRECTO) ---
-// Buscamos el botón por su ID y le pegamos la función
+// --- 2. SISTEMA DE LOGOUT ---
 const btnSalir = document.getElementById('btnSalir');
 
 if (btnSalir) {
     btnSalir.addEventListener('click', () => {
-        console.log("Click en Salir detectado");
-        
-        // Intentamos usar la alerta bonita
         if (typeof Swal !== 'undefined') {
             Swal.fire({
                 title: '¿Cerrar sesión?',
@@ -43,12 +40,9 @@ if (btnSalir) {
                 if (result.isConfirmed) ejecutarSalida();
             });
         } else {
-            // Si falla la librería, usamos la ventana básica
             if (confirm("¿Deseas cerrar sesión?")) ejecutarSalida();
         }
     });
-} else {
-    console.error("Error: No encontré el botón con id='btnSalir' en el HTML");
 }
 
 function ejecutarSalida() {
@@ -57,8 +51,59 @@ function ejecutarSalida() {
     window.location.href = 'login.html';
 }
 
-// --- 3. LÓGICA DE ACTIVIDADES ---
+// --- 3. NAVEGACIÓN UNIFICADA (AQUÍ ESTABA EL ERROR) ---
+const navAdmin = document.getElementById('navAdmin');
+if (userRol === 'admin' && navAdmin) {
+    navAdmin.style.display = 'flex';
+}
 
+window.cambiarVista = (vista) => {
+    // 1. Elementos Botones
+    const btnPlanner = document.getElementById('btnPlanner');
+    const btnUsuarios = document.getElementById('btnUsuarios');
+    const btnMiembros = document.getElementById('btnMiembros');
+    const btnEquipo = document.getElementById('btnEquipo');
+
+    // 2. Elementos Divs (Vistas)
+    const divPlanner = document.getElementById('vistaPlanner');
+    const divUsuarios = document.getElementById('vistaUsuarios');
+    const divMiembros = document.getElementById('vistaMiembros');
+    const divEquipo = document.getElementById('vistaEquipo');
+
+    // 3. Resetear TODO (Ocultar divs y quitar azul a botones)
+    if(divPlanner) divPlanner.style.display = 'none';
+    if(divUsuarios) divUsuarios.style.display = 'none';
+    if(divMiembros) divMiembros.style.display = 'none';
+    if(divEquipo) divEquipo.style.display = 'none';
+
+    if(btnPlanner) btnPlanner.classList.replace('btn-primary', 'btn-light');
+    if(btnUsuarios) btnUsuarios.classList.replace('btn-primary', 'btn-light');
+    if(btnMiembros) btnMiembros.classList.replace('btn-primary', 'btn-light');
+    if(btnEquipo) btnEquipo.classList.replace('btn-primary', 'btn-light');
+
+    // 4. Activar lo seleccionado
+    if (vista === 'planner') {
+        if(divPlanner) divPlanner.style.display = 'block';
+        if(btnPlanner) btnPlanner.classList.replace('btn-light', 'btn-primary');
+    } 
+    else if (vista === 'usuarios') {
+        if(divUsuarios) divUsuarios.style.display = 'block';
+        if(btnUsuarios) btnUsuarios.classList.replace('btn-light', 'btn-primary');
+        cargarUsuarios();
+    } 
+    else if (vista === 'miembros') {
+        if(divMiembros) divMiembros.style.display = 'block';
+        if(btnMiembros) btnMiembros.classList.replace('btn-light', 'btn-primary');
+        cargarMiembros();
+    }
+    else if (vista === 'equipo') {
+        if(divEquipo) divEquipo.style.display = 'block';
+        if(btnEquipo) btnEquipo.classList.replace('btn-light', 'btn-primary');
+        cargarEquipo();
+    }
+};
+
+// --- 4. LÓGICA DE ACTIVIDADES ---
 function calcularTiempoRestante(fechaFutura) {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -79,15 +124,9 @@ async function cargarActividades() {
     tabla.innerHTML = '';
     
     try {
-        const res = await fetch('/api/actividades', {
-            headers: { 'Authorization': token }
-        });
-
-        if (res.status === 401 || res.status === 403) {
-            ejecutarSalida(); // Token vencido
-            return;
-        }
-
+        const res = await fetch('/api/actividades', { headers: { 'Authorization': token } });
+        if (res.status === 401 || res.status === 403) { ejecutarSalida(); return; }
+        
         const datos = await res.json();
         actividadesActuales = datos;
         
@@ -99,35 +138,22 @@ async function cargarActividades() {
         datos.forEach(item => {
             const tiempo = calcularTiempoRestante(item.fecha);
             const estiloFila = item.completado ? 'opacity-50 text-decoration-line-through' : '';
-            
-            // Formatear fecha
             const fechaObj = new Date(item.fecha);
             const fechaUser = new Date(fechaObj.getTime() + fechaObj.getTimezoneOffset() * 60000);
             const fechaFormateada = fechaUser.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-
+            
             let botonesAccion = '';
-
             if (userRol === 'admin') {
                 const iconoCheck = item.completado ? 'bi-check-circle-fill' : 'bi-circle';
                 const claseBoton = item.completado ? 'btn-success' : 'btn-outline-secondary';
-                
                 botonesAccion = `
                     <div class="btn-group" role="group">
-                        <button onclick="abrirModalEditar(${item.id})" class="btn btn-outline-primary btn-sm" title="Editar">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button onclick="cambiarEstado(${item.id}, ${!item.completado})" class="btn ${claseBoton} btn-sm" title="Estado">
-                            <i class="bi ${iconoCheck}"></i>
-                        </button>
-                        <button onclick="eliminarActividad(${item.id})" class="btn btn-outline-danger btn-sm" title="Eliminar">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                `;
+                        <button onclick="abrirModalEditar(${item.id})" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-square"></i></button>
+                        <button onclick="cambiarEstado(${item.id}, ${!item.completado})" class="btn ${claseBoton} btn-sm"><i class="bi ${iconoCheck}"></i></button>
+                        <button onclick="eliminarActividad(${item.id})" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                    </div>`;
             } else {
-                botonesAccion = item.completado 
-                    ? `<span class="badge bg-success"><i class="bi bi-check2"></i> Listo</span>` 
-                    : `<span class="badge bg-light text-muted border"><i class="bi bi-clock"></i> Pendiente</span>`;
+                botonesAccion = item.completado ? `<span class="badge bg-success">Listo</span>` : `<span class="badge bg-light text-muted border">Pendiente</span>`;
             }
 
             tabla.innerHTML += `
@@ -135,139 +161,72 @@ async function cargarActividades() {
                     <td>
                         <div class="d-flex flex-column">
                             <span class="badge-date text-center">${fechaFormateada}</span>
-                            <small class="${tiempo.color} mt-1 text-center" style="font-size: 0.75rem;">
-                                ${item.completado ? 'Completado' : tiempo.texto}
-                            </small>
+                            <small class="${tiempo.color} mt-1 text-center" style="font-size: 0.75rem;">${item.completado ? 'Completado' : tiempo.texto}</small>
                         </div>
                     </td>
                     <td class="fw-bold text-dark align-middle">${item.actividad}</td>
                     <td class="text-muted align-middle">${item.detalles || '-'}</td>
                     <td class="align-middle text-end">${botonesAccion}</td>
-                </tr>
-            `;
+                </tr>`;
         });
-    } catch (error) {
-        console.error("Error al cargar:", error);
-        tabla.innerHTML = '<tr><td colspan="4" class="text-danger text-center">Error de conexión</td></tr>';
-    } finally {
-        loading.style.display = 'none';
-    }
+    } catch (error) { console.error(error); } finally { loading.style.display = 'none'; }
 }
 
-// --- 4. ACCIONES (EDITAR, GUARDAR, BORRAR) ---
-
-// Abrir Modal
+// --- 5. OPERACIONES DE ACTIVIDADES (Crear, Editar, Borrar) ---
 window.abrirModalEditar = (id) => {
     const item = actividadesActuales.find(a => a.id === id);
     if (!item) return;
-
     document.getElementById('editId').value = item.id;
     document.getElementById('editActividad').value = item.actividad;
     document.getElementById('editDetalles').value = item.detalles || '';
-
-    const fechaObj = new Date(item.fecha);
-    const fechaUser = new Date(fechaObj.getTime() + fechaObj.getTimezoneOffset() * 60000);
-    document.getElementById('editFecha').value = fechaUser.toISOString().split('T')[0];
-
-    // Verificar si Bootstrap cargó
-    if (typeof bootstrap !== 'undefined') {
-        const modal = new bootstrap.Modal(document.getElementById('modalEditar'));
-        modal.show();
-    } else {
-        alert("Error: Bootstrap no cargó correctamente. Revisa tu conexión a internet.");
-    }
+    const f = new Date(item.fecha);
+    const fUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
+    document.getElementById('editFecha').value = fUser.toISOString().split('T')[0];
+    new bootstrap.Modal(document.getElementById('modalEditar')).show();
 };
 
-// Guardar Edición
 const formEditar = document.getElementById('formEditar');
 if(formEditar) {
     formEditar.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('editId').value;
-        const datosEditados = {
+        const datos = {
             fecha: document.getElementById('editFecha').value,
             actividad: document.getElementById('editActividad').value,
             detalles: document.getElementById('editDetalles').value
         };
-
-        try {
-            const res = await fetch(`/api/actividades/editar/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': token },
-                body: JSON.stringify(datosEditados)
-            });
-
-            if (res.ok) {
-                // Cerrar modal
-                const modalEl = document.getElementById('modalEditar');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal.hide();
-
-                Swal.fire('Actualizado', 'Cambios guardados', 'success');
-                cargarActividades();
-            } else {
-                Swal.fire('Error', 'No se pudo editar', 'error');
-            }
-        } catch (error) {
-            console.error(error);
-        }
+        await fetch(`/api/actividades/editar/${id}`, {
+            method: 'PUT', headers: {'Content-Type': 'application/json', 'Authorization': token}, body: JSON.stringify(datos)
+        });
+        bootstrap.Modal.getInstance(document.getElementById('modalEditar')).hide();
+        Swal.fire('Actualizado', '', 'success');
+        cargarActividades();
     });
 }
 
-// Crear
 if (form) {
     form.addEventListener('submit', async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         const nueva = {
             fecha: document.getElementById('fecha').value,
             actividad: document.getElementById('actividad').value,
             detalles: document.getElementById('detalles').value
         };
-        await fetch('/api/actividades', { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json', 'Authorization': token }, 
-            body: JSON.stringify(nueva) 
+        await fetch('/api/actividades', {
+            method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': token}, body: JSON.stringify(nueva)
         });
         form.reset(); cargarActividades();
         Swal.fire({ icon: 'success', title: 'Guardado', timer: 1500, showConfirmButton: false });
     });
 }
 
-// Funciones globales para onclick
-// Función para cambiar estado (CON ANIMACIÓN RECUPERADA)
 window.cambiarEstado = async (id, nuevoEstado) => {
-    console.log("Intentando cambiar estado...", id, new Date().toISOString()); // <--- ESTO NOS AYUDARÁ A VER SI CARGÓ EL NUEVO SCRIPT
-
-    try {
-        await fetch(`/api/actividades/${id}`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': token 
-            },
-            body: JSON.stringify({ completado: nuevoEstado })
-        });
-
-        // Animación SweetAlert
-        const Toast = Swal.mixin({ 
-            toast: true, 
-            position: 'top-end', 
-            showConfirmButton: false, 
-            timer: 3000, 
-            timerProgressBar: true 
-        });
-
-        if (nuevoEstado) {
-            Toast.fire({ icon: 'success', title: '¡Gloria a Dios!', text: 'Actividad completada' });
-        } else {
-            Toast.fire({ icon: 'info', title: 'Pendiente', text: 'Actividad reactivada' });
-        }
-
-        cargarActividades();
-    } catch (error) { 
-        console.error(error);
-        Swal.fire('Error', 'Error al actualizar', 'error'); 
-    }
+    await fetch(`/api/actividades/${id}`, {
+        method: 'PUT', headers: {'Content-Type': 'application/json', 'Authorization': token}, body: JSON.stringify({ completado: nuevoEstado })
+    });
+    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+    nuevoEstado ? Toast.fire({ icon: 'success', title: '¡Gloria a Dios!' }) : Toast.fire({ icon: 'info', title: 'Pendiente' });
+    cargarActividades();
 };
 
 window.eliminarActividad = async (id) => {
@@ -279,56 +238,10 @@ window.eliminarActividad = async (id) => {
     }
 };
 
-// --- GESTIÓN DE USUARIOS (Si existe la vista) ---
-const navAdmin = document.getElementById('navAdmin');
-const vistaPlanner = document.getElementById('vistaPlanner');
-const vistaUsuarios = document.getElementById('vistaUsuarios');
-const tablaUsuarios = document.getElementById('tablaUsuarios');
-
-if (userRol === 'admin' && navAdmin) {
-    navAdmin.style.display = 'flex';
-}
-
-// --- FUNCIÓN DE NAVEGACIÓN ---
-window.cambiarVista = (vista) => {
-    // 1. Identificamos todos los elementos
-    const btnPlanner = document.getElementById('btnPlanner');
-    const btnUsuarios = document.getElementById('btnUsuarios');
-    const btnMiembros = document.getElementById('btnMiembros');
-    
-    const divPlanner = document.getElementById('vistaPlanner');
-    const divUsuarios = document.getElementById('vistaUsuarios');
-    const divMiembros = document.getElementById('vistaMiembros');
-
-    // 2. Ocultamos TODO primero (Reset)
-    divPlanner.style.display = 'none';
-    if(divUsuarios) divUsuarios.style.display = 'none';
-    if(divMiembros) divMiembros.style.display = 'none';
-
-    // 3. Quitamos el color azul a TODOS los botones
-    btnPlanner.classList.replace('btn-primary', 'btn-light');
-    if(btnUsuarios) btnUsuarios.classList.replace('btn-primary', 'btn-light');
-    if(btnMiembros) btnMiembros.classList.replace('btn-primary', 'btn-light');
-
-    // 4. Mostramos SOLO lo que pidió el usuario
-    if (vista === 'planner') {
-        divPlanner.style.display = 'block';
-        btnPlanner.classList.replace('btn-light', 'btn-primary');
-    } 
-    else if (vista === 'usuarios') {
-        divUsuarios.style.display = 'block';
-        btnUsuarios.classList.replace('btn-light', 'btn-primary');
-        cargarUsuarios();
-    } 
-    else if (vista === 'miembros') {
-        // --- AQUÍ ESTABA PROBABLEMENTE EL ERROR ---
-        divMiembros.style.display = 'block'; // Asegúrate que diga divMiembros (o vistaMiembros)
-        btnMiembros.classList.replace('btn-light', 'btn-primary');
-        cargarMiembros(); 
-    }
-};
-
+// --- 6. GESTIÓN DE USUARIOS ---
 async function cargarUsuarios() {
+    const tablaUsuarios = document.getElementById('tablaUsuarios');
+    if(!tablaUsuarios) return;
     try {
         const res = await fetch('/api/usuarios', { headers: { 'Authorization': token } });
         const usuarios = await res.json();
@@ -348,9 +261,7 @@ if(formUsuario) {
         const password = document.getElementById('newPassword').value;
         const rol = document.getElementById('newRol').value;
         const res = await fetch('/api/usuarios', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': token },
-            body: JSON.stringify({ username, password, rol })
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': token }, body: JSON.stringify({ username, password, rol })
         });
         if (res.ok) { Swal.fire('Creado', '', 'success'); formUsuario.reset(); cargarUsuarios(); }
         else { Swal.fire('Error', 'Fallo al crear', 'error'); }
@@ -364,127 +275,79 @@ window.eliminarUsuario = async (id) => {
     }
 };
 
-/// --- LÓGICA DE MIEMBROS (MEJORADA) ---
-
-const vistaMiembros = document.getElementById('vistaMiembros');
-const tablaMiembros = document.getElementById('tablaMiembros');
-let miembrosActuales = []; // Para guardar datos y poder editar
-
-// Función para calcular edad exacta
+// --- 7. GESTIÓN DE MIEMBROS ---
 function calcularEdad(fechaNacimiento) {
     if (!fechaNacimiento) return "-";
     const hoy = new Date();
     const cumpleanos = new Date(fechaNacimiento);
     let edad = hoy.getFullYear() - cumpleanos.getFullYear();
     const m = hoy.getMonth() - cumpleanos.getMonth();
-    
-    // Ajuste si aún no ha cumplido años este mes
-    if (m < 0 || (m === 0 && hoy.getDate() < cumpleanos.getDate())) {
-        edad--;
-    }
+    if (m < 0 || (m === 0 && hoy.getDate() < cumpleanos.getDate())) { edad--; }
     return edad;
 }
 
-// Cargar Miembros
 async function cargarMiembros() {
+    const tablaMiembros = document.getElementById('tablaMiembros');
+    if(!tablaMiembros) return;
     try {
         const res = await fetch('/api/miembros', { headers: { 'Authorization': token } });
         const data = await res.json();
-        miembrosActuales = data; // Guardamos en memoria
-        
+        miembrosActuales = data;
         tablaMiembros.innerHTML = '';
-        if(data.length === 0) {
-            tablaMiembros.innerHTML = '<tr><td colspan="6" class="text-muted">No hay miembros registrados</td></tr>';
-            return;
-        }
+        if(data.length === 0) { tablaMiembros.innerHTML = '<tr><td colspan="6" class="text-muted">Sin miembros</td></tr>'; return; }
 
         data.forEach(m => {
             const edad = calcularEdad(m.fecha_nacimiento);
-            const iconBautizado = m.bautizado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-circle text-muted opacity-25 fs-5"></i>';
-            const iconConfirmado = m.confirmado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-circle text-muted opacity-25 fs-5"></i>';
-
+            const iBau = m.bautizado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-circle text-muted opacity-25 fs-5"></i>';
+            const iCon = m.confirmado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-circle text-muted opacity-25 fs-5"></i>';
             tablaMiembros.innerHTML += `
                 <tr>
                     <td class="text-start fw-bold">${m.nombre}</td>
                     <td><span class="badge bg-primary bg-opacity-10 text-primary">${edad} años</span></td>
                     <td>${m.congregacion || '-'}</td>
-                    <td>${iconBautizado}</td>
-                    <td>${iconConfirmado}</td>
+                    <td>${iBau}</td><td>${iCon}</td>
                     <td class="text-end">
-                        <button onclick="abrirModalEditarMiembro(${m.id})" class="btn btn-outline-primary btn-sm me-1">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button onclick="eliminarMiembro(${m.id})" class="btn btn-outline-danger btn-sm">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <button onclick="abrirModalEditarMiembro(${m.id})" class="btn btn-outline-primary btn-sm me-1"><i class="bi bi-pencil-square"></i></button>
+                        <button onclick="eliminarMiembro(${m.id})" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
                     </td>
-                </tr>
-            `;
+                </tr>`;
         });
-    } catch (error) { console.error(error); }
+    } catch (e) { console.error(e); }
 }
 
-// Agregar Miembro (POST)
 const formMiembro = document.getElementById('miembroForm');
 if(formMiembro) {
     formMiembro.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const nuevoMiembro = {
+        const nuevo = {
             nombre: document.getElementById('mNombre').value,
             fecha_nacimiento: document.getElementById('mFecha').value,
             congregacion: document.getElementById('mCongregacion').value,
             bautizado: document.getElementById('mBautizado').checked,
             confirmado: document.getElementById('mConfirmado').checked
         };
-
-        try {
-            const res = await fetch('/api/miembros', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': token },
-                body: JSON.stringify(nuevoMiembro)
-            });
-
-            if(res.ok) {
-                Swal.fire('Guardado', 'Miembro agregado', 'success');
-                formMiembro.reset();
-                cargarMiembros();
-            } else {
-                Swal.fire('Error', 'No se pudo guardar', 'error');
-            }
-        } catch (error) { Swal.fire('Error', 'Fallo de conexión', 'error'); }
+        await fetch('/api/miembros', { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': token}, body: JSON.stringify(nuevo) });
+        Swal.fire('Guardado', '', 'success'); formMiembro.reset(); cargarMiembros();
     });
 }
 
-// --- EDICIÓN DE MIEMBROS ---
-
-// Abrir Modal
 window.abrirModalEditarMiembro = (id) => {
-    const miembro = miembrosActuales.find(m => m.id === id);
-    if (!miembro) return;
-
-    document.getElementById('editMemId').value = miembro.id;
-    document.getElementById('editMemNombre').value = miembro.nombre;
-    document.getElementById('editMemCongregacion').value = miembro.congregacion || '';
-    document.getElementById('editMemBautizado').checked = miembro.bautizado;
-    document.getElementById('editMemConfirmado').checked = miembro.confirmado;
-
-    if(miembro.fecha_nacimiento) {
-        const fechaObj = new Date(miembro.fecha_nacimiento);
-        document.getElementById('editMemFecha').value = fechaObj.toISOString().split('T')[0];
-    }
-
-    const modal = new bootstrap.Modal(document.getElementById('modalEditarMiembro'));
-    modal.show();
+    const m = miembrosActuales.find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('editMemId').value = m.id;
+    document.getElementById('editMemNombre').value = m.nombre;
+    document.getElementById('editMemCongregacion').value = m.congregacion || '';
+    document.getElementById('editMemBautizado').checked = m.bautizado;
+    document.getElementById('editMemConfirmado').checked = m.confirmado;
+    if(m.fecha_nacimiento) document.getElementById('editMemFecha').value = new Date(m.fecha_nacimiento).toISOString().split('T')[0];
+    new bootstrap.Modal(document.getElementById('modalEditarMiembro')).show();
 };
 
-// Guardar Edición (PUT)
-const formEditarMiembro = document.getElementById('formEditarMiembro');
-if(formEditarMiembro) {
-    formEditarMiembro.addEventListener('submit', async (e) => {
+const formEditarMem = document.getElementById('formEditarMiembro');
+if(formEditarMem) {
+    formEditarMem.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('editMemId').value;
-        
         const datos = {
             nombre: document.getElementById('editMemNombre').value,
             fecha_nacimiento: document.getElementById('editMemFecha').value,
@@ -492,77 +355,23 @@ if(formEditarMiembro) {
             bautizado: document.getElementById('editMemBautizado').checked,
             confirmado: document.getElementById('editMemConfirmado').checked
         };
-
-        try {
-            const res = await fetch(`/api/miembros/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': token },
-                body: JSON.stringify(datos)
-            });
-
-            if(res.ok) {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarMiembro'));
-                modal.hide();
-                Swal.fire('Actualizado', 'Datos del miembro modificados', 'success');
-                cargarMiembros();
-            }
-        } catch (error) { console.error(error); }
+        await fetch(`/api/miembros/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json', 'Authorization': token}, body: JSON.stringify(datos) });
+        bootstrap.Modal.getInstance(document.getElementById('modalEditarMiembro')).hide();
+        Swal.fire('Actualizado', '', 'success'); cargarMiembros();
     });
 }
 
-// Eliminar Miembro
 window.eliminarMiembro = async (id) => {
-    const r = await Swal.fire({ 
-        title: '¿Eliminar miembro?', text: "Esta acción es permanente", 
-        icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí, eliminar' 
-    });
-
-    if (r.isConfirmed) {
+    if ((await Swal.fire({ title: '¿Eliminar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' })).isConfirmed) {
         await fetch(`/api/miembros/${id}`, { method: 'DELETE', headers: { 'Authorization': token } });
-        cargarMiembros();
-        Swal.fire('Eliminado', '', 'success');
+        cargarMiembros(); Swal.fire('Eliminado', '', 'success');
     }
 };
 
-// --- LÓGICA DE EQUIPO PASTORAL ---
-
-const vistaEquipo = document.getElementById('vistaEquipo');
-
-// Actualizar cambiarVista (Agrega la nueva opción)
-window.cambiarVista = (vista) => {
-    // ... (El código anterior de ocultar todo y resetear botones) ...
-    // COPIA TU FUNCIÓN cambiarVista ACTUAL Y SOLO AGREGA ESTO AL FINAL DEL IF/ELSE:
-    
-    /* ... ifs anteriores ...
-    */
-    if (vista === 'equipo') {
-        // Ocultar los otros divs
-        document.getElementById('vistaPlanner').style.display = 'none';
-        document.getElementById('vistaUsuarios').style.display = 'none';
-        document.getElementById('vistaMiembros').style.display = 'none';
-        
-        // Mostrar Equipo
-        if(vistaEquipo) vistaEquipo.style.display = 'block';
-        
-        // Reset botones
-        document.getElementById('btnPlanner').classList.replace('btn-primary', 'btn-light');
-        if(document.getElementById('btnUsuarios')) document.getElementById('btnUsuarios').classList.replace('btn-primary', 'btn-light');
-        if(document.getElementById('btnMiembros')) document.getElementById('btnMiembros').classList.replace('btn-primary', 'btn-light');
-        
-        // Activar botón equipo
-        const btnEquipo = document.getElementById('btnEquipo');
-        if(btnEquipo) btnEquipo.classList.replace('btn-light', 'btn-primary');
-
-        cargarEquipo();
-    }
-    // ... asegúrate de manejar los otros 'else if' como ya los tenías ...
-};
-
-
+// --- 8. GESTIÓN DE EQUIPO PASTORAL ---
 async function cargarEquipo() {
     const contenedor = document.getElementById('contenedorEquipo');
     if(!contenedor) return;
-    
     contenedor.innerHTML = '<div class="spinner-border text-primary"></div>';
 
     try {
@@ -570,35 +379,24 @@ async function cargarEquipo() {
         const data = await res.json();
         contenedor.innerHTML = '';
 
-        // Agrupar por niveles para dibujar filas
         const niveles = {
-            1: { titulo: '', color: 'border-warning border-3', bg: 'bg-warning bg-opacity-10', icon: 'bi-star-fill text-warning' }, // Pastores
-            2: { titulo: '', color: 'border-primary border-2', bg: 'bg-white', icon: 'bi-shield-fill text-primary' }, // Presidente
-            3: { titulo: 'Directiva', color: 'border-secondary', bg: 'bg-white', icon: 'bi-briefcase-fill text-secondary' }, // Sec/Tes/Fis
-            4: { titulo: 'Coordinadores', color: 'border-success', bg: 'bg-white', icon: 'bi-people-fill text-success' }, // Coords
-            5: { titulo: 'Vocales y Apoyo', color: 'border-info', bg: 'bg-white', icon: 'bi-mic-fill text-info' } // Vocales
+            1: { titulo: '', color: 'border-warning border-3', bg: 'bg-warning bg-opacity-10', icon: 'bi-star-fill text-warning' },
+            2: { titulo: '', color: 'border-primary border-2', bg: 'bg-white', icon: 'bi-shield-fill text-primary' },
+            3: { titulo: 'Directiva', color: 'border-secondary', bg: 'bg-white', icon: 'bi-briefcase-fill text-secondary' },
+            4: { titulo: 'Coordinadores', color: 'border-success', bg: 'bg-white', icon: 'bi-people-fill text-success' },
+            5: { titulo: 'Vocales y Apoyo', color: 'border-info', bg: 'bg-white', icon: 'bi-mic-fill text-info' }
         };
 
-        // Recorremos los 5 niveles
         for (let i = 1; i <= 5; i++) {
             const grupo = data.filter(d => d.nivel === i);
             if(grupo.length === 0) continue;
-
             const estilo = niveles[i];
             
-            // Creamos una FILA para este nivel
             let htmlFila = `<div class="row g-4 justify-content-center w-100 animate__animated animate__fadeInUp">`;
-            
-            // Título de sección (opcional)
-            if(estilo.titulo) {
-                contenedor.innerHTML += `<h6 class="text-muted text-uppercase small fw-bold mt-4 mb-2 border-bottom pb-2 w-75 text-center">${estilo.titulo}</h6>`;
-            }
+            if(estilo.titulo) htmlFila += `<h6 class="text-muted text-uppercase small fw-bold mt-4 mb-2 border-bottom pb-2 w-75 text-center">${estilo.titulo}</h6>`;
 
             grupo.forEach(item => {
-                const btnEdit = userRol === 'admin' 
-                    ? `<button onclick="editarCargo(${item.id}, '${item.cargo}', '${item.nombre}')" class="btn btn-sm btn-light border position-absolute top-0 end-0 m-2"><i class="bi bi-pencil-fill small"></i></button>` 
-                    : '';
-
+                const btnEdit = userRol === 'admin' ? `<button onclick="editarCargo(${item.id}, '${item.cargo}', '${item.nombre}')" class="btn btn-sm btn-light border position-absolute top-0 end-0 m-2"><i class="bi bi-pencil-fill small"></i></button>` : '';
                 htmlFila += `
                     <div class="col-md-${grupo.length === 1 ? '6' : (grupo.length > 3 ? '3' : '4')}">
                         <div class="card h-100 shadow-sm ${estilo.color} position-relative text-center">
@@ -609,17 +407,14 @@ async function cargarEquipo() {
                                 <h5 class="card-title fw-bold text-dark mb-0">${item.nombre}</h5>
                             </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
             htmlFila += `</div>`;
             contenedor.innerHTML += htmlFila;
         }
-
     } catch (error) { console.error(error); }
 }
 
-// Editar Nombre del Cargo
 window.editarCargo = async (id, cargo, nombreActual) => {
     const { value: nuevoNombre } = await Swal.fire({
         title: `Asignar: ${cargo}`,
@@ -627,19 +422,17 @@ window.editarCargo = async (id, cargo, nombreActual) => {
         inputValue: nombreActual === 'Por asignar' ? '' : nombreActual,
         showCancelButton: true,
         confirmButtonText: 'Guardar',
-        cancelButtonText: 'Cancelar',
-        inputPlaceholder: 'Nombre del hermano/a'
+        cancelButtonText: 'Cancelar'
     });
 
     if (nuevoNombre) {
         await fetch(`/api/equipo/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'Authorization': token },
-            body: JSON.stringify({ nombre: nuevoNombre })
+            method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': token }, body: JSON.stringify({ nombre: nuevoNombre })
         });
         Swal.fire('Asignado', '', 'success');
         cargarEquipo();
     }
 };
+
 // Carga Inicial
 cargarActividades();
