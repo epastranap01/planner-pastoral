@@ -86,6 +86,9 @@
                 <button onclick="cambiarVista('miembros')" class="btn btn-light rounded-pill px-4" id="btnMiembros">
     <i class="bi bi-person-vcard-fill me-2"></i>Miembros
 </button>
+<button onclick="cambiarVista('equipo')" class="btn btn-light rounded-pill px-4" id="btnEquipo">
+    <i class="bi bi-diagram-3-fill me-2"></i>Equipo
+</button>
             </div>
         </div>
 
@@ -184,6 +187,14 @@
                     </div>
                 </div>
                 <div id="vistaMiembros" class="card main-card mb-5" style="display:none;">
+                    <div id="vistaEquipo" class="mb-5" style="display:none;">
+    <div class="text-center mb-5">
+        <h3 class="fw-bold text-primary">Organigrama Eclesiástico</h3>
+        <p class="text-muted">Estructura de Liderazgo y Servicio</p>
+    </div>
+
+    <div id="contenedorEquipo" class="d-flex flex-column align-items-center gap-4"></div>
+</div>
     <div class="card-body p-4 p-md-5">
         <h5 class="text-primary mb-4 fw-bold"><i class="bi bi-person-lines-fill me-2"></i>Nuevo Miembro</h5>
         

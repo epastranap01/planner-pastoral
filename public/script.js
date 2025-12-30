@@ -523,5 +523,123 @@ window.eliminarMiembro = async (id) => {
         Swal.fire('Eliminado', '', 'success');
     }
 };
+
+// --- LÓGICA DE EQUIPO PASTORAL ---
+
+const vistaEquipo = document.getElementById('vistaEquipo');
+
+// Actualizar cambiarVista (Agrega la nueva opción)
+window.cambiarVista = (vista) => {
+    // ... (El código anterior de ocultar todo y resetear botones) ...
+    // COPIA TU FUNCIÓN cambiarVista ACTUAL Y SOLO AGREGA ESTO AL FINAL DEL IF/ELSE:
+    
+    /* ... ifs anteriores ...
+    */
+    if (vista === 'equipo') {
+        // Ocultar los otros divs
+        document.getElementById('vistaPlanner').style.display = 'none';
+        document.getElementById('vistaUsuarios').style.display = 'none';
+        document.getElementById('vistaMiembros').style.display = 'none';
+        
+        // Mostrar Equipo
+        if(vistaEquipo) vistaEquipo.style.display = 'block';
+        
+        // Reset botones
+        document.getElementById('btnPlanner').classList.replace('btn-primary', 'btn-light');
+        if(document.getElementById('btnUsuarios')) document.getElementById('btnUsuarios').classList.replace('btn-primary', 'btn-light');
+        if(document.getElementById('btnMiembros')) document.getElementById('btnMiembros').classList.replace('btn-primary', 'btn-light');
+        
+        // Activar botón equipo
+        const btnEquipo = document.getElementById('btnEquipo');
+        if(btnEquipo) btnEquipo.classList.replace('btn-light', 'btn-primary');
+
+        cargarEquipo();
+    }
+    // ... asegúrate de manejar los otros 'else if' como ya los tenías ...
+};
+
+
+async function cargarEquipo() {
+    const contenedor = document.getElementById('contenedorEquipo');
+    if(!contenedor) return;
+    
+    contenedor.innerHTML = '<div class="spinner-border text-primary"></div>';
+
+    try {
+        const res = await fetch('/api/equipo');
+        const data = await res.json();
+        contenedor.innerHTML = '';
+
+        // Agrupar por niveles para dibujar filas
+        const niveles = {
+            1: { titulo: '', color: 'border-warning border-3', bg: 'bg-warning bg-opacity-10', icon: 'bi-star-fill text-warning' }, // Pastores
+            2: { titulo: '', color: 'border-primary border-2', bg: 'bg-white', icon: 'bi-shield-fill text-primary' }, // Presidente
+            3: { titulo: 'Directiva', color: 'border-secondary', bg: 'bg-white', icon: 'bi-briefcase-fill text-secondary' }, // Sec/Tes/Fis
+            4: { titulo: 'Coordinadores', color: 'border-success', bg: 'bg-white', icon: 'bi-people-fill text-success' }, // Coords
+            5: { titulo: 'Vocales y Apoyo', color: 'border-info', bg: 'bg-white', icon: 'bi-mic-fill text-info' } // Vocales
+        };
+
+        // Recorremos los 5 niveles
+        for (let i = 1; i <= 5; i++) {
+            const grupo = data.filter(d => d.nivel === i);
+            if(grupo.length === 0) continue;
+
+            const estilo = niveles[i];
+            
+            // Creamos una FILA para este nivel
+            let htmlFila = `<div class="row g-4 justify-content-center w-100 animate__animated animate__fadeInUp">`;
+            
+            // Título de sección (opcional)
+            if(estilo.titulo) {
+                contenedor.innerHTML += `<h6 class="text-muted text-uppercase small fw-bold mt-4 mb-2 border-bottom pb-2 w-75 text-center">${estilo.titulo}</h6>`;
+            }
+
+            grupo.forEach(item => {
+                const btnEdit = userRol === 'admin' 
+                    ? `<button onclick="editarCargo(${item.id}, '${item.cargo}', '${item.nombre}')" class="btn btn-sm btn-light border position-absolute top-0 end-0 m-2"><i class="bi bi-pencil-fill small"></i></button>` 
+                    : '';
+
+                htmlFila += `
+                    <div class="col-md-${grupo.length === 1 ? '6' : (grupo.length > 3 ? '3' : '4')}">
+                        <div class="card h-100 shadow-sm ${estilo.color} position-relative text-center">
+                            ${btnEdit}
+                            <div class="card-body">
+                                <div class="mb-3"><i class="bi ${estilo.icon} fs-1"></i></div>
+                                <h6 class="card-subtitle mb-2 text-muted text-uppercase small fw-bold">${item.cargo}</h6>
+                                <h5 class="card-title fw-bold text-dark mb-0">${item.nombre}</h5>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            htmlFila += `</div>`;
+            contenedor.innerHTML += htmlFila;
+        }
+
+    } catch (error) { console.error(error); }
+}
+
+// Editar Nombre del Cargo
+window.editarCargo = async (id, cargo, nombreActual) => {
+    const { value: nuevoNombre } = await Swal.fire({
+        title: `Asignar: ${cargo}`,
+        input: 'text',
+        inputValue: nombreActual === 'Por asignar' ? '' : nombreActual,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        inputPlaceholder: 'Nombre del hermano/a'
+    });
+
+    if (nuevoNombre) {
+        await fetch(`/api/equipo/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': token },
+            body: JSON.stringify({ nombre: nuevoNombre })
+        });
+        Swal.fire('Asignado', '', 'success');
+        cargarEquipo();
+    }
+};
 // Carga Inicial
 cargarActividades();

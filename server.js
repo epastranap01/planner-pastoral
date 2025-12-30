@@ -272,6 +272,33 @@ app.get(/.*/, (req, res) => {
     res.sendFile(__dirname + '/public/login.html');
 });
 
+// --- GESTIÓN DE EQUIPO PASTORAL ---
+
+// 1. Obtener equipo (Ordenado por jerarquía)
+app.get('/api/equipo', async (req, res) => {
+    try {
+        const result = await client.query('SELECT * FROM equipo_pastoral ORDER BY nivel ASC, id ASC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. Asignar nombre al cargo (Solo Admin)
+app.put('/api/equipo/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Solo admins pueden editar' });
+
+    const { id } = req.params;
+    const { nombre } = req.body; // Solo cambiamos el nombre, el cargo es fijo
+
+    try {
+        await client.query('UPDATE equipo_pastoral SET nombre = $1 WHERE id = $2', [nombre, id]);
+        res.json({ message: 'Cargo actualizado' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Servidor seguro corriendo en el puerto ${port}`);
 });
