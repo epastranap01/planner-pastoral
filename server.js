@@ -62,7 +62,64 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+// --- GESTIÓN DE USUARIOS ---
 
+// 1. OBTENER TODOS (Esta es la que te falta)
+app.get('/api/usuarios', verificarToken, async (req, res) => {
+    // Seguridad extra: Solo admin puede ver la lista
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+
+    try {
+        const result = await client.query('SELECT id, username, rol FROM usuarios ORDER BY id ASC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. CREAR USUARIO
+app.post('/api/usuarios', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+    
+    const { username, password, rol } = req.body;
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await client.query('INSERT INTO usuarios (username, password, rol) VALUES ($1, $2, $3)', [username, hashedPassword, rol]);
+        res.json({ message: 'Usuario creado' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. CAMBIAR CONTRASEÑA (La nueva que hicimos)
+app.put('/api/usuarios/:id', verificarToken, async (req, res) => {
+    if (req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 4) return res.status(400).json({ error: 'Mínimo 4 caracteres' });
+
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await client.query('UPDATE usuarios SET password = $1 WHERE id = $2', [hashedPassword, id]);
+        res.json({ message: 'Contraseña actualizada' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. ELIMINAR USUARIO
+app.delete('/api/usuarios/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+    
+    try {
+        await client.query('DELETE FROM usuarios WHERE id = $1', [req.params.id]);
+        res.json({ message: 'Usuario eliminado' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 // --- 2. MIDDLEWARE DE SEGURIDAD (EL PORTERO) ---
 const verificarToken = (req, res, next) => {
     const token = req.headers['authorization'];
