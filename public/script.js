@@ -254,24 +254,82 @@ window.eliminarActividad = async (id) => {
 
 // --- 6. GESTIÓN DE USUARIOS ---
 async function cargarUsuarios() {
-    // CAMBIO: Protección, si no es admin no hace nada
-    if (userRol !== 'admin') return;
+    if(userRol !== 'admin') return;
 
     const tablaUsuarios = document.getElementById('tablaUsuarios');
     if(!tablaUsuarios) return;
+
     try {
         const res = await fetch('/api/usuarios', { headers: { 'Authorization': token } });
         const usuarios = await res.json();
         tablaUsuarios.innerHTML = '';
+
         usuarios.forEach(user => {
             const badge = user.rol === 'admin' ? 'bg-primary' : 'bg-secondary';
-            tablaUsuarios.innerHTML += `<tr><td>#${user.id}</td><td class="fw-bold">${user.username}</td><td><span class="badge ${badge}">${user.rol}</span></td><td class="text-end"><button onclick="eliminarUsuario(${user.id})" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button></td></tr>`;
+            
+            // AGREGAMOS EL BOTÓN DE "LLAVE" (RESET PASSWORD)
+            tablaUsuarios.innerHTML += `
+                <tr>
+                    <td>#${user.id}</td>
+                    <td class="fw-bold">${user.username}</td>
+                    <td><span class="badge ${badge}">${user.rol}</span></td>
+                    <td class="text-end">
+                        <button onclick="resetPassword(${user.id}, '${user.username}')" class="btn btn-outline-warning btn-sm me-1" title="Cambiar Contraseña">
+                            <i class="bi bi-key-fill"></i>
+                        </button>
+                        <button onclick="eliminarUsuario(${user.id})" class="btn btn-outline-danger btn-sm" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
         });
     } catch (e) { console.error(e); }
 }
 
+// NUEVA FUNCIÓN: RESET PASSWORD
+window.resetPassword = async (id, username) => {
+    const { value: newPassword } = await Swal.fire({
+        title: `Nueva contraseña para: ${username}`,
+        input: 'password',
+        inputLabel: 'Ingresa la nueva clave',
+        inputPlaceholder: 'Mínimo 4 caracteres',
+        showCancelButton: true,
+        confirmButtonText: 'Actualizar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#ffc107', // Color amarillo/advertencia
+        inputAttributes: {
+            autocapitalize: 'off',
+            autocorrect: 'off'
+        }
+    });
+
+    if (newPassword) {
+        try {
+            const res = await fetch(`/api/usuarios/${id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': token 
+                },
+                body: JSON.stringify({ password: newPassword })
+            });
+
+            if (res.ok) {
+                Swal.fire('¡Listo!', 'La contraseña ha sido actualizada.', 'success');
+            } else {
+                Swal.fire('Error', 'No se pudo actualizar.', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'Fallo de conexión.', 'error');
+        }
+    }
+};
+
+// ... (El resto del código de crear usuario y eliminar usuario sigue igual abajo) ...
 const formUsuario = document.getElementById('usuarioForm');
 if(formUsuario) {
+    // ... tu código de crear usuario ...
     formUsuario.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('newUsername').value;
