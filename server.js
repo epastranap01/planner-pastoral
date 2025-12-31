@@ -210,17 +210,31 @@ app.delete('/api/miembros/:id', verificarToken, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-// --- GESTIÓN DE USUARIOS (SOLO ADMIN) ---
+// --- RUTA PARA RESETEAR CONTRASEÑA (SOLO ADMIN) ---
+app.put('/api/usuarios/:id', verificarToken, async (req, res) => {
+    // 1. Solo el admin puede hacer esto
+    if (req.user.rol !== 'admin') {
+        return res.status(403).json({ error: 'Acceso denegado' });
+    }
 
-// 1. Obtener lista de usuarios (Sin contraseña)
-app.get('/api/usuarios', verificarToken, async (req, res) => {
-    if (req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 4) {
+        return res.status(400).json({ error: 'La contraseña debe tener al menos 4 caracteres' });
+    }
 
     try {
-        const result = await client.query('SELECT id, username, rol FROM usuarios ORDER BY id ASC');
-        res.json(result.rows);
+        // 2. Encriptamos la nueva contraseña antes de guardarla
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // 3. Actualizamos en la base de datos
+        await client.query('UPDATE usuarios SET password = $1 WHERE id = $2', [hashedPassword, id]);
+        
+        res.json({ message: 'Contraseña actualizada correctamente' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error(err);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
