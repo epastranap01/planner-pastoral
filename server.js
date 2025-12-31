@@ -156,7 +156,7 @@ app.put('/api/equipo/:id', verificarToken, async (req, res) => {
 });
 
 // --- RUTA COMODÍN (AL FINAL SIEMPRE) ---
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => { // <--- Usamos /.*/ sin comillas (Expresión Regular)
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
