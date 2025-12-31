@@ -1,5 +1,5 @@
 // --- 1. INICIO Y SEGURIDAD ---
-console.log("Cargando sistema v5..."); 
+console.log("Cargando sistema v8 (Lectura Miembros/Equipo)..."); 
 
 const token = localStorage.getItem('token');
 const userRol = localStorage.getItem('rol');
@@ -17,7 +17,7 @@ const seccionCrear = document.getElementById('seccionCrear');
 let actividadesActuales = [];
 let miembrosActuales = []; 
 
-// Ocultar formulario a invitados
+// Ocultar formulario a invitados (Actividades)
 if (seccionCrear && userRol !== 'admin') {
     seccionCrear.style.display = 'none';
 }
@@ -51,16 +51,24 @@ function ejecutarSalida() {
     window.location.href = 'login.html';
 }
 
-// --- 3. NAVEGACIÓN UNIFICADA (AQUÍ ESTABA EL ERROR) ---
+// --- 3. NAVEGACIÓN UNIFICADA (MODIFICADO PARA PERMISOS) ---
 const navAdmin = document.getElementById('navAdmin');
-if (userRol === 'admin' && navAdmin) {
+
+// CAMBIO 1: Mostramos el menú a TODOS (si existe)
+if (navAdmin) {
     navAdmin.style.display = 'flex';
+}
+
+// CAMBIO 2: Pero ocultamos el botón "Usuarios" si NO es admin
+const btnUsuarios = document.getElementById('btnUsuarios');
+if (userRol !== 'admin' && btnUsuarios) {
+    btnUsuarios.style.display = 'none';
 }
 
 window.cambiarVista = (vista) => {
     // 1. Elementos Botones
     const btnPlanner = document.getElementById('btnPlanner');
-    const btnUsuarios = document.getElementById('btnUsuarios');
+    // btnUsuarios ya lo tenemos arriba
     const btnMiembros = document.getElementById('btnMiembros');
     const btnEquipo = document.getElementById('btnEquipo');
 
@@ -87,6 +95,9 @@ window.cambiarVista = (vista) => {
         if(btnPlanner) btnPlanner.classList.replace('btn-light', 'btn-primary');
     } 
     else if (vista === 'usuarios') {
+        // SEGURIDAD EXTRA: Si es invitado, no dejamos ver usuarios
+        if (userRol !== 'admin') return;
+
         if(divUsuarios) divUsuarios.style.display = 'block';
         if(btnUsuarios) btnUsuarios.classList.replace('btn-light', 'btn-primary');
         cargarUsuarios();
@@ -172,8 +183,11 @@ async function cargarActividades() {
     } catch (error) { console.error(error); } finally { loading.style.display = 'none'; }
 }
 
-// --- 5. OPERACIONES DE ACTIVIDADES (Crear, Editar, Borrar) ---
+// --- 5. OPERACIONES DE ACTIVIDADES ---
 window.abrirModalEditar = (id) => {
+    // CAMBIO: Protección extra
+    if (userRol !== 'admin') return;
+
     const item = actividadesActuales.find(a => a.id === id);
     if (!item) return;
     document.getElementById('editId').value = item.id;
@@ -240,6 +254,9 @@ window.eliminarActividad = async (id) => {
 
 // --- 6. GESTIÓN DE USUARIOS ---
 async function cargarUsuarios() {
+    // CAMBIO: Protección, si no es admin no hace nada
+    if (userRol !== 'admin') return;
+
     const tablaUsuarios = document.getElementById('tablaUsuarios');
     if(!tablaUsuarios) return;
     try {
@@ -275,7 +292,7 @@ window.eliminarUsuario = async (id) => {
     }
 };
 
-// --- 7. GESTIÓN DE MIEMBROS ---
+// --- 7. GESTIÓN DE MIEMBROS (MODIFICADO LECTURA) ---
 function calcularEdad(fechaNacimiento) {
     if (!fechaNacimiento) return "-";
     const hoy = new Date();
@@ -287,6 +304,18 @@ function calcularEdad(fechaNacimiento) {
 }
 
 async function cargarMiembros() {
+    // CAMBIO: Ocultar formulario a invitados
+    const formMiembro = document.getElementById('miembroForm');
+    const tituloForm = document.querySelector('#vistaMiembros h5'); // Seleccionamos el titulo
+    
+    if (userRol !== 'admin') {
+        if(formMiembro) formMiembro.style.display = 'none';
+        if(tituloForm) tituloForm.style.display = 'none';
+    } else {
+        if(formMiembro) formMiembro.style.display = 'block';
+        if(tituloForm) tituloForm.style.display = 'block';
+    }
+
     const tablaMiembros = document.getElementById('tablaMiembros');
     if(!tablaMiembros) return;
     try {
@@ -300,6 +329,16 @@ async function cargarMiembros() {
             const edad = calcularEdad(m.fecha_nacimiento);
             const iBau = m.bautizado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-circle text-muted opacity-25 fs-5"></i>';
             const iCon = m.confirmado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-circle text-muted opacity-25 fs-5"></i>';
+            
+            // CAMBIO: Solo mostrar botones si es admin
+            let botones = '';
+            if (userRol === 'admin') {
+                botones = `
+                    <button onclick="abrirModalEditarMiembro(${m.id})" class="btn btn-outline-primary btn-sm me-1"><i class="bi bi-pencil-square"></i></button>
+                    <button onclick="eliminarMiembro(${m.id})" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                `;
+            }
+
             tablaMiembros.innerHTML += `
                 <tr>
                     <td class="text-start fw-bold">${m.nombre}</td>
@@ -307,8 +346,7 @@ async function cargarMiembros() {
                     <td>${m.congregacion || '-'}</td>
                     <td>${iBau}</td><td>${iCon}</td>
                     <td class="text-end">
-                        <button onclick="abrirModalEditarMiembro(${m.id})" class="btn btn-outline-primary btn-sm me-1"><i class="bi bi-pencil-square"></i></button>
-                        <button onclick="eliminarMiembro(${m.id})" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                        ${botones}
                     </td>
                 </tr>`;
         });
@@ -332,6 +370,7 @@ if(formMiembro) {
 }
 
 window.abrirModalEditarMiembro = (id) => {
+    if(userRol !== 'admin') return; // Seguridad extra
     const m = miembrosActuales.find(x => x.id === id);
     if (!m) return;
     document.getElementById('editMemId').value = m.id;
@@ -362,13 +401,14 @@ if(formEditarMem) {
 }
 
 window.eliminarMiembro = async (id) => {
+    if(userRol !== 'admin') return; // Seguridad extra
     if ((await Swal.fire({ title: '¿Eliminar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' })).isConfirmed) {
         await fetch(`/api/miembros/${id}`, { method: 'DELETE', headers: { 'Authorization': token } });
         cargarMiembros(); Swal.fire('Eliminado', '', 'success');
     }
 };
 
-// --- GESTIÓN DE EQUIPO PASTORAL (ACTUALIZADO CON NIVEL 6) ---
+// --- GESTIÓN DE EQUIPO PASTORAL ---
 async function cargarEquipo() {
     const contenedor = document.getElementById('contenedorEquipo');
     if(!contenedor) return;
@@ -432,6 +472,7 @@ async function cargarEquipo() {
 }
 
 window.editarCargo = async (id, cargo, nombreActual) => {
+    if(userRol !== 'admin') return; // Seguridad extra
     const { value: nuevoNombre } = await Swal.fire({
         title: `Asignar: ${cargo}`,
         input: 'text',
