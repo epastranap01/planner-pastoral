@@ -21,6 +21,19 @@ const client = new Client({
 });
 client.connect();
 
+// --- 2. MIDDLEWARE DE SEGURIDAD (EL PORTERO) ---
+const verificarToken = (req, res, next) => {
+    const token = req.headers['authorization'];
+    if (!token) return res.status(403).json({ error: 'Acceso denegado: Se requiere Token' });
+
+    try {
+        const decoded = jwt.verify(token, SECRET_KEY);
+        req.user = decoded; // Guardamos los datos del usuario en la petición
+        next(); // Dejamos pasar
+    } catch (err) {
+        return res.status(401).json({ error: 'Token inválido o expirado' });
+    }
+};
 // --- 1. RUTAS DE AUTENTICACIÓN (LOGIN Y REGISTRO) ---
 
 // Registrar usuario (Úsalo para crear tu primer admin)
@@ -120,19 +133,6 @@ app.delete('/api/usuarios/:id', verificarToken, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-// --- 2. MIDDLEWARE DE SEGURIDAD (EL PORTERO) ---
-const verificarToken = (req, res, next) => {
-    const token = req.headers['authorization'];
-    if (!token) return res.status(403).json({ error: 'Acceso denegado: Se requiere Token' });
-
-    try {
-        const decoded = jwt.verify(token, SECRET_KEY);
-        req.user = decoded; // Guardamos los datos del usuario en la petición
-        next(); // Dejamos pasar
-    } catch (err) {
-        return res.status(401).json({ error: 'Token inválido o expirado' });
-    }
-};
 
 // --- 3. RUTAS PROTEGIDAS (ACTIVIDADES) ---
 
