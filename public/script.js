@@ -252,79 +252,64 @@ window.eliminarActividad = async (id) => {
     }
 };
 
-// --- 6. GESTIÓN DE USUARIOS ---
-async function cargarUsuarios() {
-    if(userRol !== 'admin') return;
+// --- GESTIÓN DE USUARIOS ---
 
-    const tablaUsuarios = document.getElementById('tablaUsuarios');
-    if(!tablaUsuarios) return;
+// 1. OBTENER TODOS (Esta es la que te falta)
+app.get('/api/usuarios', verificarToken, async (req, res) => {
+    // Seguridad extra: Solo admin puede ver la lista
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
 
     try {
-        const res = await fetch('/api/usuarios', { headers: { 'Authorization': token } });
-        const usuarios = await res.json();
-        tablaUsuarios.innerHTML = '';
-
-        usuarios.forEach(user => {
-            const badge = user.rol === 'admin' ? 'bg-primary' : 'bg-secondary';
-            
-            // AGREGAMOS EL BOTÓN DE "LLAVE" (RESET PASSWORD)
-            tablaUsuarios.innerHTML += `
-                <tr>
-                    <td>#${user.id}</td>
-                    <td class="fw-bold">${user.username}</td>
-                    <td><span class="badge ${badge}">${user.rol}</span></td>
-                    <td class="text-end">
-                        <button onclick="resetPassword(${user.id}, '${user.username}')" class="btn btn-outline-warning btn-sm me-1" title="Cambiar Contraseña">
-                            <i class="bi bi-key-fill"></i>
-                        </button>
-                        <button onclick="eliminarUsuario(${user.id})" class="btn btn-outline-danger btn-sm" title="Eliminar">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                </tr>`;
-        });
-    } catch (e) { console.error(e); }
-}
-
-// NUEVA FUNCIÓN: RESET PASSWORD
-window.resetPassword = async (id, username) => {
-    const { value: newPassword } = await Swal.fire({
-        title: `Nueva contraseña para: ${username}`,
-        input: 'password',
-        inputLabel: 'Ingresa la nueva clave',
-        inputPlaceholder: 'Mínimo 4 caracteres',
-        showCancelButton: true,
-        confirmButtonText: 'Actualizar',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#ffc107', // Color amarillo/advertencia
-        inputAttributes: {
-            autocapitalize: 'off',
-            autocorrect: 'off'
-        }
-    });
-
-    if (newPassword) {
-        try {
-            const res = await fetch(`/api/usuarios/${id}`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': token 
-                },
-                body: JSON.stringify({ password: newPassword })
-            });
-
-            if (res.ok) {
-                Swal.fire('¡Listo!', 'La contraseña ha sido actualizada.', 'success');
-            } else {
-                Swal.fire('Error', 'No se pudo actualizar.', 'error');
-            }
-        } catch (error) {
-            console.error(error);
-            Swal.fire('Error', 'Fallo de conexión.', 'error');
-        }
+        const result = await client.query('SELECT id, username, rol FROM usuarios ORDER BY id ASC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-};
+});
+
+// 2. CREAR USUARIO
+app.post('/api/usuarios', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+    
+    const { username, password, rol } = req.body;
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await client.query('INSERT INTO usuarios (username, password, rol) VALUES ($1, $2, $3)', [username, hashedPassword, rol]);
+        res.json({ message: 'Usuario creado' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. CAMBIAR CONTRASEÑA (La nueva que hicimos)
+app.put('/api/usuarios/:id', verificarToken, async (req, res) => {
+    if (req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 4) return res.status(400).json({ error: 'Mínimo 4 caracteres' });
+
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await client.query('UPDATE usuarios SET password = $1 WHERE id = $2', [hashedPassword, id]);
+        res.json({ message: 'Contraseña actualizada' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. ELIMINAR USUARIO
+app.delete('/api/usuarios/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+    
+    try {
+        await client.query('DELETE FROM usuarios WHERE id = $1', [req.params.id]);
+        res.json({ message: 'Usuario eliminado' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // ... (El resto del código de crear usuario y eliminar usuario sigue igual abajo) ...
 const formUsuario = document.getElementById('usuarioForm');
