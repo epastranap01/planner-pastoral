@@ -310,31 +310,6 @@ app.delete('/api/usuarios/:id', verificarToken, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
-// ... (El resto del código de crear usuario y eliminar usuario sigue igual abajo) ...
-const formUsuario = document.getElementById('usuarioForm');
-if(formUsuario) {
-    // ... tu código de crear usuario ...
-    formUsuario.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('newUsername').value;
-        const password = document.getElementById('newPassword').value;
-        const rol = document.getElementById('newRol').value;
-        const res = await fetch('/api/usuarios', {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': token }, body: JSON.stringify({ username, password, rol })
-        });
-        if (res.ok) { Swal.fire('Creado', '', 'success'); formUsuario.reset(); cargarUsuarios(); }
-        else { Swal.fire('Error', 'Fallo al crear', 'error'); }
-    });
-}
-
-window.eliminarUsuario = async (id) => {
-    if(confirm("¿Eliminar usuario?")) {
-        await fetch(`/api/usuarios/${id}`, { method: 'DELETE', headers: { 'Authorization': token } });
-        cargarUsuarios();
-    }
-};
-
 // --- 7. GESTIÓN DE MIEMBROS (MODIFICADO LECTURA) ---
 function calcularEdad(fechaNacimiento) {
     if (!fechaNacimiento) return "-";
