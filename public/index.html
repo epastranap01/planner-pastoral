@@ -3,146 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planner Iglesia Cristiana Luterana El Buen Pastor</title>
-    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
+    <title>Planner Pastoral</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
- <style>
-    /* 1. FUENTE Y FONDO GENERAL */
-    body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; }
-    
-    /* 2. HEADER AZUL */
-    .header-bg {
-        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-        color: white;
-        padding: 3rem 0;
-        margin-bottom: -3rem;
-        border-bottom-left-radius: 30px;
-        border-bottom-right-radius: 30px;
-    }
-
-    .main-card {
-        border: none; border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        background: white; overflow: hidden;
-    }
-
-    /* --- 3. CORRECCIÓN DEFINITIVA DE INPUTS Y CURSOR (LA SOLUCIÓN) --- */
-    /* Apuntamos a TODO tipo de input para que no se escape ninguno */
-    input, select, textarea, .form-control, .form-select {
-        background-color: #ffffff !important; /* Fondo BLANCO puro */
-        color: #000000 !important;           /* Texto NEGRO puro */
-        caret-color: #000000 !important;     /* Cursor (rayita) NEGRA */
-        border: 1px solid #ced4da !important;
-        border-radius: 10px !important;
-        padding: 12px !important;
-    }
-
-    /* Al pasar el mouse */
-    input:hover, select:hover, textarea:hover, .form-control:hover {
-        border-color: #adb5bd !important;    /* Borde gris un poco más oscuro */
-    }
-
-    /* Al escribir (Foco) */
-    input:focus, select:focus, textarea:focus, .form-control:focus {
-        border-color: #0d6efd !important;    /* Borde AZUL */
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important; /* Brillo azul */
-        background-color: #ffffff !important;
-        color: #000000 !important;
-    }
-
-    /* 4. BOTONES */
-    .btn-custom {
-        border-radius: 10px; padding: 12px; font-weight: 600;
-        background-color: #0d6efd; border: none; transition: all 0.3s;
-    }
-    .btn-custom:hover { background-color: #0b5ed7; transform: translateY(-2px); }
-
-    /* 5. DISEÑO RESPONSIVE (CELULAR) */
-    @media (max-width: 768px) {
-        .header-bg { padding: 2rem 0; margin-bottom: -2rem; }
-        .btn-group { flex-wrap: wrap; width: 100%; }
-        .btn-group button { flex: 1 1 40%; margin: 2px; font-size: 0.85rem; }
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; }
         
-        /* Tablas tipo Ficha */
-        .table-custom thead { display: none; }
-        .table-custom tbody tr {
-            display: block; background: white; border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 1.5rem;
-            padding: 1.5rem; border: 1px solid #f0f0f0;
+        /* HEADER AZUL INSTITUCIONAL */
+        .header-bg {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: -3rem;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
         }
-        .table-custom td {
-            display: flex; flex-direction: column; align-items: flex-start;
-            justify-content: center; text-align: left !important;
-            padding: 0.5rem 0 !important; border: none; width: 100%;
-        }
-        .table-custom td::before {
-            content: attr(data-label); font-size: 0.7rem; color: #adb5bd;
-            font-weight: 700; text-transform: uppercase; margin-bottom: 4px;
-        }
-        /* Etiquetas manuales */
-        #tablaMiembros td:nth-of-type(1)::before { content: "Nombre"; }
-        #tablaMiembros td:nth-of-type(2)::before { content: "Edad"; }
-        #tablaMiembros td:nth-of-type(3)::before { content: "Congregación"; }
-        #tablaMiembros td:nth-of-type(4)::before { content: "Bautizado"; }
-        #tablaMiembros td:nth-of-type(5)::before { content: "Confirmado"; }
-        
-        /* Botones de acción alineados */
-        .table-custom td:last-child {
-            flex-direction: row; justify-content: flex-end;
-            border-top: 1px solid #f8f9fa; margin-top: 1rem; padding-top: 1rem !important; gap: 10px;
-        }
-        .table-custom td:last-child::before { display: none; }
-        
-        /* Etiquetas Actividades y Usuarios */
-        #tablaActividades td:nth-of-type(1)::before { content: "Fecha"; }
-        #tablaActividades td:nth-of-type(2)::before { content: "Actividad"; }
-        #tablaActividades td:nth-of-type(3)::before { content: "Detalles"; }
-        #tablaUsuarios td:nth-of-type(1)::before { content: "ID"; }
-        #tablaUsuarios td:nth-of-type(2)::before { content: "Usuario"; }
-        #tablaUsuarios td:nth-of-type(3)::before { content: "Rol"; }
-        .table-custom td:last-child::before { display: none; }
-    }
 
-    /* 6. TABLAS MODO ESCRITORIO */
-    .table-custom thead th {
-        background-color: #f8f9fa; color: #6c757d; font-weight: 600;
-        border: none; text-transform: uppercase; font-size: 0.85rem; padding: 15px;
-    }
-    .table-custom tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; }
-    .badge-date {
-        background-color: #e7f1ff; color: #0d6efd; padding: 6px 10px;
-        border-radius: 8px; font-weight: 600; font-size: 0.85rem;
-        display: inline-block; min-width: 80px; text-align: center;
-    }
+        .main-card {
+            border: none; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            background: white; overflow: hidden;
+        }
 
-    /* --- 7. CORRECCIÓN DEL CALENDARIO EN MODALES --- */
-    /* Esto hace que el calendario siempre esté ENCIMA de la ventana de editar */
-    .flatpickr-calendar {
-        z-index: 1060 !important; /* Bootstrap modal usa 1055, así que ponemos 1060 */
-        border-radius: 16px !important;
-        border: none !important;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
-        font-family: 'Poppins', sans-serif !important;
-    }
-    .flatpickr-months { background: transparent !important; margin-bottom: 10px !important; }
-    .flatpickr-current-month { font-size: 1.1rem !important; font-weight: 600 !important; }
-    span.flatpickr-weekday { font-weight: bold !important; color: #adb5bd !important; }
-    
-    /* Colores del Calendario */
-    span.flatpickr-day.today { border-color: #0d6efd !important; color: #0d6efd !important; }
-    span.flatpickr-day.today:hover { background: #e7f1ff !important; }
-    
-    .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected:hover {
-        background: #0d6efd !important;
-        border-color: #0d6efd !important;
-        color: white !important;
-    }
-    .flatpickr-day:hover { background: #e7f1ff !important; border-color: #e7f1ff !important; }
-</style>
+        /* --- ARREGLO DE VISIBILIDAD (CURSOR Y TEXTO) --- */
+        /* Solo aplicamos esto a las cajas de texto, NO a los checkboxes */
+        .form-control, .form-select {
+            background-color: #ffffff !important; /* Fondo Blanco */
+            color: #212529 !important;           /* Texto Negro Oscuro */
+            border: 1px solid #ced4da;
+            border-radius: 10px; 
+            padding: 12px;
+        }
+
+        /* Al hacer clic para escribir */
+        .form-control:focus, .form-select:focus {
+            background-color: #ffffff !important;
+            color: #212529 !important;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        /* Botones personalizados */
+        .btn-custom {
+            border-radius: 10px; padding: 12px; font-weight: 600;
+            background-color: #0d6efd; border: none; transition: all 0.3s;
+        }
+        .btn-custom:hover { background-color: #0b5ed7; transform: translateY(-2px); }
+
+        /* TABLAS (DISEÑO PC) */
+        .table-custom thead th {
+            background-color: #f8f9fa; color: #6c757d; font-weight: 600;
+            border: none; text-transform: uppercase; font-size: 0.85rem; padding: 15px;
+        }
+        .table-custom tbody td {
+            padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0;
+        }
+        .badge-date {
+            background-color: #e7f1ff; color: #0d6efd; padding: 6px 10px;
+            border-radius: 8px; font-weight: 600; font-size: 0.85rem;
+            display: inline-block; min-width: 80px; text-align: center;
+        }
+
+        /* --- MODO MÓVIL (TIPO FICHA) --- */
+        @media (max-width: 768px) {
+            .header-bg { padding: 2rem 0; margin-bottom: -2rem; }
+            
+            .btn-group { flex-wrap: wrap; width: 100%; }
+            .btn-group button { flex: 1 1 40%; margin: 2px; font-size: 0.85rem; }
+
+            .table-custom thead { display: none; }
+            
+            .table-custom tbody tr {
+                display: block;
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                margin-bottom: 1.5rem;
+                padding: 1.5rem;
+                border: 1px solid #f0f0f0;
+            }
+
+            .table-custom td {
+                display: flex;
+                flex-direction: column; 
+                align-items: flex-start;
+                justify-content: center;
+                text-align: left !important;
+                padding: 0.5rem 0 !important;
+                border: none;
+                width: 100%;
+            }
+
+            .table-custom td::before {
+                content: attr(data-label);
+                font-size: 0.7rem;
+                color: #adb5bd; 
+                font-weight: 700;
+                text-transform: uppercase;
+                margin-bottom: 4px;
+                letter-spacing: 1px;
+            }
+
+            /* Etiquetas Manuales */
+            #tablaMiembros td:nth-of-type(1)::before { content: "Nombre"; }
+            #tablaMiembros td:nth-of-type(2)::before { content: "Edad"; }
+            #tablaMiembros td:nth-of-type(3)::before { content: "Congregación"; }
+            #tablaMiembros td:nth-of-type(4)::before { content: "Bautizado"; }
+            #tablaMiembros td:nth-of-type(5)::before { content: "Confirmado"; }
+            
+            #tablaActividades td:nth-of-type(1)::before { content: "Fecha"; }
+            #tablaActividades td:nth-of-type(2)::before { content: "Actividad"; }
+            #tablaActividades td:nth-of-type(3)::before { content: "Detalles"; }
+            
+            #tablaUsuarios td:nth-of-type(1)::before { content: "ID"; }
+            #tablaUsuarios td:nth-of-type(2)::before { content: "Usuario"; }
+            #tablaUsuarios td:nth-of-type(3)::before { content: "Rol"; }
+            
+            /* Botones de acción */
+            .table-custom td:last-child {
+                flex-direction: row; 
+                justify-content: flex-end; 
+                border-top: 1px solid #f8f9fa;
+                margin-top: 1rem;
+                padding-top: 1rem !important;
+                gap: 10px;
+            }
+            .table-custom td:last-child::before { display: none; }
+        }
+    </style>
 </head>
 <body>
 
@@ -182,61 +174,61 @@
             <div class="col-lg-10">
                 
                 <div id="vistaPlanner" class="card main-card mb-5">
-    <div class="card-body p-4 p-md-5">
-        
-        <div id="seccionCumpleaneros" class="mb-4" style="display: none;">
-            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #42a5f5 0%, #0d47a1 100%); color: white;">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3"><i class="bi bi-cake2-fill me-2"></i>Cumpleañeros del Mes</h5>
-                    <div id="listaCumpleaneros" class="row g-3">
+                    <div class="card-body p-4 p-md-5">
+                        
+                        <div id="seccionCumpleaneros" class="mb-4" style="display: none;">
+                            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #42a5f5 0%, #0d47a1 100%); color: white;">
+                                <div class="card-body p-4">
+                                    <h5 class="fw-bold mb-3"><i class="bi bi-cake2-fill me-2"></i>Cumpleañeros del Mes</h5>
+                                    <div id="listaCumpleaneros" class="row g-3">
+                                        </div>
+                                </div>
+                            </div>
                         </div>
-                </div>
-            </div>
-        </div>
 
-        <div id="seccionCrear">
-            <h5 class="text-primary mb-4 fw-bold"><i class="bi bi-plus-circle me-2"></i>Nueva Actividad</h5>
-            <form id="actividadForm">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label text-muted small">Fecha</label>
-                        <input type="date" id="fecha" class="form-control" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label text-muted small">Actividad</label>
-                        <input type="text" id="actividad" class="form-control" placeholder="Ej: Ayuno" required>
-                    </div>
-                    <div class="col-md-5">
-                        <label class="form-label text-muted small">Detalles</label>
-                        <input type="text" id="detalles" class="form-control" placeholder="Encargado...">
-                    </div>
-                </div>
-                <div class="mt-4 text-end">
-                    <button type="submit" class="btn btn-primary btn-custom px-5 text-white">Guardar</button>
-                </div>
-            </form>
-            <hr class="my-5 opacity-25">
-        </div>
+                        <div id="seccionCrear">
+                            <h5 class="text-primary mb-4 fw-bold"><i class="bi bi-plus-circle me-2"></i>Nueva Actividad</h5>
+                            <form id="actividadForm">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted small">Fecha</label>
+                                        <input type="date" id="fecha" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small">Actividad</label>
+                                        <input type="text" id="actividad" class="form-control" placeholder="Ej: Ayuno" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label text-muted small">Detalles</label>
+                                        <input type="text" id="detalles" class="form-control" placeholder="Encargado...">
+                                    </div>
+                                </div>
+                                <div class="mt-4 text-end">
+                                    <button type="submit" class="btn btn-primary btn-custom px-5 text-white">Guardar</button>
+                                </div>
+                            </form>
+                            <hr class="my-5 opacity-25">
+                        </div>
 
-        <h5 class="text-dark mb-4 fw-bold"><i class="bi bi-list-task me-2"></i>Próximas Actividades</h5>
-        <div class="table-responsive">
-            <table class="table table-custom table-hover">
-                <thead>
-                    <tr>
-                        <th style="width: 15%;">Fecha</th>
-                        <th style="width: 30%;">Actividad</th>
-                        <th style="width: 40%;">Detalles</th>
-                        <th style="width: 15%; text-align: right;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaActividades"></tbody>
-            </table>
-            <div id="loading" class="text-center py-4 text-muted" style="display:none;">
-                <div class="spinner-border spinner-border-sm me-2"></div> Cargando...
-            </div>
-        </div>
-    </div>
-</div>
+                        <h5 class="text-dark mb-4 fw-bold"><i class="bi bi-list-task me-2"></i>Próximas Actividades</h5>
+                        <div class="table-responsive">
+                            <table class="table table-custom table-hover">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 15%;">Fecha</th>
+                                        <th style="width: 30%;">Actividad</th>
+                                        <th style="width: 40%;">Detalles</th>
+                                        <th style="width: 15%; text-align: right;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaActividades"></tbody>
+                            </table>
+                            <div id="loading" class="text-center py-4 text-muted" style="display:none;">
+                                <div class="spinner-border spinner-border-sm me-2"></div> Cargando...
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div id="vistaUsuarios" class="card main-card mb-5" style="display:none;">
                     <div class="card-body p-4 p-md-5">
@@ -289,38 +281,38 @@
                         <h5 class="text-primary mb-4 fw-bold"><i class="bi bi-person-lines-fill me-2"></i>Nuevo Miembro</h5>
                         
                         <form id="miembroForm">
-    <div class="row g-3">
-        <div class="col-12 col-md-4">
-            <label class="form-label text-muted small fw-bold">Nombre Completo</label>
-            <input type="text" id="mNombre" class="form-control" required>
-        </div>
-        
-        <div class="col-12 col-md-2">
-            <label class="form-label text-muted small fw-bold">F. Nacimiento</label>
-            <input type="date" id="mFecha" class="form-control" required>
-        </div>
-        
-        <div class="col-12 col-md-3">
-            <label class="form-label text-muted small fw-bold">Congregación</label>
-            <input type="text" id="mCongregacion" class="form-control" placeholder="Ej: Central">
-        </div>
-        
-        <div class="col-12 col-md-3 d-flex align-items-center justify-content-around pt-3">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="mBautizado">
-                <label class="form-check-label small">Bautizado</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="mConfirmado">
-                <label class="form-check-label small">Confirmado</label>
-            </div>
-        </div>
+                            <div class="row g-3">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted small fw-bold">Nombre Completo</label>
+                                    <input type="text" id="mNombre" class="form-control" required>
+                                </div>
+                                
+                                <div class="col-12 col-md-2">
+                                    <label class="form-label text-muted small fw-bold">F. Nacimiento</label>
+                                    <input type="date" id="mFecha" class="form-control" required>
+                                </div>
+                                
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label text-muted small fw-bold">Congregación</label>
+                                    <input type="text" id="mCongregacion" class="form-control" placeholder="Ej: Central">
+                                </div>
+                                
+                                <div class="col-12 col-md-3 d-flex align-items-center justify-content-around pt-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="mBautizado">
+                                        <label class="form-check-label small">Bautizado</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="mConfirmado">
+                                        <label class="form-check-label small">Confirmado</label>
+                                    </div>
+                                </div>
 
-        <div class="col-12 text-end mt-3">
-            <button type="submit" class="btn btn-success btn-custom px-4 w-100 w-md-auto">Agregar Fiel</button>
-        </div>
-    </div>
-</form>
+                                <div class="col-12 text-end mt-3">
+                                    <button type="submit" class="btn btn-success btn-custom px-4 w-100 w-md-auto">Agregar Fiel</button>
+                                </div>
+                            </div>
+                        </form>
 
                         <hr class="my-5 opacity-25">
 
@@ -341,14 +333,17 @@
                             </table>
                         </div>
                     </div>
-                </div> <div id="vistaEquipo" class="mb-5" style="display:none;">
+                </div>
+
+                <div id="vistaEquipo" class="mb-5" style="display:none;">
                     <div class="text-center mb-5">
                         <h3 class="fw-bold text-primary">Equipo Pastoral</h3>
                         <p class="text-muted">Estructura de Liderazgo y Servicio</p>
                     </div>
-
                     <div id="contenedorEquipo" class="d-flex flex-column align-items-center gap-4"></div>
-                </div> </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
@@ -374,7 +369,6 @@
                             <label class="form-label text-muted small fw-bold">Detalles</label>
                             <textarea id="editDetalles" class="form-control" rows="2"></textarea>
                         </div>
-                        
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-custom">Guardar Cambios</button>
                         </div>
@@ -429,22 +423,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
-
-<script>
-    // Configuración Global del Calendario
-    document.addEventListener("DOMContentLoaded", function() {
-        flatpickr("input[type='date']", {
-            locale: "es",              // Idioma Español
-            dateFormat: "Y-m-d",       // Formato para la base de datos
-            altInput: true,            // Muestra una fecha legible al humano
-            altFormat: "j F, Y",       // Ej: "3 Enero, 2026"
-            // theme: "material_blue", <--- ESTA LÍNEA SE BORRA
-            disableMobile: "true"      // Forzar el diseño bonito incluso en celular
-        });
-    });
-</script>
-<script src="script.js?v=5"></script>
-    <script src="script.js?v=5"></script> </body>
+    <script src="script.js?v=6"></script> 
+</body>
 </html>
