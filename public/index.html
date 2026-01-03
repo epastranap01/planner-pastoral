@@ -192,6 +192,26 @@ span.flatpickr-weekday {
     background: #e7f1ff !important; /* Azul muy clarito */
     border-color: #e7f1ff !important;
 }
+/* --- CORRECCIÓN DE INPUTS (VISIBILIDAD) --- */
+.form-control, .form-select {
+    color: #212529 !important;       /* Texto siempre oscuro */
+    caret-color: #000000 !important; /* La rayita de escribir SIEMPRE negra */
+    cursor: text !important;         /* Asegura que salga el ícono de "escribir" */
+}
+
+/* Al pasar el mouse (Hover): Que se note el borde */
+.form-control:hover, .form-select:hover {
+    background-color: #ffffff !important; 
+    border-color: #6c757d !important; /* Borde gris oscuro para que lo veas bien */
+}
+
+/* Al escribir (Focus): Tu azul institucional */
+.form-control:focus, .form-select:focus {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+    border-color: #0d6efd !important; /* Borde Azul */
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important; /* Resplandor azul */
+}
 
         }
     </style>
