@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <style>
+ <style>
     body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; }
     
     /* HEADER */
@@ -152,83 +152,6 @@
         border-color: #e7f1ff !important;
     }
 </style>
-
-/* --- PERSONALIZACIÓN DEL CALENDARIO (ESTILO PREMIUM) --- */
-.flatpickr-calendar {
-    border-radius: 16px !important; /* Bordes bien redondeados */
-    box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important; /* Sombra suave y elegante */
-    border: none !important;
-    font-family: 'Poppins', sans-serif !important; /* Usa tu misma fuente */
-}
-
-/* Encabezado limpio */
-.flatpickr-months {
-    background: transparent !important;
-    margin-bottom: 10px !important;
-}
-.flatpickr-current-month {
-    font-size: 1.1rem !important;
-    font-weight: 600 !important;
-}
-
-/* Días de la semana */
-span.flatpickr-weekday {
-    font-weight: bold !important;
-    color: #adb5bd !important; /* Gris suave */
-}
-
-/* El día seleccionado (TU AZUL INSTITUCIONAL) */
-.flatpickr-day.selected, 
-.flatpickr-day.startRange, 
-.flatpickr-day.endRange, 
-.flatpickr-day.selected.inRange, 
-.flatpickr-day.startRange.inRange, 
-.flatpickr-day.endRange.inRange, 
-.flatpickr-day.selected:focus, 
-.flatpickr-day.startRange:focus, 
-.flatpickr-day.endRange:focus, 
-.flatpickr-day.selected:hover, 
-.flatpickr-day.startRange:hover, 
-.flatpickr-day.endRange:hover, 
-.flatpickr-day.selected.prevMonthDay, 
-.flatpickr-day.startRange.prevMonthDay, 
-.flatpickr-day.endRange.prevMonthDay, 
-.flatpickr-day.selected.nextMonthDay, 
-.flatpickr-day.startRange.nextMonthDay, 
-.flatpickr-day.endRange.nextMonthDay {
-    background: #0d6efd !important; /* ¡AQUÍ ESTÁ TU AZUL! */
-    border-color: #0d6efd !important;
-    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3) !important; /* Brillito azul */
-}
-
-/* Días al pasar el mouse (Hover) */
-.flatpickr-day:hover {
-    background: #e7f1ff !important; /* Azul muy clarito */
-    border-color: #e7f1ff !important;
-}
-/* --- CORRECCIÓN DE INPUTS (VISIBILIDAD) --- */
-.form-control, .form-select {
-    color: #212529 !important;       /* Texto siempre oscuro */
-    caret-color: #000000 !important; /* La rayita de escribir SIEMPRE negra */
-    cursor: text !important;         /* Asegura que salga el ícono de "escribir" */
-}
-
-/* Al pasar el mouse (Hover): Que se note el borde */
-.form-control:hover, .form-select:hover {
-    background-color: #ffffff !important; 
-    border-color: #6c757d !important; /* Borde gris oscuro para que lo veas bien */
-}
-
-/* Al escribir (Focus): Tu azul institucional */
-.form-control:focus, .form-select:focus {
-    background-color: #ffffff !important;
-    color: #212529 !important;
-    border-color: #0d6efd !important; /* Borde Azul */
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important; /* Resplandor azul */
-}
-
-        }
-    </style>
 </head>
 <body>
 
