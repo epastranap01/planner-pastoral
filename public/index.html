@@ -11,9 +11,10 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
  <style>
+    /* 1. FUENTE Y FONDO GENERAL */
     body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; }
     
-    /* HEADER */
+    /* 2. HEADER AZUL */
     .header-bg {
         background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
         color: white;
@@ -29,53 +30,44 @@
         background: white; overflow: hidden;
     }
 
-    /* --- CORRECCIÓN DE INPUTS Y CURSOR --- */
-    /* Esto obliga al mouse y a la barrita de escribir a ser NEGROS */
-    .form-control, .form-select, input {
-        background-color: #f8f9fa; 
-        border: 1px solid #e9ecef;
-        border-radius: 10px; 
-        padding: 12px;
-        color: #212529 !important;       /* Texto negro */
-        caret-color: black !important;   /* Barrita de escribir negra */
-        cursor: text !important;         /* Puntero del mouse tipo "Texto" */
+    /* --- 3. CORRECCIÓN DEFINITIVA DE INPUTS Y CURSOR (LA SOLUCIÓN) --- */
+    /* Apuntamos a TODO tipo de input para que no se escape ninguno */
+    input, select, textarea, .form-control, .form-select {
+        background-color: #ffffff !important; /* Fondo BLANCO puro */
+        color: #000000 !important;           /* Texto NEGRO puro */
+        caret-color: #000000 !important;     /* Cursor (rayita) NEGRA */
+        border: 1px solid #ced4da !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
     }
 
-    /* Al pasar el mouse por encima (Hover) */
-    .form-control:hover, .form-select:hover {
-        background-color: #ffffff !important; 
-        border-color: #adb5bd !important; /* Borde más visible */
-        cursor: text !important;          /* Asegurar que el mouse se vea */
+    /* Al pasar el mouse */
+    input:hover, select:hover, textarea:hover, .form-control:hover {
+        border-color: #adb5bd !important;    /* Borde gris un poco más oscuro */
     }
 
-    .form-control:focus, .form-select:focus {
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); 
-        border-color: #0d6efd; 
-        background-color: #fff;
+    /* Al escribir (Foco) */
+    input:focus, select:focus, textarea:focus, .form-control:focus {
+        border-color: #0d6efd !important;    /* Borde AZUL */
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important; /* Brillo azul */
+        background-color: #ffffff !important;
+        color: #000000 !important;
     }
 
+    /* 4. BOTONES */
     .btn-custom {
         border-radius: 10px; padding: 12px; font-weight: 600;
         background-color: #0d6efd; border: none; transition: all 0.3s;
     }
     .btn-custom:hover { background-color: #0b5ed7; transform: translateY(-2px); }
 
-    /* TABLAS Y MÓVIL (Lo que ya tenías) */
-    .table-custom thead th {
-        background-color: #f8f9fa; color: #6c757d; font-weight: 600;
-        border: none; text-transform: uppercase; font-size: 0.85rem; padding: 15px;
-    }
-    .table-custom tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; }
-    .badge-date {
-        background-color: #e7f1ff; color: #0d6efd; padding: 6px 10px;
-        border-radius: 8px; font-weight: 600; font-size: 0.85rem;
-        display: inline-block; min-width: 80px; text-align: center;
-    }
-
+    /* 5. DISEÑO RESPONSIVE (CELULAR) */
     @media (max-width: 768px) {
         .header-bg { padding: 2rem 0; margin-bottom: -2rem; }
         .btn-group { flex-wrap: wrap; width: 100%; }
         .btn-group button { flex: 1 1 40%; margin: 2px; font-size: 0.85rem; }
+        
+        /* Tablas tipo Ficha */
         .table-custom thead { display: none; }
         .table-custom tbody tr {
             display: block; background: white; border-radius: 15px;
@@ -91,66 +83,65 @@
             content: attr(data-label); font-size: 0.7rem; color: #adb5bd;
             font-weight: 700; text-transform: uppercase; margin-bottom: 4px;
         }
+        /* Etiquetas manuales */
         #tablaMiembros td:nth-of-type(1)::before { content: "Nombre"; }
         #tablaMiembros td:nth-of-type(2)::before { content: "Edad"; }
         #tablaMiembros td:nth-of-type(3)::before { content: "Congregación"; }
         #tablaMiembros td:nth-of-type(4)::before { content: "Bautizado"; }
         #tablaMiembros td:nth-of-type(5)::before { content: "Confirmado"; }
+        
+        /* Botones de acción alineados */
         .table-custom td:last-child {
             flex-direction: row; justify-content: flex-end;
             border-top: 1px solid #f8f9fa; margin-top: 1rem; padding-top: 1rem !important; gap: 10px;
         }
         .table-custom td:last-child::before { display: none; }
+        
+        /* Etiquetas Actividades y Usuarios */
         #tablaActividades td:nth-of-type(1)::before { content: "Fecha"; }
         #tablaActividades td:nth-of-type(2)::before { content: "Actividad"; }
         #tablaActividades td:nth-of-type(3)::before { content: "Detalles"; }
-        #tablaActividades td:last-child::before { display: none; }
         #tablaUsuarios td:nth-of-type(1)::before { content: "ID"; }
         #tablaUsuarios td:nth-of-type(2)::before { content: "Usuario"; }
         #tablaUsuarios td:nth-of-type(3)::before { content: "Rol"; }
-        #tablaUsuarios td:last-child::before { display: none; }
+        .table-custom td:last-child::before { display: none; }
     }
 
-    /* --- CORRECCIÓN FINAL DEL CALENDARIO --- */
+    /* 6. TABLAS MODO ESCRITORIO */
+    .table-custom thead th {
+        background-color: #f8f9fa; color: #6c757d; font-weight: 600;
+        border: none; text-transform: uppercase; font-size: 0.85rem; padding: 15px;
+    }
+    .table-custom tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; }
+    .badge-date {
+        background-color: #e7f1ff; color: #0d6efd; padding: 6px 10px;
+        border-radius: 8px; font-weight: 600; font-size: 0.85rem;
+        display: inline-block; min-width: 80px; text-align: center;
+    }
+
+    /* --- 7. CORRECCIÓN DEL CALENDARIO EN MODALES --- */
+    /* Esto hace que el calendario siempre esté ENCIMA de la ventana de editar */
     .flatpickr-calendar {
-        z-index: 9999 !important;
+        z-index: 1060 !important; /* Bootstrap modal usa 1055, así que ponemos 1060 */
         border-radius: 16px !important;
         border: none !important;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
         font-family: 'Poppins', sans-serif !important;
     }
     .flatpickr-months { background: transparent !important; margin-bottom: 10px !important; }
     .flatpickr-current-month { font-size: 1.1rem !important; font-weight: 600 !important; }
     span.flatpickr-weekday { font-weight: bold !important; color: #adb5bd !important; }
-
-    /* ¡AQUÍ ESTÁ LA MAGIA AZUL! */
-    /* 1. Quitamos el rojo del día "HOY" */
-    span.flatpickr-day.today {
-        border-color: #0d6efd !important;
-        color: #0d6efd !important;
-    }
-    span.flatpickr-day.today:hover {
-        background: #e7f1ff !important;
-        color: #0d6efd !important;
-    }
-
-    /* 2. Ponemos Azul el día SELECCIONADO */
-    .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange,
-    .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange,
-    .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus,
-    .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover,
-    .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay,
-    .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay {
+    
+    /* Colores del Calendario */
+    span.flatpickr-day.today { border-color: #0d6efd !important; color: #0d6efd !important; }
+    span.flatpickr-day.today:hover { background: #e7f1ff !important; }
+    
+    .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected:hover {
         background: #0d6efd !important;
         border-color: #0d6efd !important;
         color: white !important;
     }
-
-    /* 3. Hover suave en días normales */
-    .flatpickr-day:hover {
-        background: #e7f1ff !important;
-        border-color: #e7f1ff !important;
-    }
+    .flatpickr-day:hover { background: #e7f1ff !important; border-color: #e7f1ff !important; }
 </style>
 </head>
 <body>
