@@ -344,5 +344,84 @@ window.editarCargo = async (id, cargo, nombreActual) => {
     if (nuevoNombre) { await fetch(`/api/equipo/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': token }, body: JSON.stringify({ nombre: nuevoNombre }) }); Swal.fire('Asignado', '', 'success'); cargarEquipo(); }
 };
 
+// --- 8. CUMPLEAÑEROS DEL MES (NUEVO) ---
+async function cargarCumpleaneros() {
+    const contenedor = document.getElementById('listaCumpleaneros');
+    const seccion = document.getElementById('seccionCumpleaneros');
+    if (!contenedor || !seccion) return;
+
+    try {
+        // 1. Obtenemos miembros (reusamos la API)
+        const res = await fetch('/api/miembros', { headers: { 'Authorization': token } });
+        const miembros = await res.json();
+        
+        const hoy = new Date();
+        const mesActual = hoy.getMonth(); // 0 = Enero, 11 = Diciembre
+        
+        // Nombres de meses para el título
+        const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        
+        // Actualizamos título del bloque
+        seccion.querySelector('h5').innerHTML = `<i class="bi bi-cake2-fill me-2"></i>Cumpleañeros de ${nombresMeses[mesActual]}`;
+
+        // 2. Filtramos los que cumplen este mes
+        const cumplenEsteMes = miembros.filter(m => {
+            if (!m.fecha_nacimiento) return false;
+            // Truco para evitar problemas de zona horaria: leemos el string directo "YYYY-MM-DD"
+            const partes = new Date(m.fecha_nacimiento).toISOString().split('T')[0].split('-'); 
+            const mesNac = parseInt(partes[1]) - 1; // Mes del string (1-12) a (0-11)
+            return mesNac === mesActual;
+        });
+
+        // 3. Si no hay nadie, ocultamos la sección
+        if (cumplenEsteMes.length === 0) {
+            seccion.style.display = 'none';
+            return;
+        }
+
+        // 4. Si hay, mostramos y ordenamos por día
+        seccion.style.display = 'block';
+        
+        // Ordenar por día del mes
+        cumplenEsteMes.sort((a, b) => {
+            const diaA = parseInt(new Date(a.fecha_nacimiento).toISOString().split('T')[0].split('-')[2]);
+            const diaB = parseInt(new Date(b.fecha_nacimiento).toISOString().split('T')[0].split('-')[2]);
+            return diaA - diaB;
+        });
+
+        // 5. Generar HTML "Macizo"
+        contenedor.innerHTML = '';
+        cumplenEsteMes.forEach(m => {
+            const fecha = new Date(m.fecha_nacimiento).toISOString().split('T')[0].split('-');
+            const dia = fecha[2];
+            
+            // Calcular edad que VA a cumplir
+            const anioNac = parseInt(fecha[0]);
+            const edad = hoy.getFullYear() - anioNac;
+
+            contenedor.innerHTML += `
+                <div class="col-6 col-md-3 col-lg-2">
+                    <div class="bg-white text-dark rounded-3 p-2 text-center h-100 shadow-sm position-relative">
+                        <span class="badge bg-warning text-dark position-absolute top-0 start-50 translate-middle shadow-sm rounded-pill border border-white">
+                            ${dia} ${nombresMeses[mesActual].substring(0,3)}
+                        </span>
+                        <div class="mt-3 mb-1">
+                            <i class="bi bi-person-circle fs-1 text-secondary"></i>
+                        </div>
+                        <h6 class="fw-bold small mb-1 text-truncate">${m.nombre.split(' ')[0]} ${m.nombre.split(' ')[1] || ''}</h6>
+                        <small class="text-muted fw-bold" style="font-size: 0.75rem;">Cumple ${edad}</small>
+                    </div>
+                </div>
+            `;
+        });
+
+    } catch (error) {
+        console.error("Error cargando cumpleaños:", error);
+    }
+}
+// === IMPORTANTE: AGREGAR ESTO AL FINAL DE TU SCRIPT ===
+// Busca donde dice: // Carga Inicial
+// Y agrega la llamada a cargarCumpleaneros();
 // Carga Inicial
 cargarActividades();
+cargarCumpleaneros();
