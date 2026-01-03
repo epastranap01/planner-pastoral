@@ -11,133 +11,147 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; }
-        
-        /* HEADER */
-        .header-bg {
-            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-            color: white;
-            padding: 3rem 0;
-            margin-bottom: -3rem;
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
+    body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; }
+    
+    /* HEADER */
+    .header-bg {
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: -3rem;
+        border-bottom-left-radius: 30px;
+        border-bottom-right-radius: 30px;
+    }
+
+    .main-card {
+        border: none; border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        background: white; overflow: hidden;
+    }
+
+    /* --- CORRECCIÓN DE INPUTS Y CURSOR --- */
+    /* Esto obliga al mouse y a la barrita de escribir a ser NEGROS */
+    .form-control, .form-select, input {
+        background-color: #f8f9fa; 
+        border: 1px solid #e9ecef;
+        border-radius: 10px; 
+        padding: 12px;
+        color: #212529 !important;       /* Texto negro */
+        caret-color: black !important;   /* Barrita de escribir negra */
+        cursor: text !important;         /* Puntero del mouse tipo "Texto" */
+    }
+
+    /* Al pasar el mouse por encima (Hover) */
+    .form-control:hover, .form-select:hover {
+        background-color: #ffffff !important; 
+        border-color: #adb5bd !important; /* Borde más visible */
+        cursor: text !important;          /* Asegurar que el mouse se vea */
+    }
+
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); 
+        border-color: #0d6efd; 
+        background-color: #fff;
+    }
+
+    .btn-custom {
+        border-radius: 10px; padding: 12px; font-weight: 600;
+        background-color: #0d6efd; border: none; transition: all 0.3s;
+    }
+    .btn-custom:hover { background-color: #0b5ed7; transform: translateY(-2px); }
+
+    /* TABLAS Y MÓVIL (Lo que ya tenías) */
+    .table-custom thead th {
+        background-color: #f8f9fa; color: #6c757d; font-weight: 600;
+        border: none; text-transform: uppercase; font-size: 0.85rem; padding: 15px;
+    }
+    .table-custom tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; }
+    .badge-date {
+        background-color: #e7f1ff; color: #0d6efd; padding: 6px 10px;
+        border-radius: 8px; font-weight: 600; font-size: 0.85rem;
+        display: inline-block; min-width: 80px; text-align: center;
+    }
+
+    @media (max-width: 768px) {
+        .header-bg { padding: 2rem 0; margin-bottom: -2rem; }
+        .btn-group { flex-wrap: wrap; width: 100%; }
+        .btn-group button { flex: 1 1 40%; margin: 2px; font-size: 0.85rem; }
+        .table-custom thead { display: none; }
+        .table-custom tbody tr {
+            display: block; background: white; border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 1.5rem;
+            padding: 1.5rem; border: 1px solid #f0f0f0;
         }
-
-        .main-card {
-            border: none; border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            background: white; overflow: hidden;
+        .table-custom td {
+            display: flex; flex-direction: column; align-items: flex-start;
+            justify-content: center; text-align: left !important;
+            padding: 0.5rem 0 !important; border: none; width: 100%;
         }
-
-        /* INPUTS MEJORADOS */
-        .form-control, .form-select {
-            background-color: #f8f9fa; border: 1px solid #e9ecef;
-            border-radius: 10px; padding: 12px;
+        .table-custom td::before {
+            content: attr(data-label); font-size: 0.7rem; color: #adb5bd;
+            font-weight: 700; text-transform: uppercase; margin-bottom: 4px;
         }
-        .form-control:focus, .form-select:focus {
-            box-shadow: none; border-color: #0d6efd; background-color: #fff;
+        #tablaMiembros td:nth-of-type(1)::before { content: "Nombre"; }
+        #tablaMiembros td:nth-of-type(2)::before { content: "Edad"; }
+        #tablaMiembros td:nth-of-type(3)::before { content: "Congregación"; }
+        #tablaMiembros td:nth-of-type(4)::before { content: "Bautizado"; }
+        #tablaMiembros td:nth-of-type(5)::before { content: "Confirmado"; }
+        .table-custom td:last-child {
+            flex-direction: row; justify-content: flex-end;
+            border-top: 1px solid #f8f9fa; margin-top: 1rem; padding-top: 1rem !important; gap: 10px;
         }
+        .table-custom td:last-child::before { display: none; }
+        #tablaActividades td:nth-of-type(1)::before { content: "Fecha"; }
+        #tablaActividades td:nth-of-type(2)::before { content: "Actividad"; }
+        #tablaActividades td:nth-of-type(3)::before { content: "Detalles"; }
+        #tablaActividades td:last-child::before { display: none; }
+        #tablaUsuarios td:nth-of-type(1)::before { content: "ID"; }
+        #tablaUsuarios td:nth-of-type(2)::before { content: "Usuario"; }
+        #tablaUsuarios td:nth-of-type(3)::before { content: "Rol"; }
+        #tablaUsuarios td:last-child::before { display: none; }
+    }
 
-        .btn-custom {
-            border-radius: 10px; padding: 12px; font-weight: 600;
-            background-color: #0d6efd; border: none; transition: all 0.3s;
-        }
-        .btn-custom:hover { background-color: #0b5ed7; transform: translateY(-2px); }
+    /* --- CORRECCIÓN FINAL DEL CALENDARIO --- */
+    .flatpickr-calendar {
+        z-index: 9999 !important;
+        border-radius: 16px !important;
+        border: none !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+        font-family: 'Poppins', sans-serif !important;
+    }
+    .flatpickr-months { background: transparent !important; margin-bottom: 10px !important; }
+    .flatpickr-current-month { font-size: 1.1rem !important; font-weight: 600 !important; }
+    span.flatpickr-weekday { font-weight: bold !important; color: #adb5bd !important; }
 
-        /* TABLAS EN PC (Normal) */
-        .table-custom thead th {
-            background-color: #f8f9fa; color: #6c757d; font-weight: 600;
-            border: none; text-transform: uppercase; font-size: 0.85rem; padding: 15px;
-        }
-        .table-custom tbody td {
-            padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0;
-        }
-        .badge-date {
-            background-color: #e7f1ff; color: #0d6efd; padding: 6px 10px;
-            border-radius: 8px; font-weight: 600; font-size: 0.85rem;
-            display: inline-block; min-width: 80px; text-align: center;
-        }
+    /* ¡AQUÍ ESTÁ LA MAGIA AZUL! */
+    /* 1. Quitamos el rojo del día "HOY" */
+    span.flatpickr-day.today {
+        border-color: #0d6efd !important;
+        color: #0d6efd !important;
+    }
+    span.flatpickr-day.today:hover {
+        background: #e7f1ff !important;
+        color: #0d6efd !important;
+    }
 
-        /* --- MODO MÓVIL (CORREGIDO "TIPO FICHA") --- */
-        @media (max-width: 768px) {
-            .header-bg { padding: 2rem 0; margin-bottom: -2rem; }
-            
-            /* Botones del menú ajustables */
-            .btn-group { flex-wrap: wrap; width: 100%; }
-            .btn-group button { flex: 1 1 40%; margin: 2px; font-size: 0.85rem; }
+    /* 2. Ponemos Azul el día SELECCIONADO */
+    .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange,
+    .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange,
+    .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus,
+    .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover,
+    .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay,
+    .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay {
+        background: #0d6efd !important;
+        border-color: #0d6efd !important;
+        color: white !important;
+    }
 
-            /* Ocultar cabeceras de tabla */
-            .table-custom thead { display: none; }
-            
-            /* Convertir filas en TARJETAS */
-            .table-custom tbody tr {
-                display: block;
-                background: white;
-                border-radius: 15px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-                margin-bottom: 1.5rem;
-                padding: 1.5rem;
-                border: 1px solid #f0f0f0;
-            }
-
-            /* Convertir celdas en BLOQUES VERTICALES */
-            .table-custom td {
-                display: flex;
-                flex-direction: column; /* Apilar etiqueta y dato */
-                align-items: flex-start;
-                justify-content: center;
-                text-align: left !important;
-                padding: 0.5rem 0 !important;
-                border: none;
-                width: 100%;
-            }
-
-            /* Estilo de la etiqueta (Label gris arriba) */
-            .table-custom td::before {
-                content: attr(data-label);
-                font-size: 0.7rem;
-                color: #adb5bd; /* Gris suave */
-                font-weight: 700;
-                text-transform: uppercase;
-                margin-bottom: 4px;
-                letter-spacing: 1px;
-            }
-
-            /* Inyectar textos manualmente (Igual que antes) */
-            /* Tabla Miembros */
-            #tablaMiembros td:nth-of-type(1)::before { content: "Nombre"; }
-            #tablaMiembros td:nth-of-type(2)::before { content: "Edad"; }
-            #tablaMiembros td:nth-of-type(3)::before { content: "Congregación"; }
-            #tablaMiembros td:nth-of-type(4)::before { content: "Bautizado"; }
-            #tablaMiembros td:nth-of-type(5)::before { content: "Confirmado"; }
-            
-            /* Fila de Acciones (Botones) - Diseño Especial */
-            .table-custom td:last-child {
-                flex-direction: row; /* Botones en fila */
-                justify-content: flex-end; /* Alineados a la derecha */
-                border-top: 1px solid #f8f9fa;
-                margin-top: 1rem;
-                padding-top: 1rem !important;
-                gap: 10px;
-            }
-            .table-custom td:last-child::before { display: none; } /* Sin etiqueta para botones */
-
-            /* Tabla Actividades */
-            #tablaActividades td:nth-of-type(1)::before { content: "Fecha"; }
-            #tablaActividades td:nth-of-type(2)::before { content: "Actividad"; }
-            #tablaActividades td:nth-of-type(3)::before { content: "Detalles"; }
-            #tablaActividades td:last-child::before { display: none; }
-            
-            /* Tabla Usuarios */
-            #tablaUsuarios td:nth-of-type(1)::before { content: "ID"; }
-            #tablaUsuarios td:nth-of-type(2)::before { content: "Usuario"; }
-            #tablaUsuarios td:nth-of-type(3)::before { content: "Rol"; }
-            #tablaUsuarios td:last-child::before { display: none; }
-
-            /* Asegurar que el calendario siempre flote por encima de todo */
-.flatpickr-calendar {
-    z-index: 9999 !important;
-}
+    /* 3. Hover suave en días normales */
+    .flatpickr-day:hover {
+        background: #e7f1ff !important;
+        border-color: #e7f1ff !important;
+    }
+</style>
 
 /* --- PERSONALIZACIÓN DEL CALENDARIO (ESTILO PREMIUM) --- */
 .flatpickr-calendar {
