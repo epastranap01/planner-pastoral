@@ -538,7 +538,7 @@ window.generarPDF = () => {
         doc.setFontSize(8);
         doc.setTextColor(150);
         doc.text(`Página ${i} de ${paginas}`, 196, 285, { align: "right" });
-        doc.text("Sistema de Planner Pastoral - Uso Interno", 14, 285);
+        doc.text("Sistema de Planificacion de Actividades - Uso Interno", 14, 285);
     }
 
     doc.save(`Actividades_BuenPastor_${new Date().toISOString().split('T')[0]}.pdf`);

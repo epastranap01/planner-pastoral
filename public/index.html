@@ -67,6 +67,7 @@
             border-radius: 8px; font-weight: 600; font-size: 0.85rem;
             display: inline-block; min-width: 80px; text-align: center;
         }
+        
 
         /* --- MODO MÓVIL (TIPO FICHA) --- */
         @media (max-width: 768px) {
@@ -134,6 +135,9 @@
             }
             .table-custom td:last-child::before { display: none; }
         }
+        .table-custom td {
+    white-space: pre-wrap; 
+}
     </style>
 </head>
 <body>
@@ -199,9 +203,9 @@
                                         <input type="text" id="actividad" class="form-control" placeholder="Ej: Ayuno" required>
                                     </div>
                                     <div class="col-md-5">
-                                        <label class="form-label text-muted small">Detalles</label>
-                                        <input type="text" id="detalles" class="form-control" placeholder="Encargado...">
-                                    </div>
+    <label class="form-label text-muted small">Detalles</label>
+    <textarea id="detalles" class="form-control" placeholder="Encargado... (Enter para nueva línea)" rows="1" style="resize: none; height: 38px;"></textarea>
+</div>
                                 </div>
                                 <div class="mt-4 text-end">
                                     <button type="submit" class="btn btn-primary btn-custom px-5 text-white">Guardar</button>
