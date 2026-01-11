@@ -508,13 +508,32 @@ window.generarPDF = () => {
         ];
     });
 
-    doc.autoTable({
+doc.autoTable({
         startY: 70,
         head: [['FECHA', 'ACTIVIDAD', 'DETALLES', 'ESTADO']],
         body: cuerpoTabla,
         theme: 'plain',
-        headStyles: { fillColor: azulOscuro, textColor: 255, fontStyle: 'bold', halign: 'left', cellPadding: 5 },
-        styles: { font: 'helvetica', fontSize: 9, cellPadding: 5, valign: 'middle', textColor: grisTexto, lineColor: [230, 230, 230], lineWidth: { bottom: 0.1 } },
+        
+        // Estilos Cabecera
+        headStyles: { 
+            fillColor: azulOscuro, 
+            textColor: 255, 
+            fontStyle: 'bold', 
+            halign: 'left', 
+            cellPadding: 3 
+        },
+        
+        // Estilos Cuerpo
+        styles: { 
+            font: 'helvetica', 
+            fontSize: 9, 
+            cellPadding: 5, 
+            valign: 'middle', 
+            textColor: grisTexto,
+            // Quitamos las líneas globales para que solo manden las de los grises
+            lineWidth: 0 
+        },
+
         columnStyles: {
             0: { cellWidth: 30, fontStyle: 'bold' },
             1: { cellWidth: 60, fontStyle: 'bold', textColor: [0,0,0] },
@@ -522,40 +541,37 @@ window.generarPDF = () => {
             3: { cellWidth: 25, halign: 'center' }
         },
         
-        // --- AQUÍ ESTÁ EL ARREGLO: DIBUJAMOS CÍRCULOS ---
+        // --- 1. FONDO Y LÍNEAS EN FILAS GRISES ---
         didParseCell: function(data) {
             if (data.section === 'body' && data.row.index % 2 === 0) {
                 data.cell.styles.fillColor = grisLight;
+                // Borde gris visible arriba y abajo
+                data.cell.styles.lineWidth = { top: 0.1, bottom: 0.1 };
+                data.cell.styles.lineColor = [200, 200, 200];
             }
         },
         
+        // --- 2. DIBUJO DE CÍRCULOS (ESTADO) ---
         didDrawCell: function(data) {
-            // Solo actuamos en la columna ESTADO (índice 3) y en el cuerpo
             if (data.section === 'body' && data.column.index === 3) {
                 const esCompletado = data.cell.raw === 'SI';
-                
-                // Coordenadas del centro de la celda
                 const x = data.cell.x + (data.cell.width / 2);
                 const y = data.cell.y + (data.cell.height / 2);
                 
                 if (esCompletado) {
-                    // DIBUJAR CÍRCULO VERDE LLENO
                     doc.setFillColor(...verdeExito);
-                    doc.circle(x, y, 3, 'F'); // Radio 3
+                    doc.circle(x, y, 3, 'F');
                 } else {
-                    // DIBUJAR ANILLO NARANJA (PENDIENTE)
                     doc.setDrawColor(...naranjaPend);
                     doc.setLineWidth(0.5);
-                    doc.circle(x, y, 3, 'S'); // 'S' = Stroke (Solo borde)
-                    
-                    // Opcional: Un puntito pequeño en el centro
+                    doc.circle(x, y, 3, 'S');
                     doc.setFillColor(...naranjaPend);
                     doc.circle(x, y, 1, 'F');
                 }
             }
         },
         
-        // Borramos el texto "SI" o "NO" para que no se vea feo detrás del dibujo
+        // --- 3. LIMPIEZA DE TEXTO OCULTO ---
         willDrawCell: function(data) {
             if (data.section === 'body' && data.column.index === 3) {
                 data.cell.text = ''; 
