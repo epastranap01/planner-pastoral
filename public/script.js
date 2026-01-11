@@ -420,7 +420,7 @@ async function cargarCumpleaneros() {
     }
 }
 
-// --- 9. GENERAR PDF NIVEL PRO 🌟 ---
+// --- 9. GENERAR PDF ESTILO EJECUTIVO (ULTRA PRO) ---
 window.generarPDF = () => {
     if (!window.jspdf) {
         Swal.fire('Error', 'Librerías PDF no cargadas. Recarga la página.', 'error');
@@ -430,119 +430,158 @@ window.generarPDF = () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // Colores
-    const azulOficial = [13, 110, 253]; // #0d6efd
-    const grisClaro = [240, 240, 240];
-    const grisTexto = [150, 150, 150];
+    // --- PALETA DE COLORES PREMIUM ---
+    const colorPrimario = [13, 110, 253];   // Azul Institucional (#0d6efd)
+    const colorOscuro = [33, 37, 41];       // Negro Suave (#212529)
+    const colorGris = [108, 117, 125];      // Gris Texto (#6c757d)
+    const colorFondoCards = [248, 249, 250]; // Gris muy claro para cajas
+    const colorVerde = [25, 135, 84];       // Éxito
+    const colorNaranja = [253, 126, 20];    // Pendiente
 
-    // --- 1. ENCABEZADO TIPO BANNER ---
-    // Dibujamos un rectángulo azul en el tope
-    doc.setFillColor(...azulOficial);
-    doc.rect(0, 0, 210, 40, 'F'); // Ancho A4 es 210mm
+    // --- 1. ENCABEZADO MODERNO ---
+    // Barra lateral decorativa (Toque de diseño)
+    doc.setFillColor(...colorPrimario);
+    doc.rect(0, 0, 6, 297, 'F'); // Una línea azul vertical en todo el borde izquierdo
 
-    // Título en Blanco
+    // Título de la Iglesia
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.setTextColor(255, 255, 255);
-    doc.text("Iglesia Cristiana Luterana", 105, 18, { align: "center" });
+    doc.setFontSize(24);
+    doc.setTextColor(...colorOscuro);
+    doc.text("IGLESIA CRISTIANA LUTERANA", 14, 20);
     
-    doc.setFontSize(16);
     doc.setFont("helvetica", "normal");
-    doc.text("El Buen Pastor", 105, 26, { align: "center" });
+    doc.setFontSize(16);
+    doc.setTextColor(...colorPrimario);
+    doc.text("EL BUEN PASTOR", 14, 28);
 
-    // --- 2. INFORMACIÓN DEL REPORTE ---
-    const fechaImpresion = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    // Línea separadora fina
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 35, 196, 35);
+
+    // --- 2. DATOS DEL REPORTE (A la derecha) ---
+    const fechaImpresion = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
     const usuario = localStorage.getItem('username') || 'Administrador';
-    
-    // Calculamos estadísticas
+
+    doc.setFontSize(9);
+    doc.setTextColor(...colorGris);
+    doc.text("REPORTE OFICIAL DE ACTIVIDADES", 196, 18, { align: "right" });
+    doc.text(`Generado el: ${fechaImpresion}`, 196, 23, { align: "right" });
+    doc.text(`Por: ${usuario}`, 196, 28, { align: "right" });
+
+    // --- 3. TARJETAS DE ESTADÍSTICAS (KPIs) ---
+    // Calculamos datos
     const total = actividadesActuales.length;
     const completadas = actividadesActuales.filter(a => a.completado).length;
     const pendientes = total - completadas;
 
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("REPORTE DE ACTIVIDADES", 14, 50);
-    
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text(`Fecha de impresión: ${fechaImpresion}`, 14, 55);
-    doc.text(`Generado por: ${usuario}`, 14, 60);
+    let startY = 45;
+    let cardWidth = 58;
+    let cardHeight = 25;
+    let gap = 6;
 
-    // Resumen a la derecha
-    doc.setFont("helvetica", "bold");
-    doc.text(`Resumen:`, 150, 50);
-    doc.setFont("helvetica", "normal");
-    doc.text(`• Total Planificado: ${total}`, 150, 55);
-    doc.text(`• Ya Realizadas: ${completadas}`, 150, 60);
-    doc.text(`• Pendientes: ${pendientes}`, 150, 65);
+    // Función auxiliar para dibujar tarjetas
+    const drawCard = (x, title, value, colorBorde) => {
+        // Fondo
+        doc.setFillColor(...colorFondoCards);
+        doc.setDrawColor(...colorBorde); // Borde del color del estado
+        doc.roundedRect(x, startY, cardWidth, cardHeight, 3, 3, 'FD'); // FD = Fill + Draw border
+        
+        // Título pequeño
+        doc.setFontSize(8);
+        doc.setTextColor(...colorGris);
+        doc.setFont("helvetica", "bold");
+        doc.text(title.toUpperCase(), x + (cardWidth/2), startY + 8, { align: "center" });
 
-    // --- 3. PREPARACIÓN DE DATOS ---
-    // Ordenamos por fecha
+        // Número Grande
+        doc.setFontSize(16);
+        doc.setTextColor(...colorOscuro);
+        doc.text(String(value), x + (cardWidth/2), startY + 19, { align: "center" });
+    };
+
+    // Dibujamos las 3 tarjetas
+    drawCard(14, "Total Actividades", total, colorPrimario);
+    drawCard(14 + cardWidth + gap, "Realizadas", completadas, colorVerde);
+    drawCard(14 + (cardWidth * 2) + (gap * 2), "Pendientes", pendientes, colorNaranja);
+
+    // --- 4. TABLA DE CONTENIDO ---
     const datosOrdenados = actividadesActuales.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     const cuerpoTabla = datosOrdenados.map(item => {
         const f = new Date(item.fecha);
         const fUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
-        // Agregamos year: 'numeric' para que salga "11 ENE 2026"
         const fechaTexto = fUser.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
-        
-        // Si está completado, le agregamos una marca al texto
-        const prefijo = item.completado ? '(REALIZADA) ' : '';
         
         return [
             fechaTexto,
-            prefijo + item.actividad,
-            item.detalles || '-',
+            item.actividad,
+            item.detalles || '',
             item.completado ? 'SI' : 'NO' // Columna oculta para lógica
         ];
     });
 
-    // --- 4. GENERAR TABLA INTELIGENTE ---
     doc.autoTable({
-        startY: 70,
+        startY: 80, // Bajamos la tabla para dejar espacio a las tarjetas
         head: [['FECHA', 'ACTIVIDAD', 'DETALLES']],
         body: cuerpoTabla,
-        theme: 'grid',
+        theme: 'grid', // Rejilla limpia
         headStyles: { 
-            fillColor: azulOficial, 
-            textColor: 255, 
+            fillColor: [255, 255, 255], // Cabecera BLANCA
+            textColor: colorPrimario,   // Texto AZUL
+            lineWidth: 0.1,
+            lineColor: colorPrimario,   // Borde inferior azul
             fontStyle: 'bold',
-            halign: 'center',
+            halign: 'left',
             cellPadding: 4
         },
-        styles: { fontSize: 10, cellPadding: 3, valign: 'middle' },
-        columnStyles: {
-            0: { cellWidth: 30, halign: 'center', fontStyle: 'bold' },
-            1: { cellWidth: 70 },
-            2: { cellWidth: 'auto' }
+        styles: { 
+            font: 'helvetica',
+            fontSize: 10,
+            cellPadding: 4,
+            lineColor: [230, 230, 230], // Líneas grises suaves
+            lineWidth: 0.1,
+            valign: 'middle'
         },
-        // --- AQUÍ ESTÁ EL TRUCO PARA "TACHAR" LAS COMPLETADAS ---
+        columnStyles: {
+            0: { cellWidth: 35, fontStyle: 'bold', textColor: colorOscuro }, 
+            1: { cellWidth: 60, fontStyle: 'bold' },
+            2: { cellWidth: 'auto', textColor: colorGris } // Detalles en gris para contraste
+        },
+        // Lógica de coloreado
         didParseCell: function(data) {
-            // Verificamos si la fila actual tiene el flag 'SI' en la columna oculta (índice 3)
             const rowRaw = data.row.raw; 
             const esCompletada = rowRaw[3] === 'SI';
 
-            if (esCompletada && data.section === 'body') {
-                // Cambiamos el estilo de TODA la fila completada
-                data.cell.styles.textColor = grisTexto; // Texto gris suave
-                data.cell.styles.fillColor = grisClaro; // Fondo grisáceo
-                data.cell.styles.fontStyle = 'italic';  // Letra itálica
+            if (data.section === 'body') {
+                if (esCompletada) {
+                    // Si está completada: Fondo gris muy suave y texto tachado visualmente (gris claro)
+                    data.cell.styles.fillColor = [248, 249, 250];
+                    data.cell.styles.textColor = [170, 170, 170];
+                }
             }
         }
     });
 
-    // --- 5. PIE DE PÁGINA ---
+    // --- 5. PIE DE PÁGINA PROFESIONAL ---
     const paginas = doc.internal.getNumberOfPages();
     for (let i = 1; i <= paginas; i++) {
         doc.setPage(i);
+        
+        // Línea inferior azul
+        doc.setDrawColor(...colorPrimario);
+        doc.setLineWidth(0.5);
+        doc.line(14, 280, 196, 280);
+
         doc.setFontSize(8);
-        doc.setTextColor(150);
+        doc.setTextColor(...colorGris);
+        
+        // Izquierda
+        doc.text("Sistema de Gestión Pastoral", 14, 285);
+        
+        // Derecha
         doc.text(`Página ${i} de ${paginas}`, 196, 285, { align: "right" });
-        doc.text("Sistema de Planificacion de Actividades - Uso Interno", 14, 285);
     }
 
-    doc.save(`Actividades_BuenPastor_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`Reporte_Actividades_${new Date().toISOString().split('T')[0]}.pdf`);
 };
 // === IMPORTANTE: AGREGAR ESTO AL FINAL DE TU SCRIPT ===
 // Busca donde dice: // Carga Inicial
