@@ -519,7 +519,7 @@ window.generarPDF = () => {
             0: { cellWidth: 30, fontStyle: 'bold' },
             1: { cellWidth: 60, fontStyle: 'bold', textColor: [0,0,0] },
             2: { cellWidth: 'auto' },
-            3: { cellWidth: 20, halign: 'center' }
+            3: { cellWidth: 25, halign: 'center' }
         },
         
         // --- AQUÍ ESTÁ EL ARREGLO: DIBUJAMOS CÍRCULOS ---
