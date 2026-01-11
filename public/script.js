@@ -569,7 +569,7 @@ window.generarPDF = () => {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(180, 180, 180);
-        doc.text("Sistema de Gestión Pastoral", margin, 285);
+        doc.text("Sistema de planificacion de actividades - Uso interno", margin, 285);
         doc.text(`Página ${i} de ${paginas}`, pageWidth - margin, 285, { align: "right" });
     }
 
