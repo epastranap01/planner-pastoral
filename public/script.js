@@ -420,9 +420,8 @@ async function cargarCumpleaneros() {
     }
 }
 
-// --- 9. GENERAR PDF PROFESIONAL ---
+// --- 9. GENERAR PDF NIVEL PRO 🌟 ---
 window.generarPDF = () => {
-    // 1. Verificamos que existan las librerías
     if (!window.jspdf) {
         Swal.fire('Error', 'Librerías PDF no cargadas. Recarga la página.', 'error');
         return;
@@ -431,91 +430,118 @@ window.generarPDF = () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // --- ENCABEZADO ---
-    // Color Azul Institucional para líneas y textos clave
-    const azulInstitucional = [13, 110, 253]; // RGB de #0d6efd
+    // Colores
+    const azulOficial = [13, 110, 253]; // #0d6efd
+    const grisClaro = [240, 240, 240];
+    const grisTexto = [150, 150, 150];
 
-    // Título Principal
+    // --- 1. ENCABEZADO TIPO BANNER ---
+    // Dibujamos un rectángulo azul en el tope
+    doc.setFillColor(...azulOficial);
+    doc.rect(0, 0, 210, 40, 'F'); // Ancho A4 es 210mm
+
+    // Título en Blanco
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(...azulInstitucional);
-    doc.text("Iglesia Cristiana Luterana El Buen Pastor", 105, 20, { align: "center" });
-
-    // Subtítulo
+    doc.setFontSize(22);
+    doc.setTextColor(255, 255, 255);
+    doc.text("Iglesia Cristiana Luterana", 105, 18, { align: "center" });
+    
+    doc.setFontSize(16);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(14);
-    doc.setTextColor(60, 60, 60); // Gris oscuro
-    doc.text("Programación de Actividades", 105, 28, { align: "center" });
+    doc.text("El Buen Pastor", 105, 26, { align: "center" });
 
-    // Línea separadora azul
-    doc.setDrawColor(...azulInstitucional);
-    doc.setLineWidth(0.5);
-    doc.line(20, 32, 190, 32);
+    // --- 2. INFORMACIÓN DEL REPORTE ---
+    const fechaImpresion = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const usuario = localStorage.getItem('username') || 'Administrador';
+    
+    // Calculamos estadísticas
+    const total = actividadesActuales.length;
+    const completadas = actividadesActuales.filter(a => a.completado).length;
+    const pendientes = total - completadas;
 
-    // --- PREPARAR DATOS DE LA TABLA ---
-    // Ordenamos las actividades por fecha antes de imprimir
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("REPORTE DE ACTIVIDADES", 14, 50);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(`Fecha de impresión: ${fechaImpresion}`, 14, 55);
+    doc.text(`Generado por: ${usuario}`, 14, 60);
+
+    // Resumen a la derecha
+    doc.setFont("helvetica", "bold");
+    doc.text(`Resumen:`, 150, 50);
+    doc.setFont("helvetica", "normal");
+    doc.text(`• Total Planificado: ${total}`, 150, 55);
+    doc.text(`• Ya Realizadas: ${completadas}`, 150, 60);
+    doc.text(`• Pendientes: ${pendientes}`, 150, 65);
+
+    // --- 3. PREPARACIÓN DE DATOS ---
+    // Ordenamos por fecha
     const datosOrdenados = actividadesActuales.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     const cuerpoTabla = datosOrdenados.map(item => {
-        // Formatear fecha bonito (Ej: 12 Enero)
         const f = new Date(item.fecha);
-        const fechaUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
-        const fechaTexto = fechaUser.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+        const fUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
+        const fechaTexto = fUser.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).toUpperCase();
+        
+        // Si está completado, le agregamos una marca al texto
+        const prefijo = item.completado ? '(REALIZADA) ' : '';
         
         return [
             fechaTexto,
-            item.actividad,
-            item.detalles || ' - '
+            prefijo + item.actividad,
+            item.detalles || '-',
+            item.completado ? 'SI' : 'NO' // Columna oculta para lógica
         ];
     });
 
-    // --- CREAR TABLA (AutoTable) ---
+    // --- 4. GENERAR TABLA INTELIGENTE ---
     doc.autoTable({
-        startY: 40,
+        startY: 70,
         head: [['FECHA', 'ACTIVIDAD', 'DETALLES']],
         body: cuerpoTabla,
-        theme: 'grid', // Estilo rejilla limpio
+        theme: 'grid',
         headStyles: { 
-            fillColor: azulInstitucional, // Cabecera Azul
+            fillColor: azulOficial, 
             textColor: 255, 
             fontStyle: 'bold',
-            halign: 'center'
+            halign: 'center',
+            cellPadding: 4
         },
-        styles: {
-            font: 'helvetica',
-            fontSize: 10,
-            cellPadding: 3
-        },
+        styles: { fontSize: 10, cellPadding: 3, valign: 'middle' },
         columnStyles: {
-            0: { cellWidth: 35, halign: 'center', fontStyle: 'bold' }, // Columna Fecha
-            1: { cellWidth: 60 }, // Columna Actividad
-            2: { cellWidth: 'auto' } // Detalles (lo que sobre)
+            0: { cellWidth: 30, halign: 'center', fontStyle: 'bold' },
+            1: { cellWidth: 70 },
+            2: { cellWidth: 'auto' }
         },
-        alternateRowStyles: {
-            fillColor: [240, 248, 255] // Filas alternas color azulito muy suave
+        // --- AQUÍ ESTÁ EL TRUCO PARA "TACHAR" LAS COMPLETADAS ---
+        didParseCell: function(data) {
+            // Verificamos si la fila actual tiene el flag 'SI' en la columna oculta (índice 3)
+            const rowRaw = data.row.raw; 
+            const esCompletada = rowRaw[3] === 'SI';
+
+            if (esCompletada && data.section === 'body') {
+                // Cambiamos el estilo de TODA la fila completada
+                data.cell.styles.textColor = grisTexto; // Texto gris suave
+                data.cell.styles.fillColor = grisClaro; // Fondo grisáceo
+                data.cell.styles.fontStyle = 'italic';  // Letra itálica
+            }
         }
     });
 
-    // --- PIE DE PÁGINA (Metadatos) ---
+    // --- 5. PIE DE PÁGINA ---
     const paginas = doc.internal.getNumberOfPages();
-    const fechaImpresion = new Date().toLocaleString('es-ES');
-    // Intentamos sacar el nombre del usuario, si no hay, ponemos "Admin"
-    const usuarioImpresion = localStorage.getItem('username') || 'Administrador';
-
     for (let i = 1; i <= paginas; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
-        doc.setTextColor(150); // Gris claro
-        
-        // Texto Izquierda: Usuario y Fecha
-        doc.text(`Impreso por: ${usuarioImpresion} | Fecha: ${fechaImpresion}`, 14, 285);
-        
-        // Texto Derecha: Número de página
+        doc.setTextColor(150);
         doc.text(`Página ${i} de ${paginas}`, 196, 285, { align: "right" });
+        doc.text("Sistema de Planner Pastoral - Uso Interno", 14, 285);
     }
 
-    // --- GUARDAR ARCHIVO ---
-    doc.save(`Programacion_BuenPastor_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`Actividades_BuenPastor_${new Date().toISOString().split('T')[0]}.pdf`);
 };
 // === IMPORTANTE: AGREGAR ESTO AL FINAL DE TU SCRIPT ===
 // Busca donde dice: // Carga Inicial
