@@ -420,7 +420,7 @@ async function cargarCumpleaneros() {
     }
 }
 
-// --- 9. GENERAR PDF (VERSIÓN PULIDA & LIMPIA) ---
+// --- 9. GENERAR PDF (CORREGIDO: DIBUJO DE ESTADOS) ---
 window.generarPDF = () => {
     if (!window.jspdf) {
         Swal.fire('Error', 'Librerías PDF no cargadas.', 'error');
@@ -430,21 +430,20 @@ window.generarPDF = () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // --- PALETA DE COLORES (Sobria y Profesional) ---
-    const azulBrand = [13, 110, 253];    // Tu azul (#0d6efd)
-    const azulOscuro = [10, 88, 202];    // Para encabezados de tabla
-    const grisTexto = [80, 80, 80];      // Gris elegante para lectura
-    const grisLight = [245, 247, 250];   // Fondo de filas alternas
-    const verdeExito = [25, 135, 84];    // Iconos de check
-    const naranjaPend = [253, 126, 20];  // Iconos de pendiente
+    // --- COLORES ---
+    const azulBrand = [13, 110, 253];
+    const azulOscuro = [10, 88, 202];
+    const grisTexto = [80, 80, 80];
+    const grisLight = [245, 247, 250];
+    const verdeExito = [25, 135, 84];
+    const naranjaPend = [253, 126, 20];
 
     // Márgenes
     const margin = 15;
-    const pageWidth = doc.internal.pageSize.width; // 210mm
+    const pageWidth = doc.internal.pageSize.width;
     const contentWidth = pageWidth - (margin * 2);
 
-    // --- 1. ENCABEZADO MINIMALISTA ---
-    // Logo Texto (Izquierda)
+    // --- 1. ENCABEZADO ---
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     doc.setTextColor(...azulBrand);
@@ -455,7 +454,6 @@ window.generarPDF = () => {
     doc.setTextColor(...grisTexto);
     doc.text("IGLESIA CRISTIANA LUTERANA", margin, 26);
 
-    // Datos del Reporte (Derecha)
     const fechaImpresion = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
     const usuario = localStorage.getItem('username') || 'Admin';
 
@@ -464,35 +462,26 @@ window.generarPDF = () => {
     doc.text(`Fecha: ${fechaImpresion}`, pageWidth - margin, 25, { align: "right" });
     doc.text(`Generado por: ${usuario}`, pageWidth - margin, 30, { align: "right" });
 
-    // Línea separadora sutil
     doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.5);
     doc.line(margin, 35, pageWidth - margin, 35);
 
-    // --- 2. RESUMEN EJECUTIVO (KPIs) ---
-    // Calculamos datos
+    // --- 2. RESUMEN (KPIs) ---
     const total = actividadesActuales.length;
     const completadas = actividadesActuales.filter(a => a.completado).length;
     const pendientes = total - completadas;
 
     const startY = 45;
-    const cardHeight = 20;
-    const cardWidth = contentWidth / 3 - 4; // Dividimos el ancho en 3 con espacio
+    const cardWidth = contentWidth / 3 - 4;
 
-    // Función para dibujar una "Mini Tarjeta" limpia
     const drawKpi = (x, label, value, color) => {
-        // Título (Label)
         doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150); // Gris claro
+        doc.setTextColor(150, 150, 150);
         doc.text(label.toUpperCase(), x, startY);
-
-        // Valor (Número grande)
         doc.setFontSize(18);
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(...color); // Color del número
+        doc.setTextColor(...color);
         doc.text(String(value), x, startY + 9);
-        
-        // Barrita decorativa debajo
         doc.setDrawColor(...color);
         doc.setLineWidth(1);
         doc.line(x, startY + 12, x + 15, startY + 12);
@@ -502,7 +491,7 @@ window.generarPDF = () => {
     drawKpi(margin + cardWidth + 5, "Actividades Listas", completadas, verdeExito);
     drawKpi(margin + (cardWidth * 2) + 10, "Pendientes", pendientes, naranjaPend);
 
-    // --- 3. TABLA PROFESIONAL ---
+    // --- 3. TABLA ---
     const datosOrdenados = actividadesActuales.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     const cuerpoTabla = datosOrdenados.map(item => {
@@ -510,14 +499,12 @@ window.generarPDF = () => {
         const fUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
         const fechaTexto = fUser.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
         
-        // Definimos el símbolo
-        const estadoSimbolo = item.completado ? 'OK' : 'P'; 
-        
+        // Pasamos un string vacío en la última columna, porque vamos a DIBUJAR ahí
         return [
             fechaTexto,
             item.actividad,
             item.detalles || '',
-            estadoSimbolo // Columna simbólica
+            item.completado ? 'SI' : 'NO' // Dato oculto para saber qué dibujar
         ];
     });
 
@@ -525,55 +512,53 @@ window.generarPDF = () => {
         startY: 70,
         head: [['FECHA', 'ACTIVIDAD', 'DETALLES', 'ESTADO']],
         body: cuerpoTabla,
-        theme: 'plain', // Usamos 'plain' para dibujar nosotros las líneas y colores a medida
-        
-        // Estilos de la Cabecera
-        headStyles: { 
-            fillColor: azulOscuro, 
-            textColor: 255, 
-            fontStyle: 'bold',
-            halign: 'left',
-            cellPadding: 5
-        },
-        
-        // Estilos generales del cuerpo
-        styles: { 
-            font: 'helvetica',
-            fontSize: 9,
-            cellPadding: 5,
-            valign: 'middle',
-            textColor: grisTexto,
-            lineColor: [230, 230, 230],
-            lineWidth: { bottom: 0.1 } // Solo línea inferior fina
-        },
-
-        // Anchos de columnas
+        theme: 'plain',
+        headStyles: { fillColor: azulOscuro, textColor: 255, fontStyle: 'bold', halign: 'left', cellPadding: 5 },
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 5, valign: 'middle', textColor: grisTexto, lineColor: [230, 230, 230], lineWidth: { bottom: 0.1 } },
         columnStyles: {
-            0: { cellWidth: 30, fontStyle: 'bold' }, // Fecha
-            1: { cellWidth: 60, fontStyle: 'bold', textColor: [0,0,0] }, // Actividad (Negro)
-            2: { cellWidth: 'auto' }, // Detalles
-            3: { cellWidth: 20, halign: 'center' } // Estado (Icono)
+            0: { cellWidth: 30, fontStyle: 'bold' },
+            1: { cellWidth: 60, fontStyle: 'bold', textColor: [0,0,0] },
+            2: { cellWidth: 'auto' },
+            3: { cellWidth: 20, halign: 'center' }
         },
-
-        // --- MAGIA VISUAL: COLORES Y SÍMBOLOS ---
+        
+        // --- AQUÍ ESTÁ EL ARREGLO: DIBUJAMOS CÍRCULOS ---
         didParseCell: function(data) {
-            // Filas Cebra (Zebra Stripes) para mejor lectura
             if (data.section === 'body' && data.row.index % 2 === 0) {
                 data.cell.styles.fillColor = grisLight;
             }
-
-            // Lógica de la columna ESTADO (Índice 3)
+        },
+        
+        didDrawCell: function(data) {
+            // Solo actuamos en la columna ESTADO (índice 3) y en el cuerpo
             if (data.section === 'body' && data.column.index === 3) {
-                if (data.cell.raw === 'OK') {
-                    data.cell.text = '✔'; // Check
-                    data.cell.styles.textColor = verdeExito;
-                    data.cell.styles.fontStyle = 'bold';
-                    data.cell.styles.fontSize = 12;
+                const esCompletado = data.cell.raw === 'SI';
+                
+                // Coordenadas del centro de la celda
+                const x = data.cell.x + (data.cell.width / 2);
+                const y = data.cell.y + (data.cell.height / 2);
+                
+                if (esCompletado) {
+                    // DIBUJAR CÍRCULO VERDE LLENO
+                    doc.setFillColor(...verdeExito);
+                    doc.circle(x, y, 3, 'F'); // Radio 3
                 } else {
-                    data.cell.text = '●'; // Círculo
-                    data.cell.styles.textColor = naranjaPend;
-                    data.cell.styles.fontSize = 8;
+                    // DIBUJAR ANILLO NARANJA (PENDIENTE)
+                    doc.setDrawColor(...naranjaPend);
+                    doc.setLineWidth(0.5);
+                    doc.circle(x, y, 3, 'S'); // 'S' = Stroke (Solo borde)
+                    
+                    // Opcional: Un puntito pequeño en el centro
+                    doc.setFillColor(...naranjaPend);
+                    doc.circle(x, y, 1, 'F');
                 }
+            }
+        },
+        
+        // Borramos el texto "SI" o "NO" para que no se vea feo detrás del dibujo
+        willDrawCell: function(data) {
+            if (data.section === 'body' && data.column.index === 3) {
+                data.cell.text = ''; 
             }
         }
     });
@@ -584,11 +569,7 @@ window.generarPDF = () => {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(180, 180, 180);
-        
-        // Texto izquierda
         doc.text("Sistema de Gestión Pastoral", margin, 285);
-        
-        // Paginación derecha
         doc.text(`Página ${i} de ${paginas}`, pageWidth - margin, 285, { align: "right" });
     }
 
