@@ -205,7 +205,7 @@ async function cargarActividades() {
                 const claseBoton = item.completado ? 'btn-success' : 'btn-outline-secondary';
                 botonesAccion = `<div class="btn-group" role="group"><button onclick="abrirModalEditar(${item.id})" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-square"></i></button><button onclick="cambiarEstado(${item.id}, ${!item.completado})" class="btn ${claseBoton} btn-sm"><i class="bi ${iconoCheck}"></i></button><button onclick="eliminarActividad(${item.id})" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button></div>`;
             } else { botonesAccion = item.completado ? `<span class="badge bg-success">Listo</span>` : `<span class="badge bg-light text-muted border">Pendiente</span>`; }
-            tabla.innerHTML += `<tr class="${estiloFila}"><td data-label="Fecha"><div class="d-flex flex-column"><span class="badge-date text-center">${fUser.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span><small class="${tiempo.color} mt-1 text-center" style="font-size: 0.75rem;">${item.completado ? 'Completado' : tiempo.texto}</small></div></td><td data-label="Actividad" class="fw-bold text-dark align-middle">${item.actividad}</td><td data-label="Detalles" class="text-muted align-middle">${item.detalles || '-'}</td><td class="align-middle text-end">${botonesAccion}</td></tr>`;
+            tabla.innerHTML += `<tr class="${estiloFila}"><td data-label="Fecha"><div class="d-flex flex-column"><span class="badge-date text-center">${fUser.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span><small class="${tiempo.color} mt-1 text-center" style="font-size: 0.75rem;">${item.completado ? 'Completado' : tiempo.texto}</small></div></td><td data-label="Actividad" class="fw-bold text-dark align-middle">${item.actividad}</td><td data-label="Detalles" class="text-muted align-middle">${item.detalles || '-'}</td><td class="align-middle text-end">${botonesAccion}</td></tr>`;
         });
     } catch (error) { console.error(error); } finally { loading.style.display = 'none'; }
 }
@@ -484,7 +484,8 @@ window.generarPDF = () => {
     const cuerpoTabla = datosOrdenados.map(item => {
         const f = new Date(item.fecha);
         const fUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
-        const fechaTexto = fUser.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).toUpperCase();
+        // Agregamos year: 'numeric' para que salga "11 ENE 2026"
+        const fechaTexto = fUser.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
         
         // Si está completado, le agregamos una marca al texto
         const prefijo = item.completado ? '(REALIZADA) ' : '';
