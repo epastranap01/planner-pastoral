@@ -419,6 +419,104 @@ async function cargarCumpleaneros() {
         console.error("Error cargando cumpleaños:", error);
     }
 }
+
+// --- 9. GENERAR PDF PROFESIONAL ---
+window.generarPDF = () => {
+    // 1. Verificamos que existan las librerías
+    if (!window.jspdf) {
+        Swal.fire('Error', 'Librerías PDF no cargadas. Recarga la página.', 'error');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // --- ENCABEZADO ---
+    // Color Azul Institucional para líneas y textos clave
+    const azulInstitucional = [13, 110, 253]; // RGB de #0d6efd
+
+    // Título Principal
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(...azulInstitucional);
+    doc.text("Iglesia Cristiana Luterana El Buen Pastor", 105, 20, { align: "center" });
+
+    // Subtítulo
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(14);
+    doc.setTextColor(60, 60, 60); // Gris oscuro
+    doc.text("Programación de Actividades", 105, 28, { align: "center" });
+
+    // Línea separadora azul
+    doc.setDrawColor(...azulInstitucional);
+    doc.setLineWidth(0.5);
+    doc.line(20, 32, 190, 32);
+
+    // --- PREPARAR DATOS DE LA TABLA ---
+    // Ordenamos las actividades por fecha antes de imprimir
+    const datosOrdenados = actividadesActuales.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+    const cuerpoTabla = datosOrdenados.map(item => {
+        // Formatear fecha bonito (Ej: 12 Enero)
+        const f = new Date(item.fecha);
+        const fechaUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
+        const fechaTexto = fechaUser.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+        
+        return [
+            fechaTexto,
+            item.actividad,
+            item.detalles || ' - '
+        ];
+    });
+
+    // --- CREAR TABLA (AutoTable) ---
+    doc.autoTable({
+        startY: 40,
+        head: [['FECHA', 'ACTIVIDAD', 'DETALLES']],
+        body: cuerpoTabla,
+        theme: 'grid', // Estilo rejilla limpio
+        headStyles: { 
+            fillColor: azulInstitucional, // Cabecera Azul
+            textColor: 255, 
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        styles: {
+            font: 'helvetica',
+            fontSize: 10,
+            cellPadding: 3
+        },
+        columnStyles: {
+            0: { cellWidth: 35, halign: 'center', fontStyle: 'bold' }, // Columna Fecha
+            1: { cellWidth: 60 }, // Columna Actividad
+            2: { cellWidth: 'auto' } // Detalles (lo que sobre)
+        },
+        alternateRowStyles: {
+            fillColor: [240, 248, 255] // Filas alternas color azulito muy suave
+        }
+    });
+
+    // --- PIE DE PÁGINA (Metadatos) ---
+    const paginas = doc.internal.getNumberOfPages();
+    const fechaImpresion = new Date().toLocaleString('es-ES');
+    // Intentamos sacar el nombre del usuario, si no hay, ponemos "Admin"
+    const usuarioImpresion = localStorage.getItem('username') || 'Administrador';
+
+    for (let i = 1; i <= paginas; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150); // Gris claro
+        
+        // Texto Izquierda: Usuario y Fecha
+        doc.text(`Impreso por: ${usuarioImpresion} | Fecha: ${fechaImpresion}`, 14, 285);
+        
+        // Texto Derecha: Número de página
+        doc.text(`Página ${i} de ${paginas}`, 196, 285, { align: "right" });
+    }
+
+    // --- GUARDAR ARCHIVO ---
+    doc.save(`Programacion_BuenPastor_${new Date().toISOString().split('T')[0]}.pdf`);
+};
 // === IMPORTANTE: AGREGAR ESTO AL FINAL DE TU SCRIPT ===
 // Busca donde dice: // Carga Inicial
 // Y agrega la llamada a cargarCumpleaneros();
