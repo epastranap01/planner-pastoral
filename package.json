@@ -9,13 +9,23 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "body-parser": "^2.2.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.16.1",
     "pg": "^8.16.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/epastranap01/planner-pastoral.git"
+  },
+  "bugs": {
+    "url": "https://github.com/epastranap01/planner-pastoral/issues"
+  },
+  "homepage": "https://github.com/epastranap01/planner-pastoral#readme",
+  "description": ""
 }
