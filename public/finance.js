@@ -1,57 +1,62 @@
-// finance.js - Módulo Financiero
-console.log("Cargando Módulo Financiero v1...");
+// finance.js - Módulo Financiero (Diseño Unificado)
+console.log("Cargando Módulo Financiero v2 (Diseño Corregido)...");
 
-// --- VARIABLES GLOBALES DE FINANZAS ---
+// --- VARIABLES GLOBALES ---
 let talonarios = [];
-let categoriasEgresos = ['Servicios Públicos (Luz/Agua)', 'Mantenimiento', 'Ayuda Social', 'Papelería', 'Honorarios', 'Eventos Especiales'];
+let categoriasEgresos = ['Servicios Públicos', 'Mantenimiento', 'Ayuda Social', 'Papelería', 'Honorarios', 'Eventos'];
 let transacciones = [];
 let saldoActual = 0;
 
-// --- 2. VISTA PRINCIPAL (DASHBOARD) ---
+// --- VISTA PRINCIPAL (DASHBOARD) ---
 async function cargarDashboardFinanzas() {
     const contenedor = document.getElementById('vistaFinanzas');
     
-    // Simulamos carga de datos (Aquí conectarías con tu API real)
-    // await fetch('/api/finanzas/transacciones')...
+    // Aquí cargarías datos reales: await fetch...
     calcularSaldo();
 
-    contenedor.innerHTML = `
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm bg-primary text-white h-100">
-                    <div class="card-body">
-                        <h6 class="opacity-75">Saldo Disponible</h6>
-                        <h2 class="fw-bold">L. ${saldoActual.toLocaleString('es-HN', {minimumFractionDigits: 2})}</h2>
-                        <small><i class="bi bi-wallet2 me-1"></i> Caja General</small>
+    // 1. ESTRUCTURA BASE (Igual que Planner/Usuarios)
+    // Usamos .main-card para mantener la estética blanca y redondeada
+    let html = `
+        <div class="card main-card mb-5">
+            <div class="card-body p-4 p-md-5">
+                
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-6">
+                        <h5 class="text-primary fw-bold mb-0"><i class="bi bi-cash-coin me-2"></i>Gestión Financiera</h5>
+                        <p class="text-muted small mb-0">Control de Caja y Diezmos</p>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                        <div class="p-3 rounded-4 bg-primary bg-opacity-10 d-inline-block text-start text-md-end border border-primary border-opacity-25">
+                            <small class="text-primary fw-bold text-uppercase" style="font-size: 0.75rem;">Saldo Disponible</small>
+                            <h2 class="fw-bold text-dark mb-0">L. ${saldoActual.toLocaleString('es-HN', {minimumFractionDigits: 2})}</h2>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-8">
-                <div class="d-flex gap-2 h-100 align-items-center justify-content-end bg-white p-3 rounded-4 shadow-sm">
-                    <button onclick="renderRegistrarIngreso()" class="btn btn-success btn-custom text-white">
-                        <i class="bi bi-arrow-down-circle me-2"></i>Registrar Ingreso
+
+                <div class="d-grid gap-2 d-md-flex justify-content-center mb-5">
+                    <button onclick="renderRegistrarIngreso()" class="btn btn-success btn-custom px-4 shadow-sm">
+                        <i class="bi bi-plus-circle-fill me-2"></i>Registrar Ingreso
                     </button>
-                    <button onclick="renderRegistrarEgreso()" class="btn btn-danger btn-custom text-white">
-                        <i class="bi bi-arrow-up-circle me-2"></i>Registrar Egreso
+                    <button onclick="renderRegistrarEgreso()" class="btn btn-danger btn-custom px-4 shadow-sm">
+                        <i class="bi bi-dash-circle-fill me-2"></i>Registrar Gasto
                     </button>
-                    <button onclick="renderConfigFinanzas()" class="btn btn-secondary btn-custom text-white" title="Configurar Talonarios">
+                    <button onclick="renderConfigFinanzas()" class="btn btn-light text-muted border px-3" title="Configuración">
                         <i class="bi bi-gear-fill"></i>
                     </button>
                 </div>
-            </div>
-        </div>
 
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
-                <h5 class="fw-bold mb-3">Últimos Movimientos</h5>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-dark fw-bold m-0"><i class="bi bi-clock-history me-2"></i>Últimos Movimientos</h5>
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
+                    <table class="table table-custom table-hover">
+                        <thead>
                             <tr>
-                                <th>Fecha</th>
-                                <th>Tipo</th>
-                                <th>Descripción / Ref</th>
-                                <th class="text-end">Monto</th>
+                                <th style="width: 20%;">Fecha</th>
+                                <th style="width: 15%;">Tipo</th>
+                                <th style="width: 45%;">Descripción / Ref</th>
+                                <th style="width: 20%; text-align: right;">Monto</th>
                             </tr>
                         </thead>
                         <tbody id="tablaFinanzasBody">
@@ -59,15 +64,62 @@ async function cargarDashboardFinanzas() {
                         </tbody>
                     </table>
                 </div>
+
             </div>
         </div>
     `;
+
+    contenedor.innerHTML = html;
 }
 
-// --- 3. REGISTRAR INGRESO (CON TALONARIOS) ---
-async function renderRegistrarIngreso() {
-    // Obtenemos lista de miembros para el select
-    // Usamos la variable global 'miembrosActuales' del script.js si existe, si no fetch
+// --- GENERADOR DE FILAS (Adaptado a Móvil) ---
+function generarFilasTabla() {
+    if (transacciones.length === 0) {
+        return '<tr><td colspan="4" class="text-center text-muted py-4">No hay movimientos registrados</td></tr>';
+    }
+    
+    return transacciones.map(t => {
+        const esIngreso = t.tipo === 'ingreso';
+        const color = esIngreso ? 'text-success' : 'text-danger';
+        const signo = esIngreso ? '+' : '-';
+        const icono = esIngreso ? 'bi-arrow-down-left' : 'bi-arrow-up-right';
+        const bgBadge = esIngreso ? 'bg-success' : 'bg-danger';
+        
+        // Formato de Fecha
+        const f = new Date(t.fecha);
+        const fTexto = f.toLocaleDateString('es-HN', { day: 'numeric', month: 'short' });
+
+        // Detalles del Recibo
+        let reciboBadge = '';
+        if (t.recibo && t.recibo !== '-' && t.recibo !== 'S/N') {
+            reciboBadge = `<span class="badge bg-light text-dark border ms-2">#${t.recibo}</span>`;
+        }
+
+        return `
+            <tr>
+                <td data-label="Fecha">
+                    <span class="badge-date text-center">${fTexto}</span>
+                </td>
+                <td data-label="Categoría">
+                    <span class="badge ${bgBadge} bg-opacity-10 ${color} border border-opacity-25">
+                        <i class="bi ${icono} me-1"></i>${t.categoria}
+                    </span>
+                </td>
+                <td data-label="Descripción">
+                    <div class="fw-bold text-dark">${t.descripcion}</div>
+                    ${reciboBadge}
+                </td>
+                <td data-label="Monto" class="text-end">
+                    <span class="fw-bold ${color} fs-5">${signo} L. ${t.monto.toFixed(2)}</span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// --- FORMULARIO INGRESO (Dentro de Main Card) ---
+function renderRegistrarIngreso() {
+    // Select de Miembros
     let opcionesMiembros = '<option value="">Seleccione (Opcional)</option>';
     if (typeof miembrosActuales !== 'undefined') {
         miembrosActuales.forEach(m => {
@@ -75,19 +127,20 @@ async function renderRegistrarIngreso() {
         });
     }
 
-    // Lógica de Talonario
-    const talonarioActivo = talonarios.find(t => t.activo) || { nombre: 'Sin Talonario', actual: 0 };
+    const talonarioActivo = talonarios.find(t => t.activo) || { nombre: 'General', actual: 0 };
     const siguienteRecibo = String(talonarioActivo.actual + 1).padStart(6, '0');
 
     const html = `
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-success text-white fw-bold">
-                <i class="bi bi-arrow-down-circle me-2"></i>Nuevo Ingreso
-            </div>
-            <div class="card-body p-4">
+        <div class="card main-card mb-5">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="text-success fw-bold m-0"><i class="bi bi-plus-circle-fill me-2"></i>Registrar Ingreso</h5>
+                    <button onclick="cargarDashboardFinanzas()" class="btn btn-close"></button>
+                </div>
+                
                 <form id="formIngreso">
                     <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label text-muted small fw-bold">Tipo de Ingreso</label>
                             <select class="form-select" id="tipoIngreso" onchange="toggleDiezmante(this.value)">
                                 <option value="Diezmo">Diezmo</option>
@@ -95,19 +148,11 @@ async function renderRegistrarIngreso() {
                                 <option value="Ofrenda Especial">Ofrenda Especial</option>
                                 <option value="Actividad">Actividad / Evento</option>
                                 <option value="Donacion">Donación</option>
-                                <option value="Saldo Inicial">Apertura de Cuenta</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-muted small fw-bold">Talonario / Recibo</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light text-muted small">${talonarioActivo.nombre}</span>
-                                <input type="text" class="form-control text-end fw-bold" value="${siguienteRecibo}" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-muted small fw-bold">Monto (L.)</label>
-                            <input type="number" step="0.01" class="form-control fw-bold text-success" id="montoIngreso" required placeholder="0.00">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Recibo (${talonarioActivo.nombre})</label>
+                            <input type="text" class="form-control text-end fw-bold bg-light" value="${siguienteRecibo}" readonly>
                         </div>
 
                         <div class="col-md-6" id="divDiezmante">
@@ -116,15 +161,18 @@ async function renderRegistrarIngreso() {
                                 ${opcionesMiembros}
                             </select>
                         </div>
-                        
                         <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Detalle / Nota</label>
-                            <input type="text" class="form-control" id="detalleIngreso" placeholder="Ej: Ofrenda pro-templo">
+                            <label class="form-label text-muted small fw-bold">Monto (L.)</label>
+                            <input type="number" step="0.01" class="form-control fw-bold text-success" id="montoIngreso" required placeholder="0.00" style="font-size: 1.2rem;">
                         </div>
-                        
+
+                        <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">Nota / Detalle</label>
+                            <input type="text" class="form-control" id="detalleIngreso" placeholder="Ej: Ofrenda pro-construcción">
+                        </div>
+
                         <div class="col-12 text-end mt-4">
-                            <button type="button" onclick="cargarDashboardFinanzas()" class="btn btn-light me-2">Cancelar</button>
-                            <button type="submit" class="btn btn-success px-4">Guardar Ingreso</button>
+                            <button type="submit" class="btn btn-success btn-custom px-5 text-white">Guardar Ingreso</button>
                         </div>
                     </div>
                 </form>
@@ -133,7 +181,6 @@ async function renderRegistrarIngreso() {
     `;
     document.getElementById('vistaFinanzas').innerHTML = html;
 
-    // Manejador del submit
     document.getElementById('formIngreso').addEventListener('submit', (e) => {
         e.preventDefault();
         guardarTransaccion('ingreso');
@@ -142,46 +189,42 @@ async function renderRegistrarIngreso() {
 
 function toggleDiezmante(tipo) {
     const div = document.getElementById('divDiezmante');
-    // Si es ofrenda suelta (anonima), ocultamos el selector, si no, lo mostramos
     if (tipo === 'Ofrenda') div.style.display = 'none';
     else div.style.display = 'block';
 }
 
-// --- 4. REGISTRAR EGRESO (GASTOS) ---
+// --- FORMULARIO GASTO (Dentro de Main Card) ---
 function renderRegistrarEgreso() {
     let optsCat = '';
     categoriasEgresos.forEach(c => optsCat += `<option value="${c}">${c}</option>`);
 
     const html = `
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-danger text-white fw-bold">
-                <i class="bi bi-arrow-up-circle me-2"></i>Registrar Gasto (Egreso)
-            </div>
-            <div class="card-body p-4">
+        <div class="card main-card mb-5">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="text-danger fw-bold m-0"><i class="bi bi-dash-circle-fill me-2"></i>Registrar Gasto</h5>
+                    <button onclick="cargarDashboardFinanzas()" class="btn btn-close"></button>
+                </div>
+
                 <form id="formEgreso">
                     <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label text-muted small fw-bold">Categoría</label>
                             <select class="form-select" id="catEgreso">
                                 ${optsCat}
                                 <option value="OTRO">OTRO (Especificar)</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-muted small fw-bold">Fecha</label>
-                            <input type="date" class="form-control" id="fechaEgreso" value="${new Date().toISOString().split('T')[0]}">
-                        </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label text-muted small fw-bold">Monto (L.)</label>
-                            <input type="number" step="0.01" class="form-control fw-bold text-danger" id="montoEgreso" required placeholder="0.00">
+                            <input type="number" step="0.01" class="form-control fw-bold text-danger" id="montoEgreso" required placeholder="0.00" style="font-size: 1.2rem;">
                         </div>
                         <div class="col-12">
-                            <label class="form-label text-muted small fw-bold">Descripción del Gasto</label>
-                            <textarea class="form-control" id="descEgreso" rows="2" placeholder="Detalles de la compra, factura #..."></textarea>
+                            <label class="form-label text-muted small fw-bold">Descripción</label>
+                            <textarea class="form-control" id="descEgreso" rows="2" placeholder="Detalle del gasto..."></textarea>
                         </div>
                         <div class="col-12 text-end mt-4">
-                            <button type="button" onclick="cargarDashboardFinanzas()" class="btn btn-light me-2">Cancelar</button>
-                            <button type="submit" class="btn btn-danger px-4">Registrar Gasto</button>
+                            <button type="submit" class="btn btn-danger btn-custom px-5 text-white">Registrar Salida</button>
                         </div>
                     </div>
                 </form>
@@ -196,46 +239,53 @@ function renderRegistrarEgreso() {
     });
 }
 
-// --- 5. CONFIGURACIÓN (TALONARIOS Y CATEGORÍAS) ---
+// --- CONFIGURACIÓN ---
 function renderConfigFinanzas() {
-    // Generar lista de talonarios
     let listaTalonarios = talonarios.map((t, index) => `
-        <li class="list-group-item d-flex justify-content-between align-items-center">
+        <li class="list-group-item d-flex justify-content-between align-items-center p-3">
             <div>
-                <strong>${t.nombre}</strong> <small class="text-muted">(${t.inicio} - ${t.fin})</small>
-                <br><span class="badge bg-light text-dark border">Actual: ${t.actual}</span>
-                ${t.activo ? '<span class="badge bg-success">ACTIVO</span>' : ''}
+                <strong>${t.nombre}</strong> <span class="text-muted small">(${t.inicio} - ${t.fin})</span>
+                <div class="small mt-1 text-primary">Actual: #${String(t.actual).padStart(6,'0')}</div>
             </div>
-            ${!t.activo ? `<button onclick="activarTalonario(${index})" class="btn btn-sm btn-outline-primary">Activar</button>` : ''}
+            ${t.activo ? '<span class="badge bg-success">ACTIVO</span>' : `<button onclick="activarTalonario(${index})" class="btn btn-sm btn-outline-secondary">Activar</button>`}
         </li>
     `).join('');
 
     const html = `
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-white fw-bold">📚 Gestión de Talonarios</div>
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush mb-3">${listaTalonarios}</ul>
-                        <button onclick="nuevoTalonario()" class="btn btn-outline-primary btn-sm w-100">+ Agregar Nuevo Talonario</button>
-                    </div>
+        <div class="card main-card mb-5">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="text-dark fw-bold m-0"><i class="bi bi-gear-fill me-2"></i>Configuración Financiera</h5>
+                    <button onclick="cargarDashboardFinanzas()" class="btn btn-close"></button>
                 </div>
 
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white fw-bold">📋 Categorías de Gastos</div>
-                    <div class="card-body">
-                        <div class="d-flex gap-2 mb-3">
-                            <input type="text" id="newCatEgreso" class="form-control" placeholder="Nueva categoría...">
-                            <button onclick="agregarCategoria()" class="btn btn-primary">Agregar</button>
-                        </div>
-                        <div id="listaCategorias" class="d-flex flex-wrap gap-2">
-                            ${categoriasEgresos.map(c => `<span class="badge bg-light text-dark border p-2">${c} <i class="bi bi-x text-danger cursor-pointer" onclick="borrarCategoria('${c}')" style="cursor:pointer"></i></span>`).join('')}
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light border-0 h-100">
+                            <div class="card-body">
+                                <h6 class="fw-bold text-dark mb-3">📚 Talonarios de Recibos</h6>
+                                <ul class="list-group shadow-sm mb-3 bg-white rounded">${listaTalonarios}</ul>
+                                <button onclick="nuevoTalonario()" class="btn btn-outline-primary w-100 dashed-border">
+                                    <i class="bi bi-plus-lg me-1"></i>Nuevo Talonario
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="text-center mt-4">
-                    <button onclick="cargarDashboardFinanzas()" class="btn btn-link text-muted">« Volver al Panel</button>
+
+                    <div class="col-md-6">
+                        <div class="card bg-light border-0 h-100">
+                            <div class="card-body">
+                                <h6 class="fw-bold text-dark mb-3">📋 Categorías de Gastos</h6>
+                                <div class="d-flex gap-2 mb-3">
+                                    <input type="text" id="newCatEgreso" class="form-control" placeholder="Nueva categoría...">
+                                    <button onclick="agregarCategoria()" class="btn btn-dark"><i class="bi bi-plus-lg"></i></button>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    ${categoriasEgresos.map(c => `<span class="badge bg-white text-dark border p-2 shadow-sm">${c} <i class="bi bi-x text-danger ms-1 cursor-pointer" onclick="borrarCategoria('${c}')" style="cursor:pointer"></i></span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -243,42 +293,41 @@ function renderConfigFinanzas() {
     document.getElementById('vistaFinanzas').innerHTML = html;
 }
 
-// --- 6. LÓGICA DE GUARDADO (MOCKUP) ---
+// --- LÓGICA DE DATOS (MOCKUP TEMPORAL) ---
 function guardarTransaccion(tipo) {
+    const fecha = new Date().toISOString();
+    
     if (tipo === 'ingreso') {
         const monto = parseFloat(document.getElementById('montoIngreso').value);
         const categoria = document.getElementById('tipoIngreso').value;
         const miembro = document.getElementById('miembroIngreso').value;
         const detalle = document.getElementById('detalleIngreso').value;
         
-        // Actualizar Talonario
+        // Talonario
         const tIndex = talonarios.findIndex(t => t.activo);
         let nRecibo = 'S/N';
         if (tIndex >= 0) {
             talonarios[tIndex].actual++;
             nRecibo = String(talonarios[tIndex].actual).padStart(6, '0');
-            // AQUÍ GUARDARÍAS EL TALONARIO ACTUALIZADO EN DB
         }
 
         transacciones.unshift({
-            fecha: new Date(),
+            fecha: fecha,
             tipo: 'ingreso',
             categoria,
             descripcion: `${miembro ? miembro + ' - ' : ''}${detalle}`,
             monto: monto,
             recibo: nRecibo
         });
-
-        Swal.fire('Ingreso Registrado', `Recibo #${nRecibo} generado`, 'success');
+        Swal.fire('Ingreso Guardado', `Recibo #${nRecibo}`, 'success');
 
     } else {
         const monto = parseFloat(document.getElementById('montoEgreso').value);
         const cat = document.getElementById('catEgreso').value;
         const desc = document.getElementById('descEgreso').value;
-        const fecha = document.getElementById('fechaEgreso').value;
 
         transacciones.unshift({
-            fecha: new Date(fecha),
+            fecha: fecha,
             tipo: 'egreso',
             categoria: cat,
             descripcion: desc,
@@ -287,12 +336,9 @@ function guardarTransaccion(tipo) {
         });
         Swal.fire('Gasto Registrado', '', 'success');
     }
-
-    // AQUÍ HARÍAS EL FETCH POST A TU API
     cargarDashboardFinanzas();
 }
 
-// --- 7. UTILIDADES ---
 function calcularSaldo() {
     saldoActual = 0;
     transacciones.forEach(t => {
@@ -301,69 +347,40 @@ function calcularSaldo() {
     });
 }
 
-function generarFilasTabla() {
-    if (transacciones.length === 0) return '<tr><td colspan="4" class="text-center text-muted py-3">No hay movimientos registrados</td></tr>';
-    
-    return transacciones.map(t => {
-        const color = t.tipo === 'ingreso' ? 'text-success' : 'text-danger';
-        const signo = t.tipo === 'ingreso' ? '+' : '-';
-        const fecha = new Date(t.fecha).toLocaleDateString('es-HN');
-        
-        return `
-            <tr>
-                <td><small>${fecha}</small></td>
-                <td><span class="badge bg-light text-dark border">${t.categoria}</span></td>
-                <td>
-                    <div class="fw-bold text-dark" style="font-size: 0.9rem;">${t.descripcion}</div>
-                    ${t.recibo !== '-' ? `<small class="text-muted" style="font-size: 0.75rem;">Recibo: #${t.recibo}</small>` : ''}
-                </td>
-                <td class="text-end fw-bold ${color}">${signo} L. ${t.monto.toFixed(2)}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
-// Lógica para agregar talonarios (Mock)
+// Helpers Configuración
 async function nuevoTalonario() {
-    const { value: formValues } = await Swal.fire({
+    const { value: f } = await Swal.fire({
         title: 'Nuevo Talonario',
-        html:
-            '<input id="swal-input1" class="swal2-input" placeholder="Nombre (Ej: Serie A)">' +
-            '<input id="swal-input2" class="swal2-input" type="number" placeholder="Inicio (Ej: 1)">' +
-            '<input id="swal-input3" class="swal2-input" type="number" placeholder="Fin (Ej: 100)">',
+        html: '<input id="sw1" class="swal2-input" placeholder="Nombre (Ej: Serie A)">' +
+              '<input id="sw2" class="swal2-input" type="number" placeholder="Inicio">' +
+              '<input id="sw3" class="swal2-input" type="number" placeholder="Fin">',
         focusConfirm: false,
-        preConfirm: () => {
-            return [
-                document.getElementById('swal-input1').value,
-                document.getElementById('swal-input2').value,
-                document.getElementById('swal-input3').value
-            ]
-        }
+        preConfirm: () => [
+            document.getElementById('sw1').value,
+            document.getElementById('sw2').value,
+            document.getElementById('sw3').value
+        ]
     });
 
-    if (formValues) {
+    if (f && f[0] && f[1] && f[2]) {
         talonarios.push({
-            nombre: formValues[0],
-            inicio: parseInt(formValues[1]),
-            fin: parseInt(formValues[2]),
-            actual: parseInt(formValues[1]) - 1, // Empieza uno antes para que el primero sea el correcto
-            activo: talonarios.length === 0 // Si es el primero, se activa solo
+            nombre: f[0],
+            inicio: parseInt(f[1]),
+            fin: parseInt(f[2]),
+            actual: parseInt(f[1]) - 1,
+            activo: talonarios.length === 0
         });
         renderConfigFinanzas();
-        Swal.fire('Guardado', '', 'success');
     }
 }
 
-function activarTalonario(index) {
+function activarTalonario(idx) {
     talonarios.forEach(t => t.activo = false);
-    talonarios[index].activo = true;
+    talonarios[idx].activo = true;
     renderConfigFinanzas();
 }
 
 function agregarCategoria() {
-    const val = document.getElementById('newCatEgreso').value;
-    if(val) {
-        categoriasEgresos.push(val);
-        renderConfigFinanzas();
-    }
+    const v = document.getElementById('newCatEgreso').value;
+    if(v) { categoriasEgresos.push(v); renderConfigFinanzas(); }
 }
