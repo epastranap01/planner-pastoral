@@ -7,34 +7,6 @@ let categoriasEgresos = ['Servicios Públicos (Luz/Agua)', 'Mantenimiento', 'Ayu
 let transacciones = [];
 let saldoActual = 0;
 
-// --- 1. INICIALIZACIÓN Y NAVEGACIÓN ---
-// Se conecta con la función cambiarVista del script principal
-const originalCambiarVista = window.cambiarVista;
-window.cambiarVista = (vista) => {
-    // Ejecutamos la lógica original para ocultar/mostrar divs
-    originalCambiarVista(vista);
-
-    const btnFinanzas = document.getElementById('btnFinanzas');
-    const divFinanzas = document.getElementById('vistaFinanzas');
-
-    // Resetear botón finanzas
-    if(btnFinanzas) btnFinanzas.classList.replace('btn-primary', 'btn-light');
-    if(divFinanzas) divFinanzas.style.display = 'none';
-
-    if (vista === 'finanzas') {
-        // Solo Admin puede ver esto (Seguridad Frontend)
-        if (localStorage.getItem('rol') !== 'admin') {
-            Swal.fire('Acceso Denegado', 'Solo administración puede ver finanzas.', 'warning');
-            originalCambiarVista('planner');
-            return;
-        }
-
-        if(divFinanzas) divFinanzas.style.display = 'block';
-        if(btnFinanzas) btnFinanzas.classList.replace('btn-light', 'btn-primary');
-        cargarDashboardFinanzas();
-    }
-};
-
 // --- 2. VISTA PRINCIPAL (DASHBOARD) ---
 async function cargarDashboardFinanzas() {
     const contenedor = document.getElementById('vistaFinanzas');
