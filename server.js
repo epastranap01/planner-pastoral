@@ -187,15 +187,44 @@ app.post('/api/finanzas/transacciones', verificarToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 3. Gestión de Talonarios
+// 3. Gestión de Talonarios (ACTUALIZADO)
 app.post('/api/finanzas/talonarios', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
-    const { nombre, inicio, fin, actual } = req.body;
+    // AHORA RECIBIMOS "tipo"
+    const { nombre, inicio, fin, actual, tipo } = req.body; 
     try {
         const result = await client.query(
-            'INSERT INTO finanzas_talonarios (nombre, rango_inicio, rango_fin, actual, activo) VALUES ($1, $2, $3, $4, true) RETURNING *',
-            [nombre, inicio, fin, actual]
+            'INSERT INTO finanzas_talonarios (nombre, rango_inicio, rango_fin, actual, activo, tipo) VALUES ($1, $2, $3, $4, true, $5) RETURNING *',
+            [nombre, inicio, fin, actual, tipo || 'ingreso']
         );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/finanzas/talonarios/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
+    const { id } = req.params;
+    const { nombre, fin, actual, activo, tipo } = req.body; // Recibimos tipo para saber cuál desactivar
+    try {
+        if (activo && tipo) {
+            // Si activamos uno, desactivamos SOLO los de su mismo tipo
+            await client.query('UPDATE finanzas_talonarios SET activo = false WHERE tipo = $1', [tipo]);
+        }
+
+        let query = 'UPDATE finanzas_talonarios SET ';
+        const values = [];
+        let index = 1;
+
+        if (nombre !== undefined) { query += `nombre = $${index++}, `; values.push(nombre); }
+        if (fin !== undefined) { query += `rango_fin = $${index++}, `; values.push(fin); }
+        if (actual !== undefined) { query += `actual = $${index++}, `; values.push(actual); }
+        if (activo !== undefined) { query += `activo = $${index++}, `; values.push(activo); }
+
+        query = query.slice(0, -2);
+        query += ` WHERE id = $${index} RETURNING *`;
+        values.push(id);
+
+        const result = await client.query(query, values);
         res.json(result.rows[0]);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
