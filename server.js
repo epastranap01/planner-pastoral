@@ -4,7 +4,7 @@ const { Client } = require('pg');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const path = require('path'); // Importante para la ruta comodín
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -20,9 +20,11 @@ const client = new Client({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
-client.connect();
+client.connect()
+    .then(() => console.log('Conectado a la Base de Datos'))
+    .catch(err => console.error('Error de conexión DB', err));
 
-// --- MIDDLEWARE DE SEGURIDAD (DEFINIDO AL PRINCIPIO) ---
+// --- MIDDLEWARE DE SEGURIDAD ---
 const verificarToken = (req, res, next) => {
     const token = req.headers['authorization'];
     if (!token) return res.status(403).json({ error: 'Acceso denegado: Se requiere Token' });
@@ -53,7 +55,6 @@ app.post('/api/login', async (req, res) => {
 });
 
 // --- GESTIÓN DE USUARIOS ---
-// 1. Obtener
 app.get('/api/usuarios', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
     try {
@@ -61,7 +62,6 @@ app.get('/api/usuarios', verificarToken, async (req, res) => {
         res.json(result.rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
-// 2. Crear
 app.post('/api/usuarios', verificarToken, async (req, res) => {
     if (req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
     const { username, password, rol } = req.body;
@@ -71,7 +71,6 @@ app.post('/api/usuarios', verificarToken, async (req, res) => {
         res.json({ message: 'Usuario creado' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
-// 3. Cambiar Contraseña
 app.put('/api/usuarios/:id', verificarToken, async (req, res) => {
     if (req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
     const { id } = req.params; const { password } = req.body;
@@ -82,7 +81,6 @@ app.put('/api/usuarios/:id', verificarToken, async (req, res) => {
         res.json({ message: 'Contraseña actualizada' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
-// 4. Eliminar
 app.delete('/api/usuarios/:id', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
     try {
@@ -155,8 +153,110 @@ app.put('/api/equipo/:id', verificarToken, async (req, res) => {
     catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// --- GESTIÓN DE FINANZAS (NUEVO MÓDULO) ---
+
+// 1. Obtener Datos del Dashboard
+app.get('/api/finanzas/datos', verificarToken, async (req, res) => {
+    try {
+        // Ejecutamos las 3 consultas en paralelo
+        const transacciones = await client.query('SELECT * FROM finanzas_transacciones ORDER BY fecha DESC, id DESC');
+        const talonarios = await client.query('SELECT * FROM finanzas_talonarios ORDER BY id ASC');
+        const categorias = await client.query('SELECT * FROM finanzas_categorias ORDER BY nombre ASC');
+
+        res.json({
+            transacciones: transacciones.rows,
+            talonarios: talonarios.rows,
+            categorias: categorias.rows
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error cargando datos financieros' });
+    }
+});
+
+// 2. Guardar Transacción
+app.post('/api/finanzas/transacciones', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
+    const { fecha, tipo, categoria, descripcion, monto, recibo_no } = req.body;
+    try {
+        const result = await client.query(
+            'INSERT INTO finanzas_transacciones (fecha, tipo, categoria, descripcion, monto, recibo_no) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [fecha, tipo, categoria, descripcion, monto, recibo_no]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 3. Gestión de Talonarios
+app.post('/api/finanzas/talonarios', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
+    const { nombre, inicio, fin, actual } = req.body;
+    try {
+        const result = await client.query(
+            'INSERT INTO finanzas_talonarios (nombre, rango_inicio, rango_fin, actual, activo) VALUES ($1, $2, $3, $4, true) RETURNING *',
+            [nombre, inicio, fin, actual]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/finanzas/talonarios/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
+    const { id } = req.params;
+    const { nombre, fin, actual, activo } = req.body;
+    try {
+        if (activo) {
+            // Si activamos uno, desactivamos los demás
+            await client.query('UPDATE finanzas_talonarios SET activo = false');
+        }
+
+        // Construcción dinámica del UPDATE
+        let query = 'UPDATE finanzas_talonarios SET ';
+        const values = [];
+        let index = 1;
+
+        if (nombre !== undefined) { query += `nombre = $${index++}, `; values.push(nombre); }
+        if (fin !== undefined) { query += `rango_fin = $${index++}, `; values.push(fin); }
+        if (actual !== undefined) { query += `actual = $${index++}, `; values.push(actual); }
+        if (activo !== undefined) { query += `activo = $${index++}, `; values.push(activo); }
+
+        query = query.slice(0, -2); // Quitar última coma
+        query += ` WHERE id = $${index} RETURNING *`;
+        values.push(id);
+
+        const result = await client.query(query, values);
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/finanzas/talonarios/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
+    try {
+        await client.query('DELETE FROM finanzas_talonarios WHERE id = $1', [req.params.id]);
+        res.json({ message: 'Eliminado' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 4. Gestión de Categorías
+app.post('/api/finanzas/categorias', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
+    try {
+        const result = await client.query('INSERT INTO finanzas_categorias (nombre) VALUES ($1) RETURNING *', [req.body.nombre]);
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/finanzas/categorias/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
+    try {
+        await client.query('DELETE FROM finanzas_categorias WHERE id = $1', [req.params.id]);
+        res.json({ message: 'Eliminado' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+
 // --- RUTA COMODÍN (AL FINAL SIEMPRE) ---
-app.get(/.*/, (req, res) => { // <--- Usamos /.*/ sin comillas (Expresión Regular)
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
