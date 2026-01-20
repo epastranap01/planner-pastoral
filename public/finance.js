@@ -1,5 +1,5 @@
-// finance.js - Módulo Financiero v8 (Animaciones, Validaciones Pro y Talonarios Egresos)
-console.log("Cargando Módulo Financiero v8...");
+// finance.js - Módulo Financiero v9 (Campos Dinámicos y Edición Rangos)
+console.log("Cargando Módulo Financiero v9...");
 
 // --- VARIABLES GLOBALES ---
 let talonariosIngreso = [];
@@ -19,7 +19,7 @@ const formatoFecha = (fechaStr) => {
     return fechaCorregida.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '').toUpperCase().replace(/ /g, '-');
 };
 
-// --- ESTILOS DINÁMICOS (ANIMACIONES) ---
+// --- ESTILOS DINÁMICOS ---
 const styleSheet = document.createElement("style");
 styleSheet.innerText = `
     .cat-chip { transition: all 0.3s ease; transform: scale(1); opacity: 1; }
@@ -58,18 +58,16 @@ async function cargarDashboardFinanzas() {
         transacciones = data.transacciones;
         categoriasEgresos = data.categorias;
         
-        // Procesar Talonarios (Ingreso vs Egreso)
         const todosTalonarios = data.talonarios.map(t => ({
             ...t,
-            inicio: t.rango_inicio, fin: t.rango_fin, // Adaptador de nombres DB a JS
+            inicio: t.rango_inicio, fin: t.rango_fin,
             usados: []
         }));
 
-        // Calcular usados cruzando con transacciones
         todosTalonarios.forEach(tal => {
             const tipoTx = tal.tipo === 'egreso' ? 'egreso' : 'ingreso';
             const recibos = transacciones
-                .filter(tx => tx.tipo === tipoTx && tx.recibo_no !== 'S/N' && tx.recibo_no !== 'APERTURA' && tx.recibo_no !== '-')
+                .filter(tx => tx.tipo === tipoTx && tx.recibo_no && tx.recibo_no !== 'S/N' && tx.recibo_no !== 'APERTURA' && tx.recibo_no !== '-')
                 .map(tx => parseInt(tx.recibo_no))
                 .filter(num => num >= tal.inicio && num <= tal.fin);
             tal.usados = recibos;
@@ -137,8 +135,6 @@ function renderizarVistaPrincipal() {
 
 // --- APERTURA ---
 function renderAperturaCuenta() {
-    // (Mismo código de V7, abreviado aquí por espacio, funciona igual)
-    // ... Copia la función renderAperturaCuenta del código anterior o usa esta lógica básica ...
     const saldoExistente = transacciones.find(t => t.categoria === 'SALDO INICIAL');
     const valorActual = saldoExistente ? saldoExistente.monto : '';
     const fechaActual = saldoExistente ? new Date(saldoExistente.fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
@@ -170,7 +166,7 @@ function renderAperturaCuenta() {
     });
 }
 
-// --- REGISTRAR INGRESO (VALIDACIÓN PRO) ---
+// --- REGISTRAR INGRESO (DINÁMICO) ---
 function renderRegistrarIngreso() {
     const tal = talonariosIngreso.find(t => t.activo);
     const siguienteSugerido = tal ? tal.actual + 1 : '';
@@ -197,10 +193,13 @@ function renderRegistrarIngreso() {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6"><label class="form-label small fw-bold text-muted">TIPO</label><select class="form-select" id="tipoIngreso" onchange="toggleCultos(this.value)"><option value="Ofrenda">Ofrenda</option><option value="Diezmo">Diezmo</option><option value="Actividad">Actividad</option><option value="Donacion">Donación</option></select></div>
+
+                        <div class="col-md-6"><label class="form-label small fw-bold text-muted">TIPO DE INGRESO</label><select class="form-select" id="tipoIngreso" onchange="toggleCamposIngreso(this.value)"><option value="Ofrenda" selected>Ofrenda</option><option value="Diezmo">Diezmo</option><option value="Actividad">Actividad</option><option value="Donacion">Donación</option></select></div>
                         <div class="col-md-6"><label class="form-label small fw-bold text-muted">MONTO</label><div class="input-group"><span class="input-group-text fw-bold text-success bg-white">L.</span><input type="number" step="0.01" id="montoIngreso" class="form-control fw-bold fs-5 text-success border-start-0" required></div></div>
+                        
                         <div class="col-md-6" id="divCultos"><label class="form-label small fw-bold text-primary">CULTO</label><select class="form-select bg-primary bg-opacity-10 border-primary text-primary fw-bold" id="selectCulto"><option value="General">General</option>${optsCultos}</select></div>
-                        <div class="col-md-6"><label class="form-label small fw-bold text-muted">DONANTE</label><div class="input-group"><select class="form-select" id="miembroIngreso">${optsMiembros}</select><button class="btn btn-outline-secondary" type="button" onclick="agregarMiembroRapido()"><i class="bi bi-person-plus-fill"></i></button></div></div>
+                        <div class="col-md-6" id="divDonante" style="display:none;"><label class="form-label small fw-bold text-muted">DONANTE</label><div class="input-group"><select class="form-select" id="miembroIngreso">${optsMiembros}</select><button class="btn btn-outline-secondary" type="button" onclick="agregarMiembroRapido()"><i class="bi bi-person-plus-fill"></i></button></div></div>
+                        
                         <div class="col-12"><label class="form-label small fw-bold text-muted">NOTA</label><input type="text" id="detalleIngreso" class="form-control"></div>
                         <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-success fw-bold px-5 py-2 shadow-sm" id="btnGuardarIngreso">Guardar</button></div>
                     </div>
@@ -209,8 +208,8 @@ function renderRegistrarIngreso() {
         </div>`;
     document.getElementById('vistaFinanzas').innerHTML = html;
     
-    // Validación Pro
     setupValidacionRecibo(tal, 'numRecibo', 'reciboFeedback', 'btnGuardarIngreso');
+    toggleCamposIngreso('Ofrenda'); // Inicializar estado
 
     document.getElementById('formIngreso').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -220,8 +219,17 @@ function renderRegistrarIngreso() {
         const tipo = document.getElementById('tipoIngreso').value;
         const culto = document.getElementById('selectCulto').value;
         const miembro = document.getElementById('miembroIngreso').value;
-        let desc = (tipo === 'Ofrenda') ? culto : tipo;
-        if (miembro) desc += ` - ${miembro}`;
+        let desc = "";
+
+        // Lógica de descripción según reglas
+        if (tipo === 'Ofrenda' || tipo === 'Actividad') {
+            desc = (tipo === 'Actividad') ? 'Actividad: ' : '';
+            desc += culto; // Usamos el culto/evento como descripción
+        } else {
+            desc = tipo;
+            if (miembro) desc += ` - ${miembro}`;
+        }
+        
         if (document.getElementById('detalleIngreso').value) desc += ` (${document.getElementById('detalleIngreso').value})`;
 
         try {
@@ -242,7 +250,7 @@ function renderRegistrarIngreso() {
     });
 }
 
-// --- REGISTRAR GASTO (AHORA CON TALONARIO) ---
+// --- REGISTRAR GASTO ---
 function renderRegistrarEgreso() {
     const tal = talonariosEgreso.find(t => t.activo);
     const siguienteSugerido = tal ? tal.actual + 1 : '';
@@ -255,7 +263,6 @@ function renderRegistrarEgreso() {
                 <div class="d-flex justify-content-between mb-4"><h5 class="text-dark fw-bold text-danger"><i class="bi bi-dash-circle-fill me-2"></i>Gasto</h5><button onclick="cargarDashboardFinanzas()" class="btn-close"></button></div>
                 <form id="formEgreso">
                     <div class="row g-3">
-                        
                         <div class="col-12 mb-2">
                             <div class="bg-light p-3 rounded-3 border d-flex flex-wrap align-items-center justify-content-between gap-3">
                                 <div class="d-flex align-items-center">
@@ -279,14 +286,12 @@ function renderRegistrarEgreso() {
             </div>
         </div>`;
     document.getElementById('vistaFinanzas').innerHTML = html;
-    
-    // Validación Pro
     setupValidacionRecibo(tal, 'numDoc', 'docFeedback', 'btnGuardarEgreso');
 
     document.getElementById('formEgreso').addEventListener('submit', async (e) => {
         e.preventDefault();
         const nDoc = parseInt(document.getElementById('numDoc').value);
-        if (tal && (isNaN(nDoc) || nDoc < tal.inicio || nDoc > tal.fin || tal.usados.includes(nDoc))) return Swal.fire('Error', 'Número de documento inválido', 'error');
+        if (tal && (isNaN(nDoc) || nDoc < tal.inicio || nDoc > tal.fin || tal.usados.includes(nDoc))) return Swal.fire('Error', 'Documento inválido', 'error');
 
         try {
             await authFetch('/api/finanzas/transacciones', {
@@ -308,9 +313,8 @@ function renderRegistrarEgreso() {
     });
 }
 
-// --- CONFIGURACIÓN (TABS Y ANIMACIONES) ---
+// --- CONFIGURACIÓN ---
 function renderConfigFinanzas() {
-    // Generador de listas de talonarios
     const renderTalonarioCard = (t, idx, type) => `
         <div class="col-12">
             <div class="card h-100 border shadow-sm">
@@ -326,14 +330,21 @@ function renderConfigFinanzas() {
                     <div class="d-flex align-items-center gap-2">
                         <div class="text-end me-3 d-none d-md-block"><small class="d-block text-muted" style="font-size: 0.7rem;">ÚLTIMO</small><span class="fw-bold fs-5">#${t.actual}</span></div>
                         ${!t.activo ? `<button onclick="activarTalonario(${t.id}, '${type}')" class="btn btn-outline-dark btn-sm">Activar</button>` : ''}
-                        <button class="btn btn-light btn-sm border" onclick="borrarTalonario(${t.id})"><i class="bi bi-trash text-danger"></i></button>
+                        
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm border" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="editarTalonario('${type}', ${idx})"><i class="bi bi-pencil me-2"></i>Editar</a></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="borrarTalonario(${t.id})"><i class="bi bi-trash me-2"></i>Borrar</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>`;
 
-    const listaIng = talonariosIngreso.map((t, i) => renderTalonarioCard(t, i, 'ingreso')).join('') || '<p class="text-muted text-center py-3">No hay talonarios de ingresos.</p>';
-    const listaEgr = talonariosEgreso.map((t, i) => renderTalonarioCard(t, i, 'egreso')).join('') || '<p class="text-muted text-center py-3">No hay chequeras de egresos.</p>';
+    const listaIng = talonariosIngreso.map((t, i) => renderTalonarioCard(t, i, 'ingreso')).join('') || '<p class="text-muted text-center py-3">No hay talonarios.</p>';
+    const listaEgr = talonariosEgreso.map((t, i) => renderTalonarioCard(t, i, 'egreso')).join('') || '<p class="text-muted text-center py-3">No hay talonarios.</p>';
 
     const html = `
         <div class="card main-card mb-5">
@@ -342,46 +353,28 @@ function renderConfigFinanzas() {
                     <h4 class="text-dark fw-bold mb-0"><i class="bi bi-sliders me-2"></i>Configuración</h4>
                     <button onclick="cargarDashboardFinanzas()" class="btn btn-light border shadow-sm"><i class="bi bi-arrow-return-left me-2"></i>Volver</button>
                 </div>
-
                 <div class="row g-5">
                     <div class="col-lg-7">
-                        <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                        <ul class="nav nav-pills mb-3" id="pills-tab">
                             <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#tab-ingresos">Ingresos</button></li>
                             <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-egresos">Egresos</button></li>
                         </ul>
-                        <div class="tab-content" id="pills-tabContent">
+                        <div class="tab-content">
                             <div class="tab-pane fade show active" id="tab-ingresos">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 class="fw-bold text-uppercase text-muted m-0 small">Recibos de Ingreso</h6>
-                                    <button onclick="nuevoTalonario('ingreso')" class="btn btn-success btn-sm fw-bold"><i class="bi bi-plus-lg me-1"></i>Nuevo</button>
-                                </div>
+                                <div class="d-flex justify-content-end mb-3"><button onclick="nuevoTalonario('ingreso')" class="btn btn-success btn-sm fw-bold"><i class="bi bi-plus-lg me-1"></i>Nuevo</button></div>
                                 <div class="row g-3">${listaIng}</div>
                             </div>
                             <div class="tab-pane fade" id="tab-egresos">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 class="fw-bold text-uppercase text-muted m-0 small">Chequeras / Vouchers</h6>
-                                    <button onclick="nuevoTalonario('egreso')" class="btn btn-danger btn-sm fw-bold"><i class="bi bi-plus-lg me-1"></i>Nuevo</button>
-                                </div>
+                                <div class="d-flex justify-content-end mb-3"><button onclick="nuevoTalonario('egreso')" class="btn btn-danger btn-sm fw-bold"><i class="bi bi-plus-lg me-1"></i>Nuevo</button></div>
                                 <div class="row g-3">${listaEgr}</div>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-lg-5">
                         <div class="p-4 bg-light rounded-4 h-100">
-                            <h6 class="fw-bold text-uppercase text-muted small mb-3">Categorías de Gastos</h6>
-                            <div class="input-group mb-3">
-                                <input type="text" id="newCat" class="form-control" placeholder="Nueva Categoría...">
-                                <button onclick="agregarCategoria()" class="btn btn-dark"><i class="bi bi-plus-lg"></i></button>
-                            </div>
-                            <div class="d-flex flex-wrap gap-2" id="listaCategorias">
-                                ${categoriasEgresos.map(c => `
-                                    <span class="badge bg-white text-dark border shadow-sm py-2 px-3 rounded-pill d-flex align-items-center gap-2 cat-chip">
-                                        ${c.nombre} 
-                                        <i class="bi bi-x-circle-fill text-danger cursor-pointer" onclick="borrarCategoria(${c.id}, this)" style="opacity:0.6"></i>
-                                    </span>
-                                `).join('')}
-                            </div>
+                            <h6 class="fw-bold text-uppercase text-muted small mb-3">Categorías</h6>
+                            <div class="input-group mb-3"><input type="text" id="newCat" class="form-control" placeholder="Nueva..."><button onclick="agregarCategoria()" class="btn btn-dark"><i class="bi bi-plus-lg"></i></button></div>
+                            <div class="d-flex flex-wrap gap-2" id="listaCategorias">${categoriasEgresos.map(c => `<span class="badge bg-white text-dark border shadow-sm py-2 px-3 rounded-pill d-flex align-items-center gap-2 cat-chip">${c.nombre} <i class="bi bi-x-circle-fill text-danger cursor-pointer" onclick="borrarCategoria(${c.id}, this)" style="opacity:0.6"></i></span>`).join('')}</div>
                         </div>
                     </div>
                 </div>
@@ -390,109 +383,67 @@ function renderConfigFinanzas() {
     document.getElementById('vistaFinanzas').innerHTML = html;
 }
 
-// --- VALIDACIÓN PROFESIONAL (Sin Emojis) ---
-function setupValidacionRecibo(tal, inputId, feedbackId, btnId) {
-    const inp = document.getElementById(inputId);
-    const feed = document.getElementById(feedbackId);
-    const btn = document.getElementById(btnId);
-
-    inp.addEventListener('input', () => {
-        if (!tal) return;
-        const v = parseInt(inp.value);
-        inp.classList.remove('is-invalid', 'is-valid');
-        btn.disabled = false;
-
-        if (isNaN(v)) {
-            feed.innerHTML = ''; 
-            return;
-        }
-
-        if (v < tal.inicio || v > tal.fin) {
-            inp.classList.add('is-invalid');
-            feed.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>Fuera de rango';
-            feed.className = 'validation-msg text-danger text-end';
-            btn.disabled = true;
-        } else if (tal.usados.includes(v)) {
-            inp.classList.add('is-invalid');
-            feed.innerHTML = '<i class="bi bi-file-earmark-x me-1"></i>Ya utilizado';
-            feed.className = 'validation-msg text-danger text-end';
-            btn.disabled = true;
-        } else {
-            inp.classList.add('is-valid');
-            feed.innerHTML = '<i class="bi bi-check-circle me-1"></i>Disponible';
-            feed.className = 'validation-msg text-success text-end';
-        }
-    });
-}
-
-// --- FUNCIONES LOGICA (Con Animations) ---
-async function agregarCategoria() {
-    const v = document.getElementById('newCat').value;
-    if(v) {
-        const span = document.createElement("span"); // Placeholder para animación
-        span.className = "badge bg-white text-dark border shadow-sm py-2 px-3 rounded-pill d-flex align-items-center gap-2 cat-chip entering";
-        span.innerHTML = `${v} <i class="bi bi-hourglass-split text-muted"></i>`;
-        document.getElementById('listaCategorias').appendChild(span);
-        
-        // Reflow para activar animación
-        requestAnimationFrame(() => span.classList.remove("entering"));
-
-        await authFetch('/api/finanzas/categorias', { method: 'POST', body: JSON.stringify({ nombre: v }) });
-        renderConfigFinanzas(); 
+// --- LOGICA ---
+function toggleCamposIngreso(val) {
+    const divCultos = document.getElementById('divCultos');
+    const divDonante = document.getElementById('divDonante');
+    if (val === 'Ofrenda' || val === 'Actividad') {
+        divCultos.style.display = 'block';
+        divDonante.style.display = 'none'; // Regla del usuario: Quitar Donante
+    } else {
+        divCultos.style.display = 'none';
+        document.getElementById('selectCulto').value = 'General';
+        divDonante.style.display = 'block';
     }
-}
-
-async function borrarCategoria(id, el) {
-    // Animación de Salida
-    const chip = el.closest('.cat-chip');
-    chip.classList.add('leaving');
-    setTimeout(async () => {
-        await authFetch(`/api/finanzas/categorias/${id}`, { method: 'DELETE' });
-        renderConfigFinanzas();
-    }, 300); // Esperar a que termine la animación CSS
 }
 
 async function nuevoTalonario(tipo) {
     const { value: f } = await Swal.fire({
-        title: `Nuevo Talonario (${tipo})`,
-        html: `<input id="sw1" class="swal2-input" placeholder="Nombre (Ej: Serie B)"><div class="row g-2"><div class="col-6"><input id="sw2" type="number" class="swal2-input" placeholder="Inicio"></div><div class="col-6"><input id="sw3" type="number" class="swal2-input" placeholder="Fin"></div></div>`,
+        title: `Nuevo (${tipo})`,
+        html: `<input id="sw-nom" class="swal2-input" placeholder="Nombre (Ej: Serie B)"><div class="row g-2"><div class="col-6"><input id="sw-ini" type="number" class="swal2-input" placeholder="Inicio"></div><div class="col-6"><input id="sw-fin" type="number" class="swal2-input" placeholder="Fin"></div></div>`,
         focusConfirm: false,
-        preConfirm: () => [document.getElementById('sw1').value, document.getElementById('sw2').value, document.getElementById('sw3').value]
+        preConfirm: () => [document.getElementById('sw-nom').value, document.getElementById('sw-ini').value, document.getElementById('sw-fin').value]
+    });
+    if (f && f[0]) {
+        try { await authFetch('/api/finanzas/talonarios', { method: 'POST', body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]), actual: parseInt(f[1])-1, tipo: tipo }) }); renderConfigFinanzas(); } catch (e) { Swal.fire('Error', e.message, 'error'); }
+    }
+}
+
+async function editarTalonario(tipo, idx) {
+    const lista = tipo === 'ingreso' ? talonariosIngreso : talonariosEgreso;
+    const t = lista[idx];
+
+    const { value: f } = await Swal.fire({
+        title: 'Editar Rango',
+        html: `
+            <div class="text-start">
+                <label class="small fw-bold">Nombre</label><input id="edit-nom" class="swal2-input m-0 w-100 mb-3" value="${t.nombre}">
+                <div class="row g-2">
+                    <div class="col-6"><label class="small fw-bold">Inicio</label><input id="edit-ini" type="number" class="swal2-input m-0 w-100" value="${t.inicio}"></div>
+                    <div class="col-6"><label class="small fw-bold">Fin</label><input id="edit-fin" type="number" class="swal2-input m-0 w-100" value="${t.fin}"></div>
+                </div>
+                <div class="alert alert-warning mt-3 p-2 small"><i class="bi bi-exclamation-triangle me-1"></i> Precaución: Cambiar los rangos no altera los recibos ya emitidos, pero puede causar conflictos si se solapan.</div>
+            </div>`,
+        focusConfirm: false,
+        preConfirm: () => [document.getElementById('edit-nom').value, document.getElementById('edit-ini').value, document.getElementById('edit-fin').value]
     });
 
     if (f && f[0]) {
         try {
-            await authFetch('/api/finanzas/talonarios', {
-                method: 'POST',
-                body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]), actual: parseInt(f[1])-1, tipo: tipo })
+            await authFetch(`/api/finanzas/talonarios/${t.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]) })
             });
             renderConfigFinanzas();
         } catch (e) { Swal.fire('Error', e.message, 'error'); }
     }
 }
 
-async function activarTalonario(id, tipo) {
-    await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'PUT', body: JSON.stringify({ activo: true, tipo: tipo }) });
-    renderConfigFinanzas();
-}
-
-async function borrarTalonario(id) {
-    Swal.fire({ title: '¿Borrar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then(async (r) => {
-        if (r.isConfirmed) { await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'DELETE' }); renderConfigFinanzas(); }
-    });
-}
-
-// Helpers
-function toggleCultos(val) { const div = document.getElementById('divCultos'); if (val === 'Ofrenda' || val === 'Actividad') { div.style.display = 'block'; } else { div.style.display = 'none'; document.getElementById('selectCulto').value = 'General'; } }
-async function agregarMiembroRapido() { const { value: n } = await Swal.fire({ title: 'Nuevo', input: 'text', showCancelButton: true }); if (n) { miembrosActuales.push({ nombre: n }); const sel = document.getElementById('miembroIngreso'); const opt = document.createElement("option"); opt.text = n; opt.value = n; opt.selected = true; sel.add(opt); } }
-function calcularSaldo() { saldoActual = 0; transacciones.forEach(t => { if (t.tipo === 'ingreso') saldoActual += parseFloat(t.monto); else saldoActual -= parseFloat(t.monto); }); }
-function generarFilasTabla() {
-    if (!transacciones.length) return '<tr><td colspan="5" class="text-center py-5 text-muted">Sin movimientos</td></tr>';
-    return transacciones.map(t => {
-        const esIngreso = t.tipo === 'ingreso';
-        let reciboBadge = '-';
-        if (t.recibo_no === 'APERTURA') reciboBadge = '<span class="badge bg-warning text-dark border-0">APERTURA</span>';
-        else if (t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') reciboBadge = `<span class="badge bg-light text-dark border fw-normal">#${t.recibo_no}</span>`;
-        return `<tr><td data-label="Fecha"><small class="fw-bold text-muted">${formatoFecha(t.fecha)}</small></td><td data-label="Recibo">${reciboBadge}</td><td data-label="Categoría"><span class="badge rounded-pill ${esIngreso?'bg-success':'bg-danger'} bg-opacity-10 ${esIngreso?'text-success':'text-danger'} border border-opacity-25 fw-normal px-3">${t.categoria}</span></td><td data-label="Descripción"><span class="d-inline-block text-truncate" style="max-width: 200px;" title="${t.descripcion}">${t.descripcion}</span></td><td data-label="Monto" class="text-end"><span class="fw-bold ${esIngreso?'text-success':'text-danger'} fs-6">${esIngreso?'+':'-'} ${formatoMoneda(t.monto)}</span></td></tr>`;
-    }).join('');
-}
+async function activarTalonario(id, tipo) { await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'PUT', body: JSON.stringify({ activo: true, tipo: tipo }) }); renderConfigFinanzas(); }
+async function borrarTalonario(id) { Swal.fire({ title: '¿Borrar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then(async (r) => { if (r.isConfirmed) { await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'DELETE' }); renderConfigFinanzas(); } }); }
+function setupValidacionRecibo(tal, iId, fId, bId) { const inp=document.getElementById(iId), f=document.getElementById(fId), b=document.getElementById(bId); inp.addEventListener('input', ()=>{ if(!tal)return; const v=parseInt(inp.value); inp.classList.remove('is-invalid','is-valid'); b.disabled=false; if(isNaN(v)){f.innerHTML='';return;} if(v<tal.inicio||v>tal.fin){inp.classList.add('is-invalid');f.innerHTML='Fuera rango';f.className='validation-msg text-danger text-end';b.disabled=true;}else if(tal.usados.includes(v)){inp.classList.add('is-invalid');f.innerHTML='Ya usado';f.className='validation-msg text-danger text-end';b.disabled=true;}else{inp.classList.add('is-valid');f.innerHTML='OK';f.className='validation-msg text-success text-end';} }); }
+async function agregarCategoria() { const v=document.getElementById('newCat').value; if(v){ await authFetch('/api/finanzas/categorias', {method:'POST',body:JSON.stringify({nombre:v})}); renderConfigFinanzas(); } }
+async function borrarCategoria(id, el) { el.closest('.cat-chip').classList.add('leaving'); setTimeout(async()=>{ await authFetch(`/api/finanzas/categorias/${id}`, {method:'DELETE'}); renderConfigFinanzas(); },300); }
+async function agregarMiembroRapido(){const{value:n}=await Swal.fire({title:'Nuevo',input:'text',showCancelButton:true});if(n){miembrosActuales.push({nombre:n});const s=document.getElementById('miembroIngreso');const o=document.createElement("option");o.text=n;o.value=n;o.selected=true;s.add(o);}}
+function calcularSaldo(){saldoActual=0;transacciones.forEach(t=>{if(t.tipo==='ingreso')saldoActual+=parseFloat(t.monto);else saldoActual-=parseFloat(t.monto);});}
+function generarFilasTabla(){if(!transacciones.length)return'<tr><td colspan="5" class="text-center py-5 text-muted">Sin movimientos</td></tr>';return transacciones.map(t=>{const esIng=t.tipo==='ingreso';let bdg='-';if(t.recibo_no==='APERTURA')bdg='<span class="badge bg-warning text-dark border-0">APERTURA</span>';else if(t.recibo_no&&t.recibo_no!=='S/N'&&t.recibo_no!=='-')bdg=`<span class="badge bg-light text-dark border fw-normal">#${t.recibo_no}</span>`;return`<tr><td data-label="Fecha"><small class="fw-bold text-muted">${formatoFecha(t.fecha)}</small></td><td data-label="Recibo">${bdg}</td><td data-label="Cat"><span class="badge rounded-pill ${esIng?'bg-success':'bg-danger'} bg-opacity-10 ${esIng?'text-success':'text-danger'} border border-opacity-25 fw-normal px-3">${t.categoria}</span></td><td data-label="Desc"><span class="d-inline-block text-truncate" style="max-width:200px" title="${t.descripcion}">${t.descripcion}</span></td><td data-label="Monto" class="text-end"><span class="fw-bold ${esIng?'text-success':'text-danger'} fs-6">${esIng?'+':'-'} ${formatoMoneda(t.monto)}</span></td></tr>`;}).join('');}
