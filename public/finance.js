@@ -1,13 +1,11 @@
-// finance.js - Módulo Financiero v6 (Conectado a Neon DB 🟢)
-console.log("Cargando Módulo Financiero v6 (Online)...");
+// finance.js - Módulo Financiero v7 (Conectado y Autenticado 🔐)
+console.log("Cargando Módulo Financiero v7 (Auth)...");
 
 // --- VARIABLES GLOBALES ---
 let talonarios = [];
-let categoriasEgresos = []; // Se llenará desde BD
+let categoriasEgresos = [];
 let transacciones = [];
 let saldoActual = 0;
-
-// Constantes Locales (No cambian mucho)
 const tiposCultos = ['Culto Dominical', 'Escuela Dominical', 'Culto de Oración', 'Culto de Enseñanza', 'Reunión de Jóvenes', 'Reunión de Damas', 'Vigilia'];
 
 // --- FORMATOS ---
@@ -20,22 +18,42 @@ const formatoFecha = (fechaStr) => {
     return fechaCorregida.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '').toUpperCase().replace(/ /g, '-');
 };
 
-// --- CARGA INICIAL (CONEXIÓN API) ---
+// --- HELPER: FETCH AUTENTICADO (LA CLAVE DEL ARREGLO 🔑) ---
+async function authFetch(url, options = {}) {
+    const token = localStorage.getItem('token'); // Recuperamos el token guardado al login
+    if (!token) {
+        Swal.fire('Sesión Expirada', 'Por favor inicia sesión nuevamente', 'warning');
+        window.location.reload();
+        throw new Error('No hay token');
+    }
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': token, // AQUÍ ENVIAMOS EL PASE VIP
+        ...options.headers
+    };
+
+    const response = await fetch(url, { ...options, headers });
+    
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error en el servidor');
+    }
+    return response.json();
+}
+
+// --- CARGA INICIAL ---
 async function cargarDashboardFinanzas() {
     const contenedor = document.getElementById('vistaFinanzas');
-    
-    // Mostrar Loading mientras carga
-    contenedor.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Conectando con Neon DB...</p></div>';
+    contenedor.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Cargando Finanzas...</p></div>';
 
     try {
-        const response = await fetch('/api/finanzas/datos');
-        const data = await response.json();
+        // Usamos authFetch en lugar de fetch normal
+        const data = await authFetch('/api/finanzas/datos');
 
-        // Asignamos datos de BD a variables globales
         transacciones = data.transacciones;
         categoriasEgresos = data.categorias;
         
-        // Mapeamos los talonarios de BD al formato que usa la app
         talonarios = data.talonarios.map(t => ({
             id: t.id,
             nombre: t.nombre,
@@ -43,31 +61,30 @@ async function cargarDashboardFinanzas() {
             fin: t.rango_fin,
             actual: t.actual,
             activo: t.activo,
-            usados: [] // Calcularemos esto abajo
+            usados: []
         }));
 
-        // Calcular 'usados' cruzando con transacciones
+        // Calcular usados
         talonarios.forEach(tal => {
-            const recibosDeEsteTalonario = transacciones
+            const recibos = transacciones
                 .filter(tx => tx.tipo === 'ingreso' && tx.recibo_no !== 'S/N' && tx.recibo_no !== 'APERTURA')
                 .map(tx => parseInt(tx.recibo_no))
-                .filter(num => num >= tal.inicio && num <= tal.fin); // Aseguramos que pertenece al rango
-            tal.usados = recibosDeEsteTalonario;
+                .filter(num => num >= tal.inicio && num <= tal.fin);
+            tal.usados = recibos;
         });
 
         calcularSaldo();
-        renderizarVistaPrincipal(); // Dibujar HTML (El diseño bonito V5)
+        renderizarVistaPrincipal();
 
     } catch (error) {
         console.error(error);
-        contenedor.innerHTML = `<div class="alert alert-danger">Error cargando datos: ${error.message}</div>`;
+        contenedor.innerHTML = `<div class="alert alert-danger m-4">Error: ${error.message}</div>`;
     }
 }
 
-// --- RENDERIZADO VISUAL (Igual que V5) ---
+// --- RENDERIZADO VISUAL (Igual que antes) ---
 function renderizarVistaPrincipal() {
     const contenedor = document.getElementById('vistaFinanzas');
-    
     let html = `
         <div class="card main-card mb-5">
             <div class="card-body p-4 p-lg-5">
@@ -90,18 +107,10 @@ function renderizarVistaPrincipal() {
                 </div>
 
                 <div class="d-grid gap-3 d-md-flex justify-content-md-center mb-5">
-                    <button onclick="renderAperturaCuenta()" class="btn btn-outline-warning text-dark fw-bold px-4 py-2 shadow-sm rounded-3">
-                        <i class="bi bi-sliders me-2"></i>Ajuste / Apertura
-                    </button>
-                    <button onclick="renderRegistrarIngreso()" class="btn btn-success fw-bold px-4 py-2 shadow-sm rounded-3">
-                        <i class="bi bi-arrow-down-circle-fill me-2"></i>Nuevo Ingreso
-                    </button>
-                    <button onclick="renderRegistrarEgreso()" class="btn btn-danger fw-bold px-4 py-2 shadow-sm rounded-3">
-                        <i class="bi bi-arrow-up-circle-fill me-2"></i>Nuevo Gasto
-                    </button>
-                    <button onclick="renderConfigFinanzas()" class="btn btn-light text-secondary border px-3 py-2 shadow-sm rounded-3" title="Configuración">
-                        <i class="bi bi-gear-wide-connected fs-5"></i>
-                    </button>
+                    <button onclick="renderAperturaCuenta()" class="btn btn-outline-warning text-dark fw-bold px-4 py-2 shadow-sm rounded-3"><i class="bi bi-sliders me-2"></i>Ajuste / Apertura</button>
+                    <button onclick="renderRegistrarIngreso()" class="btn btn-success fw-bold px-4 py-2 shadow-sm rounded-3"><i class="bi bi-arrow-down-circle-fill me-2"></i>Nuevo Ingreso</button>
+                    <button onclick="renderRegistrarEgreso()" class="btn btn-danger fw-bold px-4 py-2 shadow-sm rounded-3"><i class="bi bi-arrow-up-circle-fill me-2"></i>Nuevo Gasto</button>
+                    <button onclick="renderConfigFinanzas()" class="btn btn-light text-secondary border px-3 py-2 shadow-sm rounded-3" title="Configuración"><i class="bi bi-gear-wide-connected fs-5"></i></button>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -127,7 +136,7 @@ function renderizarVistaPrincipal() {
     contenedor.innerHTML = html;
 }
 
-// --- 1. APERTURA / AJUSTE (Conectado a API) ---
+// --- 1. APERTURA / AJUSTE (Con Auth) ---
 function renderAperturaCuenta() {
     const saldoExistente = transacciones.find(t => t.categoria === 'SALDO INICIAL');
     const valorActual = saldoExistente ? saldoExistente.monto : '';
@@ -165,36 +174,28 @@ function renderAperturaCuenta() {
         const monto = parseFloat(document.getElementById('montoApertura').value);
         const fecha = document.getElementById('fechaApertura').value;
 
-        // Si ya existe, en teoría deberíamos hacer UPDATE, pero por simplicidad haremos un nuevo insert que aparecerá arriba
-        // Ojo: Si quieres editar, necesitaríamos el ID. Por ahora, asumamos nuevo registro correctivo.
-        
-        const payload = {
-            fecha: fecha,
-            tipo: 'ingreso',
-            categoria: 'SALDO INICIAL',
-            descripcion: 'Apertura / Ajuste de Caja',
-            monto: monto,
-            recibo_no: 'APERTURA'
-        };
-
         try {
-            await fetch('/api/finanzas/transacciones', {
+            await authFetch('/api/finanzas/transacciones', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    fecha: fecha,
+                    tipo: 'ingreso',
+                    categoria: 'SALDO INICIAL',
+                    descripcion: 'Apertura / Ajuste de Caja',
+                    monto: monto,
+                    recibo_no: 'APERTURA'
+                })
             });
-            Swal.fire('Guardado', 'Saldo inicial registrado en Base de Datos.', 'success');
+            Swal.fire('Guardado', 'Saldo inicial registrado.', 'success');
             cargarDashboardFinanzas();
         } catch (err) { Swal.fire('Error', err.message, 'error'); }
     });
 }
 
-// --- 2. INGRESO (Conectado a API) ---
+// --- 2. INGRESO (Con Auth) ---
 function renderRegistrarIngreso() {
     const tal = talonarios.find(t => t.activo);
     const siguienteSugerido = tal ? tal.actual + 1 : '';
-    
-    // Opciones dinámicas
     let optsMiembros = '<option value="">-- Seleccionar / Anónimo --</option>';
     if (typeof miembrosActuales !== 'undefined') {
         miembrosActuales.forEach(m => optsMiembros += `<option value="${m.nombre}">${m.nombre}</option>`);
@@ -275,12 +276,10 @@ function renderRegistrarIngreso() {
 
     document.getElementById('formIngreso').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const inp = document.getElementById('numRecibo');
         const nRecibo = parseInt(inp.value);
         const monto = parseFloat(document.getElementById('montoIngreso').value);
         
-        // Validación local antes de enviar
         if (tal) {
             if (!nRecibo) return Swal.fire('Error', 'Falta número recibo', 'error');
             if (nRecibo < tal.inicio || nRecibo > tal.fin) return Swal.fire('Error', 'Recibo fuera de rango', 'error');
@@ -291,16 +290,13 @@ function renderRegistrarIngreso() {
         const culto = document.getElementById('selectCulto').value;
         const miembro = document.getElementById('miembroIngreso').value;
         const detalle = document.getElementById('detalleIngreso').value;
-
         let desc = (tipo === 'Ofrenda') ? culto : tipo;
         if (miembro) desc += ` - ${miembro}`;
         if (detalle) desc += ` (${detalle})`;
 
         try {
-            // 1. Guardar Transacción
-            await fetch('/api/finanzas/transacciones', {
+            await authFetch('/api/finanzas/transacciones', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     fecha: new Date().toISOString(),
                     tipo: 'ingreso',
@@ -311,25 +307,21 @@ function renderRegistrarIngreso() {
                 })
             });
 
-            // 2. Actualizar Talonario (si aplica)
             if (tal && nRecibo > tal.actual) {
-                await fetch(`/api/finanzas/talonarios/${tal.id}`, {
+                await authFetch(`/api/finanzas/talonarios/${tal.id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ actual: nRecibo })
                 });
             }
 
-            Swal.fire('Guardado', 'Ingreso registrado en BD', 'success');
+            Swal.fire('Guardado', 'Ingreso registrado.', 'success');
             cargarDashboardFinanzas();
-
         } catch (err) { Swal.fire('Error', err.message, 'error'); }
     });
 }
 
-// --- 3. NUEVO GASTO (Conectado a API) ---
+// --- 3. GASTO (Con Auth) ---
 function renderRegistrarEgreso() {
-    // Si no hay categorías en BD, usamos unas por defecto
     const cats = categoriasEgresos.length > 0 ? categoriasEgresos.map(c => c.nombre) : ['Mantenimiento', 'Servicios', 'Ayuda'];
     let opts = cats.map(c => `<option value="${c}">${c}</option>`).join('');
 
@@ -355,7 +347,7 @@ function renderRegistrarEgreso() {
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-bold text-muted">DESCRIPCIÓN</label>
-                            <textarea id="descEgreso" class="form-control" rows="2" placeholder="Detalles de compra..."></textarea>
+                            <textarea id="descEgreso" class="form-control" rows="2" placeholder="Detalles..."></textarea>
                         </div>
                         <div class="col-12 text-end mt-4">
                             <button type="submit" class="btn btn-danger fw-bold px-5 py-2 shadow-sm">Registrar Salida</button>
@@ -370,9 +362,8 @@ function renderRegistrarEgreso() {
     document.getElementById('formEgreso').addEventListener('submit', async (e) => {
         e.preventDefault();
         try {
-            await fetch('/api/finanzas/transacciones', {
+            await authFetch('/api/finanzas/transacciones', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     fecha: new Date().toISOString(),
                     tipo: 'egreso',
@@ -382,13 +373,13 @@ function renderRegistrarEgreso() {
                     recibo_no: '-'
                 })
             });
-            Swal.fire('Guardado', 'Gasto registrado en BD', 'success');
+            Swal.fire('Guardado', 'Gasto registrado.', 'success');
             cargarDashboardFinanzas();
         } catch (err) { Swal.fire('Error', err.message, 'error'); }
     });
 }
 
-// --- 4. CONFIGURACIÓN (Conectado a API) ---
+// --- 4. CONFIGURACIÓN (Con Auth) ---
 function renderConfigFinanzas() {
     let listaHTML = talonarios.map((t, i) => `
         <div class="col-12">
@@ -404,7 +395,7 @@ function renderConfigFinanzas() {
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <div class="text-end me-3 d-none d-md-block">
-                            <small class="d-block text-muted" style="font-size: 0.7rem;">ÚLTIMO RECIBO</small>
+                            <small class="d-block text-muted" style="font-size: 0.7rem;">ÚLTIMO</small>
                             <span class="fw-bold fs-5">#${t.actual}</span>
                         </div>
                         ${!t.activo ? `<button onclick="activarTalonario(${i})" class="btn btn-outline-success btn-sm">Activar</button>` : ''}
@@ -434,7 +425,6 @@ function renderConfigFinanzas() {
                     </div>
                     <button onclick="cargarDashboardFinanzas()" class="btn btn-light border shadow-sm"><i class="bi bi-arrow-return-left me-2"></i>Volver</button>
                 </div>
-
                 <div class="row g-5">
                     <div class="col-lg-7">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -445,7 +435,6 @@ function renderConfigFinanzas() {
                             ${listaHTML.length ? listaHTML : '<div class="text-center text-muted py-5 border rounded bg-light">No hay talonarios registrados</div>'}
                         </div>
                     </div>
-
                     <div class="col-lg-5">
                         <div class="p-4 bg-light rounded-4 h-100">
                             <h6 class="fw-bold text-uppercase text-muted small mb-3">Categorías de Gastos</h6>
@@ -454,12 +443,7 @@ function renderConfigFinanzas() {
                                 <button onclick="agregarCategoria()" class="btn btn-dark"><i class="bi bi-plus-lg"></i></button>
                             </div>
                             <div class="d-flex flex-wrap gap-2">
-                                ${categoriasEgresos.map(c => `
-                                    <span class="badge bg-white text-dark border shadow-sm py-2 px-3 rounded-pill d-flex align-items-center gap-2">
-                                        ${c.nombre} 
-                                        <i class="bi bi-x-circle-fill text-danger cursor-pointer" onclick="borrarCategoria(${c.id})" style="opacity:0.6"></i>
-                                    </span>
-                                `).join('')}
+                                ${categoriasEgresos.map(c => `<span class="badge bg-white text-dark border shadow-sm py-2 px-3 rounded-pill d-flex align-items-center gap-2">${c.nombre} <i class="bi bi-x-circle-fill text-danger cursor-pointer" onclick="borrarCategoria(${c.id})" style="opacity:0.6"></i></span>`).join('')}
                             </div>
                         </div>
                     </div>
@@ -470,7 +454,7 @@ function renderConfigFinanzas() {
     document.getElementById('vistaFinanzas').innerHTML = html;
 }
 
-// --- LOGICA DB TALONARIOS ---
+// --- LOGICA DB ---
 async function nuevoTalonario() {
     const { value: f } = await Swal.fire({
         title: 'Nuevo Talonario',
@@ -481,12 +465,10 @@ async function nuevoTalonario() {
 
     if (f && f[0]) {
         try {
-            await fetch('/api/finanzas/talonarios', {
+            await authFetch('/api/finanzas/talonarios', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]), actual: parseInt(f[1])-1 })
             });
-            renderConfigFinanzas(); // Recarga solo la config (o mejor cargarDashboardFinanzas para recargar todo)
             cargarDashboardFinanzas();
         } catch (e) { Swal.fire('Error', e.message, 'error'); }
     }
@@ -495,9 +477,8 @@ async function nuevoTalonario() {
 async function activarTalonario(idx) {
     const t = talonarios[idx];
     try {
-        await fetch(`/api/finanzas/talonarios/${t.id}`, {
+        await authFetch(`/api/finanzas/talonarios/${t.id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ activo: true })
         });
         cargarDashboardFinanzas();
@@ -514,30 +495,51 @@ async function borrarTalonario(idx) {
         confirmButtonColor: '#d33'
     }).then(async (res) => {
         if (res.isConfirmed) {
-            await fetch(`/api/finanzas/talonarios/${t.id}`, { method: 'DELETE' });
+            await authFetch(`/api/finanzas/talonarios/${t.id}`, { method: 'DELETE' });
             cargarDashboardFinanzas();
         }
     });
 }
 
-// --- LOGICA DB CATEGORÍAS ---
+async function editarTalonario(idx) {
+    const t = talonarios[idx];
+    const { value: f } = await Swal.fire({
+        title: 'Editar Talonario',
+        html: `
+            <input id="sw1" class="swal2-input" value="${t.nombre}">
+            <input id="sw3" type="number" class="swal2-input" value="${t.fin}">
+        `,
+        focusConfirm: false,
+        preConfirm: () => [document.getElementById('sw1').value, document.getElementById('sw3').value]
+    });
+
+    if (f && f[0]) {
+        try {
+            await authFetch(`/api/finanzas/talonarios/${t.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ nombre: f[0], fin: parseInt(f[1]) })
+            });
+            cargarDashboardFinanzas();
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
+    }
+}
+
 async function agregarCategoria() {
     const v = document.getElementById('newCat').value;
     if(v) {
-        await fetch('/api/finanzas/categorias', {
+        await authFetch('/api/finanzas/categorias', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nombre: v })
         });
         cargarDashboardFinanzas();
     }
 }
 async function borrarCategoria(id) {
-    await fetch(`/api/finanzas/categorias/${id}`, { method: 'DELETE' });
+    await authFetch(`/api/finanzas/categorias/${id}`, { method: 'DELETE' });
     cargarDashboardFinanzas();
 }
 
-// --- HELPERS VISUALES (Sin cambios grandes) ---
+// --- HELPERS VISUALES ---
 function toggleCultos(val) {
     const div = document.getElementById('divCultos');
     if (val === 'Ofrenda' || val === 'Actividad') { div.style.display = 'block'; } 
@@ -547,7 +549,9 @@ function toggleCultos(val) {
 async function agregarMiembroRapido() {
     const { value: n } = await Swal.fire({ title: 'Nuevo Donante', input: 'text', showCancelButton: true });
     if (n && typeof miembrosActuales !== 'undefined') {
-        miembrosActuales.push({ nombre: n }); // Ojo: Esto es temporal en RAM para el select, idealmente guardar en BD Miembros
+        // En un sistema real, aquí llamaríamos a la API para guardar el miembro
+        // Por ahora lo agregamos al select temporalmente
+        miembrosActuales.push({ nombre: n });
         const sel = document.getElementById('miembroIngreso');
         const opt = document.createElement("option"); opt.text = n; opt.value = n; opt.selected = true;
         sel.add(opt);
@@ -570,6 +574,15 @@ function setupValidacionRecibo(tal) {
             inp.classList.remove('is-invalid'); inp.classList.add('is-valid');
             feed.className = 'text-success fw-bold small'; feed.innerText = '✅ Disponible';
         }
+    });
+}
+
+function verDetalleTalonario(idx) {
+    const t = talonarios[idx];
+    const lista = t.usados.length ? t.usados.sort((a,b)=>a-b).join(', ') : 'Ninguno';
+    Swal.fire({
+        title: `<span class="fs-5">${t.nombre}</span>`,
+        html: `<div class="text-start bg-light p-3 rounded"><small class="text-muted fw-bold">USADOS:</small><div class="mt-1" style="max-height: 100px; overflow-y: auto; font-family: monospace;">${lista}</div></div>`
     });
 }
 
