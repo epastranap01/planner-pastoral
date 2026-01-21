@@ -1,11 +1,12 @@
-// finance.js - Módulo Financiero v11 (Diseño Visual Mejorado)
-console.log("Cargando Módulo Financiero v11...");
+// finance.js - Módulo Financiero v12 (Modales Bootstrap y Persistencia Miembros)
+console.log("Cargando Módulo Financiero v12...");
 
 // --- VARIABLES GLOBALES ---
 let talonariosIngreso = [];
 let talonariosEgreso = [];
 let categoriasEgresos = [];
 let transacciones = [];
+let miembrosActuales = []; // Aquí guardaremos la lista real de la BD
 let saldoActual = 0;
 const tiposCultos = ['Culto Dominical', 'Escuela Dominical', 'Culto de Oración', 'Culto de Enseñanza', 'Reunión de Jóvenes', 'Reunión de Damas', 'Vigilia'];
 
@@ -19,21 +20,17 @@ const formatoFecha = (fechaStr) => {
     return fechaCorregida.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '').toUpperCase().replace(/ /g, '-');
 };
 
-// --- ESTILOS INYECTADOS ---
+// --- ESTILOS VISUALES ---
 const styleSheet = document.createElement("style");
 styleSheet.innerText = `
     .cat-chip { transition: all 0.2s ease; border: 1px solid #dee2e6; }
     .cat-chip:hover { background-color: #f8f9fa; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .cat-chip.leaving { opacity: 0; transform: scale(0.8); }
-    
-    /* Estilo Ticket para Talonarios */
     .ticket-card { border: 1px solid #e9ecef; border-left-width: 5px; background: #fff; transition: transform 0.2s; }
     .ticket-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important; }
     .ticket-ingreso { border-left-color: #198754; }
     .ticket-egreso { border-left-color: #dc3545; }
-    
     .nav-pills .nav-link.active { background-color: #0d6efd; box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2); }
-    .nav-pills .nav-link { color: #495057; font-weight: 600; }
 `;
 document.head.appendChild(styleSheet);
 
@@ -54,17 +51,23 @@ async function authFetch(url, options = {}) {
     return response.json();
 }
 
-// --- CARGA INICIAL ---
+// --- CARGA INICIAL (Ahora carga Miembros también) ---
 async function cargarDashboardFinanzas() {
     const contenedor = document.getElementById('vistaFinanzas');
-    contenedor.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Cargando datos...</p></div>';
+    contenedor.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Cargando datos y miembros...</p></div>';
 
     try {
-        const data = await authFetch('/api/finanzas/datos');
-        transacciones = data.transacciones;
-        categoriasEgresos = data.categorias;
-        
-        const todosTalonarios = data.talonarios.map(t => ({
+        // Cargar Datos Financieros y Miembros en paralelo
+        const [dataFinanzas, dataMiembros] = await Promise.all([
+            authFetch('/api/finanzas/datos'),
+            authFetch('/api/miembros') // <--- AQUÍ TRAEMOS LOS MIEMBROS DE LA BD
+        ]);
+
+        transacciones = dataFinanzas.transacciones;
+        categoriasEgresos = dataFinanzas.categorias;
+        miembrosActuales = dataMiembros; // Guardamos en memoria
+
+        const todosTalonarios = dataFinanzas.talonarios.map(t => ({
             ...t, inicio: t.rango_inicio, fin: t.rango_fin, usados: []
         }));
 
@@ -136,9 +139,8 @@ function renderizarVistaPrincipal() {
     contenedor.innerHTML = html;
 }
 
-// --- CONFIGURACIÓN (REDISEÑADA) ---
+// --- CONFIGURACIÓN ---
 function renderConfigFinanzas() {
-    // Función para dibujar cada tarjeta de talonario bonita
     const cardHTML = (t, idx, type) => {
         const colorClass = type === 'ingreso' ? 'text-success' : 'text-danger';
         const borderClass = type === 'ingreso' ? 'ticket-ingreso' : 'ticket-egreso';
@@ -150,17 +152,11 @@ function renderConfigFinanzas() {
         <div class="col-md-6 col-lg-12 col-xl-6">
             <div class="card h-100 shadow-sm ticket-card ${borderClass} p-3">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h6 class="fw-bold mb-1 text-dark">${t.nombre}</h6>
-                        <div class="small text-muted">Rango: <span class="fw-bold text-dark">${t.inicio}</span> al <span class="fw-bold text-dark">${t.fin}</span></div>
-                    </div>
+                    <div><h6 class="fw-bold mb-1 text-dark">${t.nombre}</h6><div class="small text-muted">Rango: <span class="fw-bold text-dark">${t.inicio}</span> al <span class="fw-bold text-dark">${t.fin}</span></div></div>
                     ${badge}
                 </div>
                 <div class="d-flex justify-content-between align-items-end mt-2">
-                    <div>
-                        <small class="text-muted d-block" style="font-size:0.7rem;">ÚLTIMO UTILIZADO</small>
-                        <span class="fs-4 fw-bold ${colorClass}">#${t.actual}</span>
-                    </div>
+                    <div><small class="text-muted d-block" style="font-size:0.7rem;">ÚLTIMO</small><span class="fs-4 fw-bold ${colorClass}">#${t.actual}</span></div>
                     <div class="btn-group">
                         ${!t.activo ? `<button onclick="activarTalonario(${t.id}, '${type}')" class="btn btn-sm btn-outline-dark" title="Activar"><i class="bi bi-power"></i></button>` : ''}
                         <button class="btn btn-sm btn-light border" onclick="editarTalonario('${type}', ${idx})" title="Editar"><i class="bi bi-pencil-square text-primary"></i></button>
@@ -181,48 +177,28 @@ function renderConfigFinanzas() {
                     <h4 class="text-dark fw-bold m-0"><i class="bi bi-sliders me-2"></i>Configuración</h4>
                     <button onclick="cargarDashboardFinanzas()" class="btn btn-light border shadow-sm rounded-pill px-3"><i class="bi bi-arrow-left me-2"></i>Volver</button>
                 </div>
-
                 <div class="row g-5">
                     <div class="col-lg-7">
                         <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
                             <li class="nav-item me-2"><button class="nav-link active rounded-pill px-4" data-bs-toggle="pill" data-bs-target="#tab-ingresos">Ingresos</button></li>
                             <li class="nav-item"><button class="nav-link rounded-pill px-4" data-bs-toggle="pill" data-bs-target="#tab-egresos">Egresos</button></li>
                         </ul>
-                        
                         <div class="tab-content">
                             <div class="tab-pane fade show active" id="tab-ingresos">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <small class="text-uppercase text-muted fw-bold">Recibos Disponibles</small>
-                                    <button onclick="nuevoTalonario('ingreso')" class="btn btn-success btn-sm fw-bold rounded-pill px-3"><i class="bi bi-plus-lg me-1"></i>Nuevo</button>
-                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3"><small class="text-uppercase text-muted fw-bold">Recibos de Ingreso</small><button onclick="nuevoTalonario('ingreso')" class="btn btn-success btn-sm fw-bold rounded-pill px-3"><i class="bi bi-plus-lg me-1"></i>Nuevo</button></div>
                                 <div class="row g-3">${listaIng}</div>
                             </div>
-                            
                             <div class="tab-pane fade" id="tab-egresos">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <small class="text-uppercase text-muted fw-bold">Vouchers / Chequeras</small>
-                                    <button onclick="nuevoTalonario('egreso')" class="btn btn-danger btn-sm fw-bold rounded-pill px-3"><i class="bi bi-plus-lg me-1"></i>Nuevo</button>
-                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3"><small class="text-uppercase text-muted fw-bold">Vouchers / Chequeras</small><button onclick="nuevoTalonario('egreso')" class="btn btn-danger btn-sm fw-bold rounded-pill px-3"><i class="bi bi-plus-lg me-1"></i>Nuevo</button></div>
                                 <div class="row g-3">${listaEgr}</div>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-lg-5">
                         <div class="bg-light p-4 rounded-4 h-100 border">
                             <h6 class="fw-bold text-dark mb-3"><i class="bi bi-tags-fill me-2 text-muted"></i>Categorías de Gastos</h6>
-                            <div class="input-group mb-3">
-                                <input type="text" id="newCat" class="form-control border-0 shadow-sm" placeholder="Nueva categoría...">
-                                <button onclick="agregarCategoria()" class="btn btn-dark shadow-sm"><i class="bi bi-plus-lg"></i></button>
-                            </div>
-                            <div class="d-flex flex-wrap gap-2" id="listaCategorias">
-                                ${categoriasEgresos.map(c => `
-                                    <span class="badge bg-white text-dark shadow-sm py-2 px-3 rounded-pill d-flex align-items-center gap-2 cat-chip">
-                                        ${c.nombre} 
-                                        <i class="bi bi-x-circle-fill text-danger cursor-pointer ms-1" onclick="borrarCategoria(${c.id}, this)" style="opacity:0.5; font-size:1.1em;"></i>
-                                    </span>
-                                `).join('')}
-                            </div>
+                            <div class="input-group mb-3"><input type="text" id="newCat" class="form-control border-0 shadow-sm" placeholder="Nueva..."><button onclick="agregarCategoria()" class="btn btn-dark shadow-sm"><i class="bi bi-plus-lg"></i></button></div>
+                            <div class="d-flex flex-wrap gap-2" id="listaCategorias">${categoriasEgresos.map(c => `<span class="badge bg-white text-dark shadow-sm py-2 px-3 rounded-pill d-flex align-items-center gap-2 cat-chip">${c.nombre} <i class="bi bi-x-circle-fill text-danger cursor-pointer ms-1" onclick="borrarCategoria(${c.id}, this)" style="opacity:0.5; font-size:1.1em;"></i></span>`).join('')}</div>
                         </div>
                     </div>
                 </div>
@@ -236,12 +212,11 @@ function renderAperturaCuenta() {
     const saldoExistente = transacciones.find(t => t.categoria === 'SALDO INICIAL');
     const valorActual = saldoExistente ? saldoExistente.monto : '';
     const fechaActual = saldoExistente ? new Date(saldoExistente.fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-    const titulo = saldoExistente ? 'Ajustar Saldo' : 'Apertura de Caja';
 
     const html = `
         <div class="card main-card mb-5 border-warning border-start border-4">
             <div class="card-body p-4 p-lg-5">
-                <div class="d-flex justify-content-between mb-4"><h5 class="text-dark fw-bold text-warning"><i class="bi bi-sliders me-2"></i>${titulo}</h5><button onclick="cargarDashboardFinanzas()" class="btn-close"></button></div>
+                <div class="d-flex justify-content-between mb-4"><h5 class="text-dark fw-bold text-warning"><i class="bi bi-sliders me-2"></i>Apertura de Caja</h5><button onclick="cargarDashboardFinanzas()" class="btn-close"></button></div>
                 <form id="formApertura">
                     <div class="row g-4">
                         <div class="col-md-6"><label class="form-label fw-bold small text-muted">MONTO INICIAL</label><input type="number" step="0.01" id="montoApertura" class="form-control form-control-lg fw-bold" value="${valorActual}" required></div>
@@ -269,8 +244,13 @@ function renderAperturaCuenta() {
 function renderRegistrarIngreso() {
     const tal = talonariosIngreso.find(t => t.activo);
     const siguienteSugerido = tal ? tal.actual + 1 : '';
+    
+    // Generar opciones desde la lista de miembros REAL
     let optsMiembros = '<option value="">-- Seleccionar --</option>';
-    if (typeof miembrosActuales !== 'undefined') miembrosActuales.forEach(m => optsMiembros += `<option value="${m.nombre}">${m.nombre}</option>`);
+    if (miembrosActuales && miembrosActuales.length > 0) {
+        miembrosActuales.forEach(m => optsMiembros += `<option value="${m.nombre}">${m.nombre}</option>`);
+    }
+    
     let optsCultos = tiposCultos.map(c => `<option value="${c}">${c}</option>`).join('');
 
     const html = `
@@ -398,21 +378,103 @@ function setupValidacionRecibo(tal, iId, fId, bId) {
     });
 }
 
+// --- NUEVO TALONARIO (HTML CORREGIDO PARA MODAL BONITO) ---
 async function nuevoTalonario(tipo) {
-    const { value: f } = await Swal.fire({ title: `Nuevo (${tipo})`, html: `<input id="sw-nom" class="swal2-input" placeholder="Nombre"><div class="row g-2"><div class="col-6"><input id="sw-ini" type="number" class="swal2-input" placeholder="Inicio"></div><div class="col-6"><input id="sw-fin" type="number" class="swal2-input" placeholder="Fin"></div></div>`, focusConfirm: false, preConfirm: () => [document.getElementById('sw-nom').value, document.getElementById('sw-ini').value, document.getElementById('sw-fin').value] });
-    if (f && f[0]) { try { await authFetch('/api/finanzas/talonarios', { method: 'POST', body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]), actual: parseInt(f[1])-1, tipo: tipo }) }); renderConfigFinanzas(); const d = await authFetch('/api/finanzas/datos'); const mapped = d.talonarios.map(t => ({...t, inicio: t.rango_inicio, fin: t.rango_fin, usados: []})); talonariosIngreso = mapped.filter(t => t.tipo === 'ingreso'); talonariosEgreso = mapped.filter(t => t.tipo === 'egreso'); renderConfigFinanzas(); } catch (e) { Swal.fire('Error', e.message, 'error'); } }
+    const { value: f } = await Swal.fire({
+        title: `Nuevo Talonario (${tipo})`,
+        html: `
+            <div class="container-fluid text-start">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nombre</label>
+                    <input id="sw-nom" class="form-control" placeholder="Ej: Serie A 2026">
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Inicio</label>
+                        <input id="sw-ini" type="number" class="form-control" placeholder="1">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Fin</label>
+                        <input id="sw-fin" type="number" class="form-control" placeholder="100">
+                    </div>
+                </div>
+            </div>
+        `,
+        focusConfirm: false,
+        preConfirm: () => [document.getElementById('sw-nom').value, document.getElementById('sw-ini').value, document.getElementById('sw-fin').value]
+    });
+
+    if (f && f[0]) {
+        try { 
+            await authFetch('/api/finanzas/talonarios', { 
+                method: 'POST', 
+                body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]), actual: parseInt(f[1])-1, tipo: tipo }) 
+            }); 
+            // Recargar Todo para que se vea el cambio
+            cargarDashboardFinanzas();
+            // Ir directo a config
+            setTimeout(renderConfigFinanzas, 500); 
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
+    }
 }
 
 async function editarTalonario(tipo, idx) {
     const lista = tipo === 'ingreso' ? talonariosIngreso : talonariosEgreso; const t = lista[idx];
-    const { value: f } = await Swal.fire({ title: 'Editar', html: `<div class="text-start"><label class="small fw-bold">Nombre</label><input id="e-nom" class="swal2-input m-0 w-100 mb-3" value="${t.nombre}"><div class="row g-2"><div class="col-6"><label class="small fw-bold">Inicio</label><input id="e-ini" type="number" class="swal2-input m-0 w-100" value="${t.inicio}"></div><div class="col-6"><label class="small fw-bold">Fin</label><input id="e-fin" type="number" class="swal2-input m-0 w-100" value="${t.fin}"></div></div></div>`, focusConfirm: false, preConfirm: () => [document.getElementById('e-nom').value, document.getElementById('e-ini').value, document.getElementById('e-fin').value] });
+    const { value: f } = await Swal.fire({
+        title: 'Editar Rango',
+        html: `
+            <div class="text-start">
+                <label class="small fw-bold">Nombre</label><input id="e-nom" class="form-control mb-3" value="${t.nombre}">
+                <div class="row g-2">
+                    <div class="col-6"><label class="small fw-bold">Inicio</label><input id="e-ini" type="number" class="form-control" value="${t.inicio}"></div>
+                    <div class="col-6"><label class="small fw-bold">Fin</label><input id="e-fin" type="number" class="form-control" value="${t.fin}"></div>
+                </div>
+            </div>`,
+        focusConfirm: false,
+        preConfirm: () => [document.getElementById('e-nom').value, document.getElementById('e-ini').value, document.getElementById('e-fin').value]
+    });
     if (f && f[0]) { try { await authFetch(`/api/finanzas/talonarios/${t.id}`, { method: 'PUT', body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]) }) }); t.nombre = f[0]; t.inicio = parseInt(f[1]); t.fin = parseInt(f[2]); renderConfigFinanzas(); } catch (e) { Swal.fire('Error', e.message, 'error'); } }
 }
 
-async function activarTalonario(id, tipo) { await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'PUT', body: JSON.stringify({ activo: true, tipo: tipo }) }); cargarDashboardFinanzas(); }
-async function borrarTalonario(id) { Swal.fire({ title: '¿Borrar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then(async (r) => { if (r.isConfirmed) { await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'DELETE' }); cargarDashboardFinanzas(); } }); }
+async function activarTalonario(id, tipo) { await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'PUT', body: JSON.stringify({ activo: true, tipo: tipo }) }); cargarDashboardFinanzas(); setTimeout(renderConfigFinanzas, 500); }
+async function borrarTalonario(id) { Swal.fire({ title: '¿Borrar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then(async (r) => { if (r.isConfirmed) { await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'DELETE' }); cargarDashboardFinanzas(); setTimeout(renderConfigFinanzas, 500); } }); }
 async function agregarCategoria() { const v = document.getElementById('newCat').value; if (v) { await authFetch('/api/finanzas/categorias', { method: 'POST', body: JSON.stringify({ nombre: v }) }); const d = await authFetch('/api/finanzas/datos'); categoriasEgresos = d.categorias; renderConfigFinanzas(); } }
 async function borrarCategoria(id, el) { el.closest('.cat-chip').classList.add('leaving'); setTimeout(async () => { await authFetch(`/api/finanzas/categorias/${id}`, { method: 'DELETE' }); const d = await authFetch('/api/finanzas/datos'); categoriasEgresos = d.categorias; renderConfigFinanzas(); }, 200); }
-async function agregarMiembroRapido() { const { value: n } = await Swal.fire({ title: 'Nuevo Donante', input: 'text', showCancelButton: true }); if (n) { miembrosActuales.push({ nombre: n }); const s = document.getElementById('miembroIngreso'); const o = document.createElement("option"); o.text = n; o.value = n; o.selected = true; s.add(o); } }
+
+// --- AGREGAR MIEMBRO Y GUARDAR EN BD ---
+async function agregarMiembroRapido() {
+    const { value: n } = await Swal.fire({ title: 'Nuevo Donante', input: 'text', showCancelButton: true });
+    if (n) {
+        try {
+            // Guardar en la Base de Datos usando el API existente
+            // Enviamos datos dummy para los campos requeridos por tu server
+            await authFetch('/api/miembros', {
+                method: 'POST',
+                body: JSON.stringify({
+                    nombre: n,
+                    fecha_nacimiento: '2000-01-01', // Dummy
+                    congregacion: 'General', // Dummy
+                    bautizado: false,
+                    confirmado: false
+                })
+            });
+
+            // Actualizar lista local y Select
+            miembrosActuales.push({ nombre: n });
+            const s = document.getElementById('miembroIngreso');
+            const o = document.createElement("option");
+            o.text = n;
+            o.value = n;
+            o.selected = true;
+            s.add(o);
+
+            Swal.fire({ icon: 'success', title: 'Guardado', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+
+        } catch (e) {
+            Swal.fire('Error', 'No se pudo guardar el miembro: ' + e.message, 'error');
+        }
+    }
+}
+
 function calcularSaldo() { saldoActual = 0; transacciones.forEach(t => { if (t.tipo === 'ingreso') saldoActual += parseFloat(t.monto); else saldoActual -= parseFloat(t.monto); }); }
 function generarFilasTabla() { if (!transacciones.length) return '<tr><td colspan="5" class="text-center py-5 text-muted">Sin movimientos</td></tr>'; return transacciones.map(t => { const esIng = t.tipo === 'ingreso'; let bdg = '-'; if (t.recibo_no === 'APERTURA') bdg = '<span class="badge bg-warning text-dark border-0">APERTURA</span>'; else if (t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') bdg = `<span class="badge bg-light text-dark border fw-normal">#${t.recibo_no}</span>`; return `<tr><td data-label="Fecha"><small class="fw-bold text-muted">${formatoFecha(t.fecha)}</small></td><td data-label="Recibo">${bdg}</td><td data-label="Cat"><span class="badge rounded-pill ${esIng ? 'bg-success' : 'bg-danger'} bg-opacity-10 ${esIng ? 'text-success' : 'text-danger'} border border-opacity-25 fw-normal px-3">${t.categoria}</span></td><td data-label="Desc"><span class="d-inline-block text-truncate" style="max-width:200px" title="${t.descripcion}">${t.descripcion}</span></td><td data-label="Monto" class="text-end"><span class="fw-bold ${esIng ? 'text-success' : 'text-danger'} fs-6">${esIng ? '+' : '-'} ${formatoMoneda(t.monto)}</span></td></tr>`; }).join(''); }
