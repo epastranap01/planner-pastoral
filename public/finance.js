@@ -1,5 +1,5 @@
-// finance.js - Módulo Financiero v9 (Campos Dinámicos y Edición Rangos)
-console.log("Cargando Módulo Financiero v9...");
+// finance.js - Módulo Financiero v10 (Formateado y Corregido)
+console.log("Cargando Módulo Financiero v10...");
 
 // --- VARIABLES GLOBALES ---
 let talonariosIngreso = [];
@@ -11,6 +11,7 @@ const tiposCultos = ['Culto Dominical', 'Escuela Dominical', 'Culto de Oración'
 
 // --- FORMATOS ---
 const formatoMoneda = (monto) => new Intl.NumberFormat('es-HN', { style: 'currency', currency: 'HNL' }).format(monto);
+
 const formatoFecha = (fechaStr) => {
     if (!fechaStr) return '-';
     const fecha = new Date(fechaStr);
@@ -58,12 +59,15 @@ async function cargarDashboardFinanzas() {
         transacciones = data.transacciones;
         categoriasEgresos = data.categorias;
         
+        // Mapear talonarios desde DB
         const todosTalonarios = data.talonarios.map(t => ({
             ...t,
-            inicio: t.rango_inicio, fin: t.rango_fin,
+            inicio: t.rango_inicio, 
+            fin: t.rango_fin,
             usados: []
         }));
 
+        // Calcular números usados
         todosTalonarios.forEach(tal => {
             const tipoTx = tal.tipo === 'egreso' ? 'egreso' : 'ingreso';
             const recibos = transacciones
@@ -153,6 +157,7 @@ function renderAperturaCuenta() {
             </div>
         </div>`;
     document.getElementById('vistaFinanzas').innerHTML = html;
+
     document.getElementById('formApertura').addEventListener('submit', async (e) => {
         e.preventDefault();
         try {
@@ -166,12 +171,14 @@ function renderAperturaCuenta() {
     });
 }
 
-// --- REGISTRAR INGRESO (DINÁMICO) ---
+// --- REGISTRAR INGRESO ---
 function renderRegistrarIngreso() {
     const tal = talonariosIngreso.find(t => t.activo);
     const siguienteSugerido = tal ? tal.actual + 1 : '';
+    
     let optsMiembros = '<option value="">-- Seleccionar / Anónimo --</option>';
     if (typeof miembrosActuales !== 'undefined') miembrosActuales.forEach(m => optsMiembros += `<option value="${m.nombre}">${m.nombre}</option>`);
+    
     let optsCultos = tiposCultos.map(c => `<option value="${c}">${c}</option>`).join('');
 
     const html = `
@@ -209,7 +216,7 @@ function renderRegistrarIngreso() {
     document.getElementById('vistaFinanzas').innerHTML = html;
     
     setupValidacionRecibo(tal, 'numRecibo', 'reciboFeedback', 'btnGuardarIngreso');
-    toggleCamposIngreso('Ofrenda'); // Inicializar estado
+    toggleCamposIngreso('Ofrenda'); // Inicializar estado visualmente
 
     document.getElementById('formIngreso').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -221,10 +228,10 @@ function renderRegistrarIngreso() {
         const miembro = document.getElementById('miembroIngreso').value;
         let desc = "";
 
-        // Lógica de descripción según reglas
+        // Regla: Ofrenda/Actividad -> Culto. Diezmo/Donacion -> Donante.
         if (tipo === 'Ofrenda' || tipo === 'Actividad') {
             desc = (tipo === 'Actividad') ? 'Actividad: ' : '';
-            desc += culto; // Usamos el culto/evento como descripción
+            desc += culto; 
         } else {
             desc = tipo;
             if (miembro) desc += ` - ${miembro}`;
@@ -383,13 +390,14 @@ function renderConfigFinanzas() {
     document.getElementById('vistaFinanzas').innerHTML = html;
 }
 
-// --- LOGICA ---
+// --- LOGICA INTERACTIVA ---
+
 function toggleCamposIngreso(val) {
     const divCultos = document.getElementById('divCultos');
     const divDonante = document.getElementById('divDonante');
     if (val === 'Ofrenda' || val === 'Actividad') {
         divCultos.style.display = 'block';
-        divDonante.style.display = 'none'; // Regla del usuario: Quitar Donante
+        divDonante.style.display = 'none';
     } else {
         divCultos.style.display = 'none';
         document.getElementById('selectCulto').value = 'General';
@@ -400,12 +408,29 @@ function toggleCamposIngreso(val) {
 async function nuevoTalonario(tipo) {
     const { value: f } = await Swal.fire({
         title: `Nuevo (${tipo})`,
-        html: `<input id="sw-nom" class="swal2-input" placeholder="Nombre (Ej: Serie B)"><div class="row g-2"><div class="col-6"><input id="sw-ini" type="number" class="swal2-input" placeholder="Inicio"></div><div class="col-6"><input id="sw-fin" type="number" class="swal2-input" placeholder="Fin"></div></div>`,
+        html: `
+            <input id="sw-nom" class="swal2-input" placeholder="Nombre (Ej: Serie B)">
+            <div class="row g-2">
+                <div class="col-6"><input id="sw-ini" type="number" class="swal2-input" placeholder="Inicio"></div>
+                <div class="col-6"><input id="sw-fin" type="number" class="swal2-input" placeholder="Fin"></div>
+            </div>`,
         focusConfirm: false,
         preConfirm: () => [document.getElementById('sw-nom').value, document.getElementById('sw-ini').value, document.getElementById('sw-fin').value]
     });
     if (f && f[0]) {
-        try { await authFetch('/api/finanzas/talonarios', { method: 'POST', body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]), actual: parseInt(f[1])-1, tipo: tipo }) }); renderConfigFinanzas(); } catch (e) { Swal.fire('Error', e.message, 'error'); }
+        try { 
+            await authFetch('/api/finanzas/talonarios', { 
+                method: 'POST', 
+                body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]), actual: parseInt(f[1])-1, tipo: tipo }) 
+            }); 
+            renderConfigFinanzas(); 
+            // Recargamos datos para actualizar listas
+            const data = await authFetch('/api/finanzas/datos');
+            const mapped = data.talonarios.map(t => ({...t, inicio: t.rango_inicio, fin: t.rango_fin, usados: []}));
+            talonariosIngreso = mapped.filter(t => t.tipo === 'ingreso');
+            talonariosEgreso = mapped.filter(t => t.tipo === 'egreso');
+            renderConfigFinanzas();
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
     }
 }
 
@@ -422,7 +447,7 @@ async function editarTalonario(tipo, idx) {
                     <div class="col-6"><label class="small fw-bold">Inicio</label><input id="edit-ini" type="number" class="swal2-input m-0 w-100" value="${t.inicio}"></div>
                     <div class="col-6"><label class="small fw-bold">Fin</label><input id="edit-fin" type="number" class="swal2-input m-0 w-100" value="${t.fin}"></div>
                 </div>
-                <div class="alert alert-warning mt-3 p-2 small"><i class="bi bi-exclamation-triangle me-1"></i> Precaución: Cambiar los rangos no altera los recibos ya emitidos, pero puede causar conflictos si se solapan.</div>
+                <div class="alert alert-warning mt-3 p-2 small"><i class="bi bi-exclamation-triangle me-1"></i> Cuidado: Cambiar los rangos puede afectar el control de recibos.</div>
             </div>`,
         focusConfirm: false,
         preConfirm: () => [document.getElementById('edit-nom').value, document.getElementById('edit-ini').value, document.getElementById('edit-fin').value]
@@ -434,16 +459,126 @@ async function editarTalonario(tipo, idx) {
                 method: 'PUT',
                 body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]) })
             });
+            // Actualización local rápida
+            t.nombre = f[0];
+            t.inicio = parseInt(f[1]);
+            t.fin = parseInt(f[2]);
             renderConfigFinanzas();
         } catch (e) { Swal.fire('Error', e.message, 'error'); }
     }
 }
 
-async function activarTalonario(id, tipo) { await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'PUT', body: JSON.stringify({ activo: true, tipo: tipo }) }); renderConfigFinanzas(); }
-async function borrarTalonario(id) { Swal.fire({ title: '¿Borrar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then(async (r) => { if (r.isConfirmed) { await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'DELETE' }); renderConfigFinanzas(); } }); }
-function setupValidacionRecibo(tal, iId, fId, bId) { const inp=document.getElementById(iId), f=document.getElementById(fId), b=document.getElementById(bId); inp.addEventListener('input', ()=>{ if(!tal)return; const v=parseInt(inp.value); inp.classList.remove('is-invalid','is-valid'); b.disabled=false; if(isNaN(v)){f.innerHTML='';return;} if(v<tal.inicio||v>tal.fin){inp.classList.add('is-invalid');f.innerHTML='Fuera rango';f.className='validation-msg text-danger text-end';b.disabled=true;}else if(tal.usados.includes(v)){inp.classList.add('is-invalid');f.innerHTML='Ya usado';f.className='validation-msg text-danger text-end';b.disabled=true;}else{inp.classList.add('is-valid');f.innerHTML='OK';f.className='validation-msg text-success text-end';} }); }
-async function agregarCategoria() { const v=document.getElementById('newCat').value; if(v){ await authFetch('/api/finanzas/categorias', {method:'POST',body:JSON.stringify({nombre:v})}); renderConfigFinanzas(); } }
-async function borrarCategoria(id, el) { el.closest('.cat-chip').classList.add('leaving'); setTimeout(async()=>{ await authFetch(`/api/finanzas/categorias/${id}`, {method:'DELETE'}); renderConfigFinanzas(); },300); }
-async function agregarMiembroRapido(){const{value:n}=await Swal.fire({title:'Nuevo',input:'text',showCancelButton:true});if(n){miembrosActuales.push({nombre:n});const s=document.getElementById('miembroIngreso');const o=document.createElement("option");o.text=n;o.value=n;o.selected=true;s.add(o);}}
-function calcularSaldo(){saldoActual=0;transacciones.forEach(t=>{if(t.tipo==='ingreso')saldoActual+=parseFloat(t.monto);else saldoActual-=parseFloat(t.monto);});}
-function generarFilasTabla(){if(!transacciones.length)return'<tr><td colspan="5" class="text-center py-5 text-muted">Sin movimientos</td></tr>';return transacciones.map(t=>{const esIng=t.tipo==='ingreso';let bdg='-';if(t.recibo_no==='APERTURA')bdg='<span class="badge bg-warning text-dark border-0">APERTURA</span>';else if(t.recibo_no&&t.recibo_no!=='S/N'&&t.recibo_no!=='-')bdg=`<span class="badge bg-light text-dark border fw-normal">#${t.recibo_no}</span>`;return`<tr><td data-label="Fecha"><small class="fw-bold text-muted">${formatoFecha(t.fecha)}</small></td><td data-label="Recibo">${bdg}</td><td data-label="Cat"><span class="badge rounded-pill ${esIng?'bg-success':'bg-danger'} bg-opacity-10 ${esIng?'text-success':'text-danger'} border border-opacity-25 fw-normal px-3">${t.categoria}</span></td><td data-label="Desc"><span class="d-inline-block text-truncate" style="max-width:200px" title="${t.descripcion}">${t.descripcion}</span></td><td data-label="Monto" class="text-end"><span class="fw-bold ${esIng?'text-success':'text-danger'} fs-6">${esIng?'+':'-'} ${formatoMoneda(t.monto)}</span></td></tr>`;}).join('');}
+async function activarTalonario(id, tipo) {
+    await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'PUT', body: JSON.stringify({ activo: true, tipo: tipo }) });
+    
+    // Recargar todo para asegurar consistencia
+    cargarDashboardFinanzas();
+}
+
+async function borrarTalonario(id) {
+    Swal.fire({ title: '¿Borrar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then(async (r) => { 
+        if (r.isConfirmed) { 
+            await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'DELETE' }); 
+            cargarDashboardFinanzas(); 
+        } 
+    });
+}
+
+function setupValidacionRecibo(tal, iId, fId, bId) {
+    const inp = document.getElementById(iId);
+    const f = document.getElementById(fId);
+    const b = document.getElementById(bId);
+
+    inp.addEventListener('input', () => {
+        if (!tal) return;
+        const v = parseInt(inp.value);
+        inp.classList.remove('is-invalid', 'is-valid');
+        b.disabled = false;
+
+        if (isNaN(v)) {
+            f.innerHTML = '';
+            return;
+        }
+
+        if (v < tal.inicio || v > tal.fin) {
+            inp.classList.add('is-invalid');
+            f.innerHTML = 'Fuera rango';
+            f.className = 'validation-msg text-danger text-end';
+            b.disabled = true;
+        } else if (tal.usados.includes(v)) {
+            inp.classList.add('is-invalid');
+            f.innerHTML = 'Ya usado';
+            f.className = 'validation-msg text-danger text-end';
+            b.disabled = true;
+        } else {
+            inp.classList.add('is-valid');
+            f.innerHTML = 'OK';
+            f.className = 'validation-msg text-success text-end';
+        }
+    });
+}
+
+async function agregarCategoria() {
+    const v = document.getElementById('newCat').value;
+    if (v) {
+        await authFetch('/api/finanzas/categorias', { method: 'POST', body: JSON.stringify({ nombre: v }) });
+        
+        // Recargar categorías
+        const data = await authFetch('/api/finanzas/datos');
+        categoriasEgresos = data.categorias;
+        renderConfigFinanzas();
+    }
+}
+
+async function borrarCategoria(id, el) {
+    el.closest('.cat-chip').classList.add('leaving');
+    setTimeout(async () => {
+        await authFetch(`/api/finanzas/categorias/${id}`, { method: 'DELETE' });
+        // Recargar categorías
+        const data = await authFetch('/api/finanzas/datos');
+        categoriasEgresos = data.categorias;
+        renderConfigFinanzas();
+    }, 300);
+}
+
+async function agregarMiembroRapido() {
+    const { value: n } = await Swal.fire({ title: 'Nuevo', input: 'text', showCancelButton: true });
+    if (n) {
+        // Idealmente guardar en BD Miembros
+        if (typeof miembrosActuales !== 'undefined') miembrosActuales.push({ nombre: n });
+        const s = document.getElementById('miembroIngreso');
+        const o = document.createElement("option");
+        o.text = n;
+        o.value = n;
+        o.selected = true;
+        s.add(o);
+    }
+}
+
+function calcularSaldo() {
+    saldoActual = 0;
+    transacciones.forEach(t => {
+        if (t.tipo === 'ingreso') saldoActual += parseFloat(t.monto);
+        else saldoActual -= parseFloat(t.monto);
+    });
+}
+
+function generarFilasTabla() {
+    if (!transacciones.length) return '<tr><td colspan="5" class="text-center py-5 text-muted">Sin movimientos</td></tr>';
+    
+    return transacciones.map(t => {
+        const esIng = t.tipo === 'ingreso';
+        let bdg = '-';
+        
+        if (t.recibo_no === 'APERTURA') bdg = '<span class="badge bg-warning text-dark border-0">APERTURA</span>';
+        else if (t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') bdg = `<span class="badge bg-light text-dark border fw-normal">#${t.recibo_no}</span>`;
+        
+        return `<tr>
+            <td data-label="Fecha"><small class="fw-bold text-muted">${formatoFecha(t.fecha)}</small></td>
+            <td data-label="Recibo">${bdg}</td>
+            <td data-label="Cat"><span class="badge rounded-pill ${esIng ? 'bg-success' : 'bg-danger'} bg-opacity-10 ${esIng ? 'text-success' : 'text-danger'} border border-opacity-25 fw-normal px-3">${t.categoria}</span></td>
+            <td data-label="Desc"><span class="d-inline-block text-truncate" style="max-width:200px" title="${t.descripcion}">${t.descripcion}</span></td>
+            <td data-label="Monto" class="text-end"><span class="fw-bold ${esIng ? 'text-success' : 'text-danger'} fs-6">${esIng ? '+' : '-'} ${formatoMoneda(t.monto)}</span></td>
+        </tr>`;
+    }).join('');
+}
