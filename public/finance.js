@@ -1,12 +1,12 @@
-// finance.js - Módulo Financiero v13 (Estable, Legible y Reparado)
-console.log("Cargando Módulo Financiero v13...");
+// finance.js - Módulo Financiero v14 (Variable Renombrada Anti-Conflicto)
+console.log("Cargando Módulo Financiero v14...");
 
 // --- VARIABLES GLOBALES ---
 let talonariosIngreso = [];
 let talonariosEgreso = [];
 let categoriasEgresos = [];
 let transacciones = [];
-let miembrosActuales = []; 
+let miembrosFinanzas = []; // <--- RENOMBRADO PARA EVITAR ERROR EN CONSOLA
 let saldoActual = 0;
 const tiposCultos = ['Culto Dominical', 'Escuela Dominical', 'Culto de Oración', 'Culto de Enseñanza', 'Reunión de Jóvenes', 'Reunión de Damas', 'Vigilia'];
 
@@ -34,6 +34,8 @@ try {
         .ticket-egreso { border-left-color: #dc3545; }
         .nav-pills .nav-link.active { background-color: #0d6efd; box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2); }
         .validation-msg { font-size: 0.75rem; font-weight: 600; margin-top: 4px; }
+        /* Ajuste Modal SweetAlert */
+        div:where(.swal2-container) div:where(.swal2-popup) { font-size: 0.9rem !important; }
     `;
     document.head.appendChild(styleSheet);
 } catch (e) {
@@ -60,7 +62,7 @@ async function authFetch(url, options = {}) {
 // --- CARGA INICIAL ---
 async function cargarDashboardFinanzas() {
     const contenedor = document.getElementById('vistaFinanzas');
-    if (!contenedor) return; // Protección por si no existe el div
+    if (!contenedor) return; 
     
     contenedor.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Cargando sistema...</p></div>';
 
@@ -73,7 +75,7 @@ async function cargarDashboardFinanzas() {
 
         transacciones = dataFinanzas.transacciones;
         categoriasEgresos = dataFinanzas.categorias;
-        miembrosActuales = dataMiembros;
+        miembrosFinanzas = dataMiembros; // <--- USAMOS LA VARIABLE RENOMBRADA
 
         const todosTalonarios = dataFinanzas.talonarios.map(t => ({
             ...t, inicio: t.rango_inicio, fin: t.rango_fin, usados: []
@@ -253,9 +255,10 @@ function renderRegistrarIngreso() {
     const tal = talonariosIngreso.find(t => t.activo);
     const siguienteSugerido = tal ? tal.actual + 1 : '';
     
+    // Generar opciones desde la lista de miembros RENOMBRADA
     let optsMiembros = '<option value="">-- Seleccionar --</option>';
-    if (miembrosActuales && miembrosActuales.length > 0) {
-        miembrosActuales.forEach(m => optsMiembros += `<option value="${m.nombre}">${m.nombre}</option>`);
+    if (miembrosFinanzas && miembrosFinanzas.length > 0) { // <--- USAMOS LA NUEVA VARIABLE
+        miembrosFinanzas.forEach(m => optsMiembros += `<option value="${m.nombre}">${m.nombre}</option>`);
     }
     
     let optsCultos = tiposCultos.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -522,6 +525,7 @@ async function borrarCategoria(id, el) {
     }, 200); 
 }
 
+// --- AGREGAR MIEMBRO Y GUARDAR EN BD ---
 async function agregarMiembroRapido() {
     const { value: n } = await Swal.fire({ title: 'Nuevo Donante', input: 'text', showCancelButton: true });
     if (n) {
@@ -538,8 +542,9 @@ async function agregarMiembroRapido() {
                 })
             });
 
-            // Actualizar lista local
-            miembrosActuales.push({ nombre: n });
+            // Actualizar lista local usando la NUEVA variable para que aparezca al instante
+            miembrosFinanzas.push({ nombre: n }); // <--- AQUÍ SE AGREGA AL ARRAY LOCAL
+            
             const s = document.getElementById('miembroIngreso');
             const o = document.createElement("option");
             o.text = n;
