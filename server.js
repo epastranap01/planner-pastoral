@@ -189,6 +189,26 @@ app.post('/api/finanzas/transacciones', verificarToken, async (req, res) => {
         res.json(result.rows[0]);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
+// 2.1. Editar Transacción (NUEVO)
+app.put('/api/finanzas/transacciones/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
+    
+    const { id } = req.params;
+    const { fecha, categoria, descripcion, monto, recibo_no, comulgantes } = req.body;
+    
+    try {
+        const result = await client.query(
+            'UPDATE finanzas_transacciones SET fecha=$1, categoria=$2, descripcion=$3, monto=$4, recibo_no=$5, comulgantes=$6 WHERE id=$7 RETURNING *',
+            [fecha, categoria, descripcion, monto, recibo_no, comulgantes || 0, id]
+        );
+        
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Transacción no encontrada' });
+        
+        res.json({ message: 'Transacción actualizada', transaccion: result.rows[0] });
+    } catch (err) { 
+        res.status(500).json({ error: err.message }); 
+    }
+});
 
 // 3. Gestión de Talonarios (ACTUALIZADO)
 app.post('/api/finanzas/talonarios', verificarToken, async (req, res) => {

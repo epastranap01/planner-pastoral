@@ -1,5 +1,5 @@
-// finance.js - Módulo Financiero v15 (Con Comulgantes 👥)
-console.log("Cargando Módulo Financiero v15...");
+// finance.js - Módulo Financiero v16 (Columna Comulgantes y Edición)
+console.log("Cargando Módulo Financiero v16...");
 
 // --- VARIABLES GLOBALES ---
 let talonariosIngreso = [];
@@ -35,6 +35,10 @@ try {
         .nav-pills .nav-link.active { background-color: #0d6efd; box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2); }
         .validation-msg { font-size: 0.75rem; font-weight: 600; margin-top: 4px; }
         div:where(.swal2-container) div:where(.swal2-popup) { font-size: 0.9rem !important; }
+        
+        /* Estilos Tabla Mejorada */
+        .col-comulgantes { width: 100px; text-align: center; }
+        .col-acciones { width: 100px; text-align: center; }
     `;
     document.head.appendChild(styleSheet);
 } catch (e) { console.error("Error estilos:", e); }
@@ -130,11 +134,13 @@ function renderizarVistaPrincipal() {
                     <table class="table table-custom table-hover align-middle">
                         <thead class="bg-light">
                             <tr>
-                                <th style="width: 15%;">Fecha</th>
-                                <th style="width: 10%;">Recibo</th>
-                                <th style="width: 20%;">Categoría</th>
-                                <th style="width: 35%;">Descripción</th>
-                                <th style="width: 20%; text-align: right;">Monto</th>
+                                <th style="width: 12%;" class="small text-muted fw-bold">FECHA</th>
+                                <th style="width: 10%;" class="small text-muted fw-bold">RECIBO</th>
+                                <th style="width: 15%;" class="small text-muted fw-bold">CATEGORÍA</th>
+                                <th style="width: 25%;" class="small text-muted fw-bold">DESCRIPCIÓN</th>
+                                <th style="width: 10%; text-align:center;" class="small text-muted fw-bold">COMULG.</th>
+                                <th style="width: 18%; text-align: right;" class="small text-muted fw-bold">MONTO</th>
+                                <th style="width: 10%; text-align: center;" class="small text-muted fw-bold">ACCIONES</th>
                             </tr>
                         </thead>
                         <tbody class="fs-6 border-top-0">${generarFilasTabla()}</tbody>
@@ -143,6 +149,106 @@ function renderizarVistaPrincipal() {
             </div>
         </div>`;
     contenedor.innerHTML = html;
+}
+
+// --- TABLA Y FILAS ---
+function generarFilasTabla() { 
+    if (!transacciones.length) return '<tr><td colspan="7" class="text-center py-5 text-muted">Sin movimientos</td></tr>'; 
+    
+    return transacciones.map((t, index) => { 
+        const esIng = t.tipo === 'ingreso'; 
+        let bdg = '-'; 
+        if (t.recibo_no === 'APERTURA') bdg = '<span class="badge bg-warning text-dark border-0">INICIO</span>'; 
+        else if (t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') bdg = `<span class="badge bg-light text-dark border fw-normal">#${t.recibo_no}</span>`; 
+        
+        // Columna Comulgantes (Mostrar solo si > 0)
+        const comulgantesVal = (t.comulgantes && t.comulgantes > 0) ? `<span class="badge bg-info bg-opacity-10 text-dark border border-info">${t.comulgantes}</span>` : '<span class="text-muted">-</span>';
+
+        // Objeto JSON safe para pasar al botón editar
+        const tSafe = encodeURIComponent(JSON.stringify(t));
+
+        return `<tr>
+            <td class="text-nowrap"><small class="fw-bold text-muted">${formatoFecha(t.fecha)}</small></td>
+            <td>${bdg}</td>
+            <td><span class="badge rounded-pill ${esIng ? 'bg-success' : 'bg-danger'} bg-opacity-10 ${esIng ? 'text-success' : 'text-danger'} border border-opacity-25 fw-normal px-2">${t.categoria}</span></td>
+            <td><span class="d-inline-block text-truncate" style="max-width:200px" title="${t.descripcion}">${t.descripcion}</span></td>
+            <td class="text-center">${comulgantesVal}</td>
+            <td class="text-end"><span class="fw-bold ${esIng ? 'text-success' : 'text-danger'} fs-6">${esIng ? '+' : '-'} ${formatoMoneda(t.monto)}</span></td>
+            <td class="text-center">
+                <div class="btn-group">
+                    <button onclick="editarTransaccion(${index})" class="btn btn-sm btn-light border-0 text-primary" title="Editar"><i class="bi bi-pencil-square"></i></button>
+                </div>
+            </td>
+        </tr>`; 
+    }).join(''); 
+}
+
+// --- EDICIÓN DE TRANSACCIONES ---
+async function editarTransaccion(index) {
+    const t = transacciones[index];
+    const fechaISO = new Date(t.fecha).toISOString().split('T')[0];
+
+    const { value: formValues } = await Swal.fire({
+        title: 'Editar Transacción',
+        html: `
+            <div class="text-start fs-6">
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Fecha</label>
+                        <input id="sw-fecha" type="date" class="form-control" value="${fechaISO}">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Recibo / Doc #</label>
+                        <input id="sw-recibo" type="text" class="form-control" value="${t.recibo_no}">
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-bold">Categoría</label>
+                    <input id="sw-cat" type="text" class="form-control" value="${t.categoria}">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-bold">Descripción</label>
+                    <textarea id="sw-desc" class="form-control" rows="2">${t.descripcion}</textarea>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Monto (L.)</label>
+                        <input id="sw-monto" type="number" step="0.01" class="form-control fw-bold" value="${t.monto}">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-info">Comulgantes</label>
+                        <input id="sw-comu" type="number" class="form-control" value="${t.comulgantes || 0}">
+                    </div>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar Cambios',
+        focusConfirm: false,
+        preConfirm: () => {
+            return {
+                fecha: document.getElementById('sw-fecha').value,
+                recibo_no: document.getElementById('sw-recibo').value,
+                categoria: document.getElementById('sw-cat').value,
+                descripcion: document.getElementById('sw-desc').value,
+                monto: document.getElementById('sw-monto').value,
+                comulgantes: document.getElementById('sw-comu').value
+            }
+        }
+    });
+
+    if (formValues) {
+        try {
+            await authFetch(`/api/finanzas/transacciones/${t.id}`, {
+                method: 'PUT',
+                body: JSON.stringify(formValues)
+            });
+            Swal.fire({ icon: 'success', title: 'Actualizado', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            cargarDashboardFinanzas(); // Recargar tabla
+        } catch (error) {
+            Swal.fire('Error', error.message, 'error');
+        }
+    }
 }
 
 // --- CONFIGURACIÓN ---
@@ -312,7 +418,7 @@ function renderRegistrarIngreso() {
         const tipo = document.getElementById('tipoIngreso').value;
         const culto = document.getElementById('selectCulto').value;
         const miembro = document.getElementById('miembroIngreso').value;
-        const comulgantes = parseInt(document.getElementById('cantComulgantes').value) || 0; // Capturar comulgantes
+        const comulgantes = parseInt(document.getElementById('cantComulgantes').value) || 0; 
 
         let desc = (tipo === 'Ofrenda' || tipo === 'Actividad') ? ((tipo === 'Actividad' ? 'Actividad: ' : '') + culto) : (tipo + (miembro ? ` - ${miembro}` : ''));
         if (document.getElementById('detalleIngreso').value) desc += ` (${document.getElementById('detalleIngreso').value})`;
@@ -327,7 +433,7 @@ function renderRegistrarIngreso() {
                     descripcion: desc, 
                     monto: parseFloat(document.getElementById('montoIngreso').value), 
                     recibo_no: nRecibo ? String(nRecibo).padStart(6,'0') : 'S/N',
-                    comulgantes: comulgantes // Enviamos al servidor
+                    comulgantes: comulgantes 
                 }) 
             });
             if (tal && nRecibo > tal.actual) await authFetch(`/api/finanzas/talonarios/${tal.id}`, { method: 'PUT', body: JSON.stringify({ actual: nRecibo, tipo: 'ingreso' }) });
@@ -586,28 +692,4 @@ function calcularSaldo() {
         if (t.tipo === 'ingreso') saldoActual += parseFloat(t.monto); 
         else saldoActual -= parseFloat(t.monto); 
     }); 
-}
-
-function generarFilasTabla() { 
-    if (!transacciones.length) return '<tr><td colspan="5" class="text-center py-5 text-muted">Sin movimientos</td></tr>'; 
-    return transacciones.map(t => { 
-        const esIng = t.tipo === 'ingreso'; 
-        let bdg = '-'; 
-        if (t.recibo_no === 'APERTURA') bdg = '<span class="badge bg-warning text-dark border-0">APERTURA</span>'; 
-        else if (t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') bdg = `<span class="badge bg-light text-dark border fw-normal">#${t.recibo_no}</span>`; 
-        
-        // Mostrar comulgantes si existen
-        const comulgantesBadge = (t.comulgantes && t.comulgantes > 0) ? `<span class="badge bg-info text-dark ms-2" title="Comulgantes"><i class="bi bi-people-fill me-1"></i>${t.comulgantes}</span>` : '';
-
-        return `<tr>
-            <td data-label="Fecha"><small class="fw-bold text-muted">${formatoFecha(t.fecha)}</small></td>
-            <td data-label="Recibo">${bdg}</td>
-            <td data-label="Cat"><span class="badge rounded-pill ${esIng ? 'bg-success' : 'bg-danger'} bg-opacity-10 ${esIng ? 'text-success' : 'text-danger'} border border-opacity-25 fw-normal px-3">${t.categoria}</span></td>
-            <td data-label="Desc">
-                <span class="d-inline-block text-truncate" style="max-width:200px" title="${t.descripcion}">${t.descripcion}</span>
-                ${comulgantesBadge}
-            </td>
-            <td data-label="Monto" class="text-end"><span class="fw-bold ${esIng ? 'text-success' : 'text-danger'} fs-6">${esIng ? '+' : '-'} ${formatoMoneda(t.monto)}</span></td>
-        </tr>`; 
-    }).join(''); 
 }
