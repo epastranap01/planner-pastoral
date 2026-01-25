@@ -867,35 +867,75 @@ function renderAperturaCuenta() {
 }
 
 // ==========================================
-// 11. GESTIÓN TALONARIOS Y CATEGORÍAS (CRUD)
+// 11. GESTIÓN TALONARIOS Y CATEGORÍAS (CRUD MEJORADO)
 // ==========================================
 
 async function nuevoTalonario(tipo) {
+    const titulo = tipo === 'ingreso' ? 'Ingresos' : 'Egresos';
+    const color = tipo === 'ingreso' ? '#198754' : '#dc3545'; // Verde o Rojo
+
     const { value: f } = await Swal.fire({
-        title: `Nuevo Talonario (${tipo})`,
+        title: `Nuevo Talonario (${titulo})`,
+        // Usamos HTML con clases de Bootstrap para que se vea ordenado
         html: `
-            <input id="sw-nom" class="swal2-input" placeholder="Nombre (Ej: Serie A)">
-            <div class="row g-2">
-                <div class="col-6"><input id="sw-ini" type="number" class="swal2-input" placeholder="Inicio"></div>
-                <div class="col-6"><input id="sw-fin" type="number" class="swal2-input" placeholder="Fin"></div>
-            </div>`,
+            <div class="text-start fs-6">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">NOMBRE DE LA SERIE</label>
+                    <input id="sw-nom" class="form-control" placeholder="Ej: Serie A - 2026">
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-muted">INICIO</label>
+                        <input id="sw-ini" type="number" class="form-control fw-bold" placeholder="1">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-muted">FIN</label>
+                        <input id="sw-fin" type="number" class="form-control fw-bold" placeholder="100">
+                    </div>
+                </div>
+                <div class="mt-3 p-2 bg-light border rounded small text-muted">
+                    <i class="bi bi-info-circle me-1"></i> El conteo iniciará automáticamente desde el valor "Inicio".
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonColor: color,
+        confirmButtonText: 'Crear Talonario',
+        cancelButtonText: 'Cancelar',
         focusConfirm: false,
-        preConfirm: () => [document.getElementById('sw-nom').value, document.getElementById('sw-ini').value, document.getElementById('sw-fin').value]
+        preConfirm: () => {
+            const nom = document.getElementById('sw-nom').value;
+            const ini = document.getElementById('sw-ini').value;
+            const fin = document.getElementById('sw-fin').value;
+            if (!nom || !ini || !fin) {
+                Swal.showValidationMessage('Por favor completa todos los campos');
+                return false;
+            }
+            return [nom, ini, fin];
+        }
     });
 
     if (f && f[0]) {
         try { 
             await authFetch('/api/finanzas/talonarios', { 
                 method: 'POST', 
-                body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]), actual: parseInt(f[1])-1, tipo: tipo }) 
+                body: JSON.stringify({ 
+                    nombre: f[0], 
+                    inicio: parseInt(f[1]), 
+                    fin: parseInt(f[2]), 
+                    actual: parseInt(f[1])-1, // El actual empieza uno antes del inicio
+                    tipo: tipo 
+                }) 
             }); 
-            renderConfigFinanzas(); 
-            // Recarga silenciosa de datos para actualizar listas
+            
+            // Recarga completa de datos
             const d = await authFetch('/api/finanzas/datos');
             const mapped = d.talonarios.map(t => ({...t, inicio: t.rango_inicio, fin: t.rango_fin, usados: []}));
             talonariosIngreso = mapped.filter(t => t.tipo === 'ingreso');
             talonariosEgreso = mapped.filter(t => t.tipo === 'egreso');
-            renderConfigFinanzas();
+            
+            renderConfigFinanzas(); 
+            Swal.fire({ icon: 'success', title: 'Creado', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
         } catch (e) { Swal.fire('Error', e.message, 'error'); }
     }
 }
@@ -903,65 +943,141 @@ async function nuevoTalonario(tipo) {
 async function editarTalonario(tipo, idx) {
     const lista = tipo === 'ingreso' ? talonariosIngreso : talonariosEgreso;
     const t = lista[idx];
+    
     const { value: f } = await Swal.fire({
         title: 'Editar Rango',
         html: `
-            <input id="sw-nom" class="swal2-input" value="${t.nombre}">
-            <div class="row g-2">
-                <div class="col-6"><input id="sw-ini" type="number" class="swal2-input" value="${t.inicio}"></div>
-                <div class="col-6"><input id="sw-fin" type="number" class="swal2-input" value="${t.fin}"></div>
+            <div class="text-start fs-6">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">NOMBRE</label>
+                    <input id="sw-nom" class="form-control" value="${t.nombre}">
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-muted">INICIO</label>
+                        <input id="sw-ini" type="number" class="form-control" value="${t.inicio}">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-muted">FIN</label>
+                        <input id="sw-fin" type="number" class="form-control" value="${t.fin}">
+                    </div>
+                </div>
+                <div class="alert alert-warning d-flex align-items-center small p-2 mb-0" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <div>
+                        <strong>Cuidado:</strong> Modificar los rangos puede afectar la validación de recibos ya emitidos.
+                    </div>
+                </div>
             </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar Cambios',
+        cancelButtonText: 'Cancelar',
+        focusConfirm: false,
         preConfirm: () => [document.getElementById('sw-nom').value, document.getElementById('sw-ini').value, document.getElementById('sw-fin').value]
     });
 
     if (f) {
-        await authFetch(`/api/finanzas/talonarios/${t.id}`, { method: 'PUT', body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]) }) });
-        t.nombre = f[0]; t.inicio = parseInt(f[1]); t.fin = parseInt(f[2]);
-        renderConfigFinanzas();
+        try {
+            await authFetch(`/api/finanzas/talonarios/${t.id}`, { 
+                method: 'PUT', 
+                body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]) }) 
+            });
+            
+            // Actualización local rápida
+            t.nombre = f[0]; 
+            t.inicio = parseInt(f[1]); 
+            t.fin = parseInt(f[2]);
+            
+            renderConfigFinanzas();
+            Swal.fire({ icon: 'success', title: 'Actualizado', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
     }
 }
 
 async function activarTalonario(id, tipo) { 
-    await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'PUT', body: JSON.stringify({ activo: true, tipo: tipo }) }); 
-    cargarDashboardFinanzas(); 
-    setTimeout(renderConfigFinanzas, 300); 
+    try {
+        await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'PUT', body: JSON.stringify({ activo: true, tipo: tipo }) }); 
+        cargarDashboardFinanzas(); 
+        // Pequeño delay para asegurar que la UI se refresque bien
+        setTimeout(renderConfigFinanzas, 300); 
+    } catch (e) { Swal.fire('Error', e.message, 'error'); }
 }
 
 async function borrarTalonario(id) { 
-    if ((await Swal.fire({ title: '¿Borrar?', icon: 'warning', showCancelButton: true })).isConfirmed) {
-        await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'DELETE' }); 
-        cargarDashboardFinanzas(); 
-        setTimeout(renderConfigFinanzas, 300);
+    const result = await Swal.fire({ 
+        title: '¿Borrar Talonario?', 
+        text: "Se perderá la configuración de rangos, pero los recibos ya emitidos se conservarán en el historial.", 
+        icon: 'warning', 
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Sí, borrar',
+        cancelButtonText: 'Cancelar'
+    });
+    
+    if (result.isConfirmed) {
+        try {
+            await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'DELETE' }); 
+            cargarDashboardFinanzas(); 
+            setTimeout(renderConfigFinanzas, 300);
+            Swal.fire({ icon: 'success', title: 'Eliminado', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
     }
 }
 
 async function agregarCategoria() { 
     const v = document.getElementById('newCat').value; 
     if (v) { 
-        await authFetch('/api/finanzas/categorias', { method: 'POST', body: JSON.stringify({ nombre: v }) }); 
-        const d = await authFetch('/api/finanzas/datos'); 
-        categoriasEgresos = d.categorias; 
-        renderConfigFinanzas(); 
+        try {
+            await authFetch('/api/finanzas/categorias', { method: 'POST', body: JSON.stringify({ nombre: v }) }); 
+            const d = await authFetch('/api/finanzas/datos'); 
+            categoriasEgresos = d.categorias; 
+            renderConfigFinanzas(); 
+            document.getElementById('newCat').value = ''; // Limpiar input
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
     } 
 }
 
 async function borrarCategoria(id, el) { 
+    // Animación visual antes de borrar
     el.closest('.cat-chip').classList.add('leaving'); 
+    
     setTimeout(async () => { 
-        await authFetch(`/api/finanzas/categorias/${id}`, { method: 'DELETE' }); 
-        const d = await authFetch('/api/finanzas/datos'); 
-        categoriasEgresos = d.categorias; 
-        renderConfigFinanzas(); 
+        try {
+            await authFetch(`/api/finanzas/categorias/${id}`, { method: 'DELETE' }); 
+            const d = await authFetch('/api/finanzas/datos'); 
+            categoriasEgresos = d.categorias; 
+            renderConfigFinanzas(); 
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
     }, 200); 
 }
 
 async function agregarMiembroRapido() {
-    const { value: n } = await Swal.fire({ title: 'Nuevo Donante', input: 'text', showCancelButton: true });
+    const { value: n } = await Swal.fire({ 
+        title: 'Nuevo Donante', 
+        input: 'text', 
+        inputPlaceholder: 'Nombre completo',
+        showCancelButton: true,
+        confirmButtonText: 'Guardar'
+    });
+    
     if (n) {
-        await authFetch('/api/miembros', { method: 'POST', body: JSON.stringify({ nombre: n, fecha_nacimiento: '2000-01-01', congregacion: 'General', bautizado: false, confirmado: false }) });
-        miembrosFinanzas.push({ nombre: n });
-        const o = document.createElement("option"); o.text = n; o.value = n; o.selected = true;
-        document.getElementById('miembroIngreso').add(o);
-        Swal.fire({ title: 'Guardado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+        try {
+            await authFetch('/api/miembros', { 
+                method: 'POST', 
+                body: JSON.stringify({ nombre: n, fecha_nacimiento: '2000-01-01', congregacion: 'General', bautizado: false, confirmado: false }) 
+            });
+            
+            miembrosFinanzas.push({ nombre: n });
+            
+            // Agregar al select activo
+            const select = document.getElementById('miembroIngreso');
+            if(select) {
+                const o = document.createElement("option"); 
+                o.text = n; o.value = n; o.selected = true;
+                select.add(o);
+            }
+            
+            Swal.fire({ title: 'Guardado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
     }
 }
