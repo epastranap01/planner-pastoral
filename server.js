@@ -210,6 +210,16 @@ app.put('/api/finanzas/transacciones/:id', verificarToken, async (req, res) => {
     }
 });
 
+// 2.2. Eliminar Transacción (NUEVO)
+app.delete('/api/finanzas/transacciones/:id', verificarToken, async (req, res) => {
+    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
+    try {
+        const result = await client.query('DELETE FROM finanzas_transacciones WHERE id = $1 RETURNING *', [req.params.id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'No encontrado' });
+        res.json({ message: 'Eliminado', eliminado: result.rows[0] });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // 3. Gestión de Talonarios (ACTUALIZADO)
 app.post('/api/finanzas/talonarios', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
