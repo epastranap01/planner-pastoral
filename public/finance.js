@@ -1,12 +1,12 @@
-// finance.js - Módulo Financiero v14 (Variable Renombrada Anti-Conflicto)
-console.log("Cargando Módulo Financiero v14...");
+// finance.js - Módulo Financiero v15 (Con Comulgantes 👥)
+console.log("Cargando Módulo Financiero v15...");
 
 // --- VARIABLES GLOBALES ---
 let talonariosIngreso = [];
 let talonariosEgreso = [];
 let categoriasEgresos = [];
 let transacciones = [];
-let miembrosFinanzas = []; // <--- RENOMBRADO PARA EVITAR ERROR EN CONSOLA
+let miembrosFinanzas = []; 
 let saldoActual = 0;
 const tiposCultos = ['Culto Dominical', 'Escuela Dominical', 'Culto de Oración', 'Culto de Enseñanza', 'Reunión de Jóvenes', 'Reunión de Damas', 'Vigilia'];
 
@@ -21,7 +21,7 @@ const formatoFecha = (fechaStr) => {
     return fechaCorregida.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '').toUpperCase().replace(/ /g, '-');
 };
 
-// --- ESTILOS VISUALES (Inyectados con seguridad) ---
+// --- ESTILOS VISUALES ---
 try {
     const styleSheet = document.createElement("style");
     styleSheet.innerText = `
@@ -34,13 +34,10 @@ try {
         .ticket-egreso { border-left-color: #dc3545; }
         .nav-pills .nav-link.active { background-color: #0d6efd; box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2); }
         .validation-msg { font-size: 0.75rem; font-weight: 600; margin-top: 4px; }
-        /* Ajuste Modal SweetAlert */
         div:where(.swal2-container) div:where(.swal2-popup) { font-size: 0.9rem !important; }
     `;
     document.head.appendChild(styleSheet);
-} catch (e) {
-    console.error("Error aplicando estilos de finanzas:", e);
-}
+} catch (e) { console.error("Error estilos:", e); }
 
 // --- AUTH FETCH ---
 async function authFetch(url, options = {}) {
@@ -67,7 +64,6 @@ async function cargarDashboardFinanzas() {
     contenedor.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Cargando sistema...</p></div>';
 
     try {
-        // Cargar Datos Financieros y Miembros
         const [dataFinanzas, dataMiembros] = await Promise.all([
             authFetch('/api/finanzas/datos'),
             authFetch('/api/miembros')
@@ -75,7 +71,7 @@ async function cargarDashboardFinanzas() {
 
         transacciones = dataFinanzas.transacciones;
         categoriasEgresos = dataFinanzas.categorias;
-        miembrosFinanzas = dataMiembros; // <--- USAMOS LA VARIABLE RENOMBRADA
+        miembrosFinanzas = dataMiembros;
 
         const todosTalonarios = dataFinanzas.talonarios.map(t => ({
             ...t, inicio: t.rango_inicio, fin: t.rango_fin, usados: []
@@ -250,14 +246,13 @@ function renderAperturaCuenta() {
     });
 }
 
-// --- INGRESO ---
+// --- INGRESO (CON COMULGANTES 👥) ---
 function renderRegistrarIngreso() {
     const tal = talonariosIngreso.find(t => t.activo);
     const siguienteSugerido = tal ? tal.actual + 1 : '';
     
-    // Generar opciones desde la lista de miembros RENOMBRADA
     let optsMiembros = '<option value="">-- Seleccionar --</option>';
-    if (miembrosFinanzas && miembrosFinanzas.length > 0) { // <--- USAMOS LA NUEVA VARIABLE
+    if (miembrosFinanzas && miembrosFinanzas.length > 0) {
         miembrosFinanzas.forEach(m => optsMiembros += `<option value="${m.nombre}">${m.nombre}</option>`);
     }
     
@@ -284,7 +279,20 @@ function renderRegistrarIngreso() {
                         </div>
                         <div class="col-md-6"><label class="form-label small fw-bold text-muted">TIPO</label><select class="form-select" id="tipoIngreso" onchange="toggleCamposIngreso(this.value)"><option value="Ofrenda">Ofrenda</option><option value="Diezmo">Diezmo</option><option value="Actividad">Actividad</option><option value="Donacion">Donación</option></select></div>
                         <div class="col-md-6"><label class="form-label small fw-bold text-muted">MONTO</label><div class="input-group"><span class="input-group-text fw-bold text-success bg-white">L.</span><input type="number" step="0.01" id="montoIngreso" class="form-control fw-bold fs-5 text-success border-start-0" required></div></div>
-                        <div class="col-md-6" id="divCultos"><label class="form-label small fw-bold text-primary">CULTO</label><select class="form-select bg-primary bg-opacity-10 border-primary text-primary fw-bold" id="selectCulto"><option value="General">General</option>${optsCultos}</select></div>
+                        
+                        <div class="col-md-6" id="divCultos">
+                            <div class="row g-2">
+                                <div class="col-7">
+                                    <label class="form-label small fw-bold text-primary">CULTO</label>
+                                    <select class="form-select bg-primary bg-opacity-10 border-primary text-primary fw-bold" id="selectCulto"><option value="General">General</option>${optsCultos}</select>
+                                </div>
+                                <div class="col-5">
+                                    <label class="form-label small fw-bold text-muted" title="Cantidad de personas que comulgaron">COMULGANTES</label>
+                                    <input type="number" id="cantComulgantes" class="form-control" placeholder="0" min="0">
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-md-6" id="divDonante" style="display:none;"><label class="form-label small fw-bold text-muted">DONANTE</label><div class="input-group"><select class="form-select" id="miembroIngreso">${optsMiembros}</select><button class="btn btn-outline-secondary" type="button" onclick="agregarMiembroRapido()"><i class="bi bi-person-plus-fill"></i></button></div></div>
                         <div class="col-12"><label class="form-label small fw-bold text-muted">NOTA</label><input type="text" id="detalleIngreso" class="form-control" placeholder="Detalle opcional..."></div>
                         <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-success fw-bold px-5 py-2 shadow-sm rounded-pill" id="btnGuardarIngreso">Guardar Ingreso</button></div>
@@ -304,11 +312,24 @@ function renderRegistrarIngreso() {
         const tipo = document.getElementById('tipoIngreso').value;
         const culto = document.getElementById('selectCulto').value;
         const miembro = document.getElementById('miembroIngreso').value;
+        const comulgantes = parseInt(document.getElementById('cantComulgantes').value) || 0; // Capturar comulgantes
+
         let desc = (tipo === 'Ofrenda' || tipo === 'Actividad') ? ((tipo === 'Actividad' ? 'Actividad: ' : '') + culto) : (tipo + (miembro ? ` - ${miembro}` : ''));
         if (document.getElementById('detalleIngreso').value) desc += ` (${document.getElementById('detalleIngreso').value})`;
 
         try {
-            await authFetch('/api/finanzas/transacciones', { method: 'POST', body: JSON.stringify({ fecha: new Date().toISOString(), tipo: 'ingreso', categoria: tipo, descripcion: desc, monto: parseFloat(document.getElementById('montoIngreso').value), recibo_no: nRecibo ? String(nRecibo).padStart(6,'0') : 'S/N' }) });
+            await authFetch('/api/finanzas/transacciones', { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    fecha: new Date().toISOString(), 
+                    tipo: 'ingreso', 
+                    categoria: tipo, 
+                    descripcion: desc, 
+                    monto: parseFloat(document.getElementById('montoIngreso').value), 
+                    recibo_no: nRecibo ? String(nRecibo).padStart(6,'0') : 'S/N',
+                    comulgantes: comulgantes // Enviamos al servidor
+                }) 
+            });
             if (tal && nRecibo > tal.actual) await authFetch(`/api/finanzas/talonarios/${tal.id}`, { method: 'PUT', body: JSON.stringify({ actual: nRecibo, tipo: 'ingreso' }) });
             Swal.fire('Guardado', 'Ingreso registrado.', 'success');
             cargarDashboardFinanzas();
@@ -491,8 +512,8 @@ async function editarTalonario(tipo, idx) {
 
 async function activarTalonario(id, tipo) { 
     await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'PUT', body: JSON.stringify({ activo: true, tipo: tipo }) }); 
-    cargarDashboardFinanzas(); // Recargar para actualizar todo
-    setTimeout(renderConfigFinanzas, 300); // Volver a config
+    cargarDashboardFinanzas(); 
+    setTimeout(renderConfigFinanzas, 300); 
 }
 
 async function borrarTalonario(id) { 
@@ -543,7 +564,7 @@ async function agregarMiembroRapido() {
             });
 
             // Actualizar lista local usando la NUEVA variable para que aparezca al instante
-            miembrosFinanzas.push({ nombre: n }); // <--- AQUÍ SE AGREGA AL ARRAY LOCAL
+            miembrosFinanzas.push({ nombre: n }); 
             
             const s = document.getElementById('miembroIngreso');
             const o = document.createElement("option");
@@ -575,11 +596,17 @@ function generarFilasTabla() {
         if (t.recibo_no === 'APERTURA') bdg = '<span class="badge bg-warning text-dark border-0">APERTURA</span>'; 
         else if (t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') bdg = `<span class="badge bg-light text-dark border fw-normal">#${t.recibo_no}</span>`; 
         
+        // Mostrar comulgantes si existen
+        const comulgantesBadge = (t.comulgantes && t.comulgantes > 0) ? `<span class="badge bg-info text-dark ms-2" title="Comulgantes"><i class="bi bi-people-fill me-1"></i>${t.comulgantes}</span>` : '';
+
         return `<tr>
             <td data-label="Fecha"><small class="fw-bold text-muted">${formatoFecha(t.fecha)}</small></td>
             <td data-label="Recibo">${bdg}</td>
             <td data-label="Cat"><span class="badge rounded-pill ${esIng ? 'bg-success' : 'bg-danger'} bg-opacity-10 ${esIng ? 'text-success' : 'text-danger'} border border-opacity-25 fw-normal px-3">${t.categoria}</span></td>
-            <td data-label="Desc"><span class="d-inline-block text-truncate" style="max-width:200px" title="${t.descripcion}">${t.descripcion}</span></td>
+            <td data-label="Desc">
+                <span class="d-inline-block text-truncate" style="max-width:200px" title="${t.descripcion}">${t.descripcion}</span>
+                ${comulgantesBadge}
+            </td>
             <td data-label="Monto" class="text-end"><span class="fw-bold ${esIng ? 'text-success' : 'text-danger'} fs-6">${esIng ? '+' : '-'} ${formatoMoneda(t.monto)}</span></td>
         </tr>`; 
     }).join(''); 

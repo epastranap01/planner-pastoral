@@ -174,14 +174,17 @@ app.get('/api/finanzas/datos', verificarToken, async (req, res) => {
     }
 });
 
-// 2. Guardar Transacción
+// 2. Guardar Transacción (ACTUALIZADO CON COMULGANTES)
 app.post('/api/finanzas/transacciones', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
-    const { fecha, tipo, categoria, descripcion, monto, recibo_no } = req.body;
+    
+    // AHORA RECIBIMOS "comulgantes"
+    const { fecha, tipo, categoria, descripcion, monto, recibo_no, comulgantes } = req.body;
+    
     try {
         const result = await client.query(
-            'INSERT INTO finanzas_transacciones (fecha, tipo, categoria, descripcion, monto, recibo_no) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [fecha, tipo, categoria, descripcion, monto, recibo_no]
+            'INSERT INTO finanzas_transacciones (fecha, tipo, categoria, descripcion, monto, recibo_no, comulgantes) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+            [fecha, tipo, categoria, descripcion, monto, recibo_no, comulgantes || 0] // Si no envían nada, ponemos 0
         );
         res.json(result.rows[0]);
     } catch (err) { res.status(500).json({ error: err.message }); }
