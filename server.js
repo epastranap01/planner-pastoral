@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { Client } = require('pg');
+const { Pool } = require('pg'); // CAMBIO IMPORTANTE: Usamos Pool
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -15,14 +15,32 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Base de Datos
-const client = new Client({
+// --- BASE DE DATOS ROBUSTA (POOL) ---
+const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false }, // Necesario para Render/Neon
+    max: 20, // Conexiones simultáneas
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
 });
-client.connect()
-    .then(() => console.log('Conectado a la Base de Datos'))
-    .catch(err => console.error('Error de conexión DB', err));
+
+// Helper para usar pool como si fuera client
+const client = {
+    query: (text, params) => pool.query(text, params)
+};
+
+// Verificar conexión al iniciar
+pool.connect()
+    .then(client => {
+        console.log('✅ Conectado a la Base de Datos (Pool)');
+        client.release();
+    })
+    .catch(err => console.error('❌ Error de conexión DB', err));
+
+// Manejo de errores de conexión (Anti-Caídas)
+pool.on('error', (err) => {
+    console.error('Error inesperado en el cliente DB', err);
+});
 
 // --- MIDDLEWARE DE SEGURIDAD ---
 const verificarToken = (req, res, next) => {
@@ -153,12 +171,13 @@ app.put('/api/equipo/:id', verificarToken, async (req, res) => {
     catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// --- GESTIÓN DE FINANZAS (NUEVO MÓDULO) ---
+// ==========================================
+// --- GESTIÓN DE FINANZAS (MÓDULO UNIFICADO) ---
+// ==========================================
 
-// 1. Obtener Datos del Dashboard
+// 1. Obtener Datos
 app.get('/api/finanzas/datos', verificarToken, async (req, res) => {
     try {
-        // Ejecutamos las 3 consultas en paralelo
         const transacciones = await client.query('SELECT * FROM finanzas_transacciones ORDER BY fecha DESC, id DESC');
         const talonarios = await client.query('SELECT * FROM finanzas_talonarios ORDER BY id ASC');
         const categorias = await client.query('SELECT * FROM finanzas_categorias ORDER BY nombre ASC');
@@ -174,43 +193,33 @@ app.get('/api/finanzas/datos', verificarToken, async (req, res) => {
     }
 });
 
-// 2. Guardar Transacción (ACTUALIZADO CON COMULGANTES)
+// 2. Transacciones (Crear, Editar, Eliminar)
 app.post('/api/finanzas/transacciones', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
-    
-    // AHORA RECIBIMOS "comulgantes"
     const { fecha, tipo, categoria, descripcion, monto, recibo_no, comulgantes } = req.body;
-    
     try {
         const result = await client.query(
             'INSERT INTO finanzas_transacciones (fecha, tipo, categoria, descripcion, monto, recibo_no, comulgantes) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-            [fecha, tipo, categoria, descripcion, monto, recibo_no, comulgantes || 0] // Si no envían nada, ponemos 0
+            [fecha, tipo, categoria, descripcion, monto, recibo_no, comulgantes || 0]
         );
         res.json(result.rows[0]);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
-// 2.1. Editar Transacción (NUEVO)
+
 app.put('/api/finanzas/transacciones/:id', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
-    
     const { id } = req.params;
     const { fecha, categoria, descripcion, monto, recibo_no, comulgantes } = req.body;
-    
     try {
         const result = await client.query(
             'UPDATE finanzas_transacciones SET fecha=$1, categoria=$2, descripcion=$3, monto=$4, recibo_no=$5, comulgantes=$6 WHERE id=$7 RETURNING *',
             [fecha, categoria, descripcion, monto, recibo_no, comulgantes || 0, id]
         );
-        
         if (result.rows.length === 0) return res.status(404).json({ error: 'Transacción no encontrada' });
-        
-        res.json({ message: 'Transacción actualizada', transaccion: result.rows[0] });
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
-    }
+        res.json({ message: 'Actualizada', transaccion: result.rows[0] });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 2.2. Eliminar Transacción (NUEVO)
 app.delete('/api/finanzas/transacciones/:id', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
     try {
@@ -220,10 +229,9 @@ app.delete('/api/finanzas/transacciones/:id', verificarToken, async (req, res) =
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 3. Gestión de Talonarios (ACTUALIZADO)
+// 3. Gestión de Talonarios (Crear, Editar, Eliminar)
 app.post('/api/finanzas/talonarios', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
-    // AHORA RECIBIMOS "tipo"
     const { nombre, inicio, fin, actual, tipo } = req.body; 
     try {
         const result = await client.query(
@@ -234,43 +242,16 @@ app.post('/api/finanzas/talonarios', verificarToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// --- RUTA DE EDICIÓN DE TALONARIOS CORREGIDA Y UNIFICADA ---
 app.put('/api/finanzas/talonarios/:id', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
     const { id } = req.params;
-    // Agregamos 'inicio' a los campos recibidos
     const { nombre, inicio, fin, actual, activo, tipo } = req.body; 
+
     try {
-        if (activo && tipo) {
+        // Si estamos activando un talonario, desactivar los demás de ese tipo
+        if (activo === true && tipo) {
             await client.query('UPDATE finanzas_talonarios SET activo = false WHERE tipo = $1', [tipo]);
-        }
-
-        let query = 'UPDATE finanzas_talonarios SET ';
-        const values = [];
-        let index = 1;
-
-        if (nombre !== undefined) { query += `nombre = $${index++}, `; values.push(nombre); }
-        if (inicio !== undefined) { query += `rango_inicio = $${index++}, `; values.push(inicio); } // <--- NUEVO
-        if (fin !== undefined) { query += `rango_fin = $${index++}, `; values.push(fin); }
-        if (actual !== undefined) { query += `actual = $${index++}, `; values.push(actual); }
-        if (activo !== undefined) { query += `activo = $${index++}, `; values.push(activo); }
-
-        query = query.slice(0, -2);
-        query += ` WHERE id = $${index} RETURNING *`;
-        values.push(id);
-
-        const result = await client.query(query, values);
-        res.json(result.rows[0]);
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.put('/api/finanzas/talonarios/:id', verificarToken, async (req, res) => {
-    if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Denegado' });
-    const { id } = req.params;
-    const { nombre, fin, actual, activo } = req.body;
-    try {
-        if (activo) {
-            // Si activamos uno, desactivamos los demás
-            await client.query('UPDATE finanzas_talonarios SET activo = false');
         }
 
         // Construcción dinámica del UPDATE
@@ -279,6 +260,7 @@ app.put('/api/finanzas/talonarios/:id', verificarToken, async (req, res) => {
         let index = 1;
 
         if (nombre !== undefined) { query += `nombre = $${index++}, `; values.push(nombre); }
+        if (inicio !== undefined) { query += `rango_inicio = $${index++}, `; values.push(inicio); } // ¡IMPORTANTE!
         if (fin !== undefined) { query += `rango_fin = $${index++}, `; values.push(fin); }
         if (actual !== undefined) { query += `actual = $${index++}, `; values.push(actual); }
         if (activo !== undefined) { query += `activo = $${index++}, `; values.push(activo); }
@@ -317,8 +299,7 @@ app.delete('/api/finanzas/categorias/:id', verificarToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-
-// --- RUTA COMODÍN (AL FINAL SIEMPRE) ---
+// --- RUTA COMODÍN (SPA) ---
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
