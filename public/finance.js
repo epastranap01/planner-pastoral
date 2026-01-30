@@ -1,5 +1,5 @@
-// finance.js - Módulo Financiero v18 (Material Design + FAB)
-console.log("Cargando Módulo Financiero v18 (Material UI)...");
+// finance.js - Módulo Financiero v19 (Material Design + Lógica Completa Restaurada)
+console.log("Cargando Módulo Financiero v19 (Material + Logic)...");
 
 // ==========================================
 // 1. VARIABLES GLOBALES
@@ -14,105 +14,29 @@ const tiposCultos = ['Culto Dominical', 'Escuela Dominical', 'Culto de Oración'
 try {
     const styleSheet = document.createElement("style");
     styleSheet.innerText = `
-        /* --- VARIABLES & BASE --- */
-        :root {
-            --md-primary: #6200ee; /* Violeta Material */
-            --md-secondary: #03dac6; /* Teal Material */
-            --md-bg: #f5f5f5;
-            --md-surface: #ffffff;
-            --md-error: #b00020;
-        }
-
-        /* --- CARDS (TARJETAS) --- */
-        .md-card {
-            background: var(--md-surface);
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.2), 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12);
-            transition: box-shadow 0.3s cubic-bezier(.25,.8,.25,1);
-            overflow: hidden;
-            height: 100%;
-        }
-        .md-card:hover {
-            box-shadow: 0 5px 5px -3px rgba(0,0,0,0.2), 0 8px 10px 1px rgba(0,0,0,0.14), 0 3px 14px 2px rgba(0,0,0,0.12);
-        }
-
-        /* --- FLOATING ACTION BUTTON (FAB) --- */
-        .fab-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column-reverse;
-            align-items: center;
-            gap: 16px;
-        }
-        .fab-main {
-            width: 56px; height: 56px;
-            background-color: var(--md-primary);
-            color: white;
-            border-radius: 50%;
-            border: none;
-            box-shadow: 0 3px 5px -1px rgba(0,0,0,0.2), 0 6px 10px 0 rgba(0,0,0,0.14), 0 1px 18px 0 rgba(0,0,0,0.12);
-            font-size: 24px;
-            display: flex; align-items: center; justify-content: center;
-            transition: transform 0.3s, background 0.3s;
-            cursor: pointer;
-        }
-        .fab-main:hover { background-color: #3700b3; }
-        .fab-main.active { transform: rotate(45deg); }
+        :root { --md-primary: #6200ee; --md-secondary: #03dac6; --md-bg: #f5f5f5; --md-surface: #ffffff; }
         
-        .fab-action {
-            width: 48px; height: 48px;
-            border-radius: 50%;
-            border: none;
-            color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
-            opacity: 0; transform: translateY(20px) scale(0.8);
-            transition: all 0.3s;
-            pointer-events: none;
-            position: relative;
-        }
+        /* Cards */
+        .md-card { background: var(--md-surface); border-radius: 16px; border: none; box-shadow: 0 2px 4px -1px rgba(0,0,0,0.2), 0 4px 5px 0 rgba(0,0,0,0.14); transition: all 0.3s; overflow: hidden; height: 100%; }
+        .md-card:hover { transform: translateY(-3px); box-shadow: 0 8px 10px 1px rgba(0,0,0,0.14); }
+        
+        /* FAB */
+        .fab-container { position: fixed; bottom: 24px; right: 24px; z-index: 1000; display: flex; flex-direction: column-reverse; align-items: center; gap: 16px; }
+        .fab-main { width: 56px; height: 56px; background-color: var(--md-primary); color: white; border-radius: 50%; border: none; box-shadow: 0 4px 5px rgba(0,0,0,0.2); font-size: 24px; display: flex; align-items: center; justify-content: center; transition: transform 0.3s; cursor: pointer; }
+        .fab-main.active { transform: rotate(45deg); background-color: #3700b3; }
+        .fab-action { width: 48px; height: 48px; border-radius: 50%; border: none; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px; opacity: 0; transform: translateY(20px) scale(0.8); transition: all 0.3s; pointer-events: none; position: relative; }
         .fab-action.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .fab-label { position: absolute; right: 60px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; pointer-events: none; }
+
+        /* Table & Badges */
+        .md-table thead th { text-transform: uppercase; font-size: 0.75rem; color: rgba(0,0,0,0.6); padding: 16px; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .md-table tbody td { padding: 16px; vertical-align: middle; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .md-icon-btn { border: none; background: transparent; color: #555; border-radius: 50%; width: 36px; height: 36px; transition: 0.2s; }
+        .md-icon-btn:hover { background: rgba(0,0,0,0.05); color: #000; }
+        .md-chip { background: #e0e0e0; border-radius: 16px; padding: 4px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; }
         
-        /* Tooltip del FAB */
-        .fab-label {
-            position: absolute; right: 60px;
-            background: rgba(0,0,0,0.7); color: white;
-            padding: 4px 8px; border-radius: 4px;
-            font-size: 12px; white-space: nowrap;
-            pointer-events: none;
-        }
-
-        /* --- TABLA MATERIAL --- */
-        .md-table thead th {
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: rgba(0,0,0,0.6);
-            border-bottom: 1px solid rgba(0,0,0,0.12);
-            padding: 16px;
-        }
-        .md-table tbody td {
-            padding: 16px;
-            border-bottom: 1px solid rgba(0,0,0,0.06);
-            vertical-align: middle;
-        }
-        .md-icon-btn {
-            border: none; background: transparent; color: rgba(0,0,0,0.54);
-            border-radius: 50%; width: 36px; height: 36px;
-            transition: background 0.2s;
-        }
-        .md-icon-btn:hover { background: rgba(0,0,0,0.04); color: black; }
-
-        /* --- BADGES & CHIPS --- */
-        .md-chip {
-            background: #e0e0e0; border-radius: 16px; padding: 4px 12px;
-            font-size: 0.8125rem; color: rgba(0,0,0,0.87); display: inline-flex; align-items: center;
-        }
+        /* Validations */
+        .validation-msg { font-size: 0.75rem; font-weight: 700; margin-top: 4px; display: block; }
     `;
     document.head.appendChild(styleSheet);
 } catch (e) { console.error(e); }
@@ -133,12 +57,12 @@ async function authFetch(url, opts={}) {
 }
 
 // ==========================================
-// 4. CORE - CARGA DE DATOS
+// 4. CARGA DE DATOS
 // ==========================================
 async function cargarDashboardFinanzas() {
     const el = document.getElementById('vistaFinanzas');
     if(!el) return;
-    el.innerHTML = '<div class="d-flex justify-content-center align-items-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+    el.innerHTML = '<div class="d-flex justify-content-center align-items-center py-5"><div class="spinner-border text-primary"></div></div>';
 
     try {
         const [dFin, dMiem] = await Promise.all([authFetch('/api/finanzas/datos'), authFetch('/api/miembros')]);
@@ -177,7 +101,7 @@ function calcularMetricas() {
 }
 
 // ==========================================
-// 5. VISTA PRINCIPAL (MATERIAL DASHBOARD)
+// 5. VISTA PRINCIPAL (UI)
 // ==========================================
 function renderizarVistaPrincipal() {
     const container = document.getElementById('vistaFinanzas');
@@ -188,22 +112,17 @@ function renderizarVistaPrincipal() {
             <div class="col-12 col-md-4">
                 <div class="md-card p-4 d-flex align-items-center">
                     <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3 text-primary"><i class="bi bi-wallet2 fs-3"></i></div>
-                    <div>
-                        <div class="text-muted small fw-bold text-uppercase">Disponible</div>
-                        <h2 class="mb-0 fw-bold text-dark">${formatoMoneda(saldoActual)}</h2>
-                    </div>
+                    <div><div class="text-muted small fw-bold text-uppercase">Disponible</div><h2 class="mb-0 fw-bold text-dark">${formatoMoneda(saldoActual)}</h2></div>
                 </div>
             </div>
             <div class="col-6 col-md-4">
                 <div class="md-card p-3 p-md-4 border-start border-4 border-success">
-                    <div class="text-success small fw-bold text-uppercase mb-1">Ingresos (Mes)</div>
-                    <h4 class="mb-0 text-dark fw-bold">+${formatoMoneda(ingresosMes)}</h4>
+                    <div class="text-success small fw-bold text-uppercase mb-1">Ingresos (Mes)</div><h4 class="mb-0 text-dark fw-bold">+${formatoMoneda(ingresosMes)}</h4>
                 </div>
             </div>
             <div class="col-6 col-md-4">
                 <div class="md-card p-3 p-md-4 border-start border-4 border-danger">
-                    <div class="text-danger small fw-bold text-uppercase mb-1">Gastos (Mes)</div>
-                    <h4 class="mb-0 text-dark fw-bold">-${formatoMoneda(egresosMes)}</h4>
+                    <div class="text-danger small fw-bold text-uppercase mb-1">Gastos (Mes)</div><h4 class="mb-0 text-dark fw-bold">-${formatoMoneda(egresosMes)}</h4>
                 </div>
             </div>
         </div>
@@ -215,15 +134,7 @@ function renderizarVistaPrincipal() {
             </div>
             <div class="table-responsive">
                 <table class="table md-table w-100 mb-0">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Recibo</th>
-                            <th>Descripción</th>
-                            <th class="text-end">Monto</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Fecha</th><th>Recibo</th><th>Descripción</th><th class="text-end">Monto</th><th class="text-center">Acciones</th></tr></thead>
                     <tbody>${generarFilasTabla()}</tbody>
                 </table>
             </div>
@@ -231,28 +142,12 @@ function renderizarVistaPrincipal() {
     </div>
 
     <div class="fab-container" id="fabMenu">
-        <button class="fab-main" onclick="toggleFab()">
-            <i class="bi bi-plus-lg"></i>
-        </button>
-        
-        <button class="fab-action bg-dark" onclick="renderConfigFinanzas(); toggleFab();">
-            <i class="bi bi-gear-fill"></i>
-            <span class="fab-label">Configuración</span>
-        </button>
-        <button class="fab-action bg-warning text-dark" onclick="renderAperturaCuenta(); toggleFab();">
-            <i class="bi bi-sliders"></i>
-            <span class="fab-label">Ajuste / Apertura</span>
-        </button>
-        <button class="fab-action bg-danger" onclick="renderRegistrarEgreso(); toggleFab();">
-            <i class="bi bi-dash-lg"></i>
-            <span class="fab-label">Registrar Gasto</span>
-        </button>
-        <button class="fab-action bg-success" onclick="renderRegistrarIngreso(); toggleFab();">
-            <i class="bi bi-arrow-down"></i>
-            <span class="fab-label">Registrar Ingreso</span>
-        </button>
-    </div>
-    `;
+        <button class="fab-main" onclick="toggleFab()"><i class="bi bi-plus-lg"></i></button>
+        <button class="fab-action bg-dark" onclick="renderConfigFinanzas(); toggleFab();"><i class="bi bi-gear-fill"></i><span class="fab-label">Configuración</span></button>
+        <button class="fab-action bg-warning text-dark" onclick="renderAperturaCuenta(); toggleFab();"><i class="bi bi-sliders"></i><span class="fab-label">Ajuste / Apertura</span></button>
+        <button class="fab-action bg-danger" onclick="renderRegistrarEgreso(); toggleFab();"><i class="bi bi-dash-lg"></i><span class="fab-label">Gasto</span></button>
+        <button class="fab-action bg-success" onclick="renderRegistrarIngreso(); toggleFab();"><i class="bi bi-arrow-down"></i><span class="fab-label">Ingreso</span></button>
+    </div>`;
 }
 
 function generarFilasTabla() {
@@ -267,7 +162,7 @@ function generarFilasTabla() {
         if(t.recibo_no === 'APERTURA') recibo = '<span class="badge bg-warning text-dark">INICIO</span>';
         else if(t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') recibo = `<span class="fw-bold text-dark">#${t.recibo_no}</span>`;
         
-        const comulgantes = (t.comulgantes > 0) ? `<span class="badge bg-info text-dark ms-1" title="Comulgantes"><i class="bi bi-people-fill"></i> ${t.comulgantes}</span>` : '';
+        const comulgantes = (t.comulgantes > 0) ? `<span class="badge bg-info text-dark ms-1"><i class="bi bi-people-fill"></i> ${t.comulgantes}</span>` : '';
 
         return `
         <tr>
@@ -277,18 +172,15 @@ function generarFilasTabla() {
                 <div class="text-dark fw-medium">${t.categoria}</div>
                 <div class="text-muted small text-truncate" style="max-width: 200px;">${t.descripcion} ${comulgantes}</div>
             </td>
-            <td class="text-end">
-                <span class="fw-bold ${color}">${signo} ${formatoMoneda(t.monto)}</span>
-            </td>
+            <td class="text-end"><span class="fw-bold ${color}">${signo} ${formatoMoneda(t.monto)}</span></td>
             <td class="text-center">
-                <button class="md-icon-btn" onclick="editarTransaccion(${idx})"><i class="bi bi-pencil"></i></button>
-                <button class="md-icon-btn text-danger" onclick="eliminarTransaccion(${t.id})"><i class="bi bi-trash"></i></button>
+                <button class="md-icon-btn" onclick="editarTransaccion(${idx})" title="Editar"><i class="bi bi-pencil"></i></button>
+                <button class="md-icon-btn text-danger" onclick="eliminarTransaccion(${t.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
             </td>
         </tr>`;
     }).join('');
 }
 
-// Lógica del FAB
 window.toggleFab = function() {
     const main = document.querySelector('.fab-main');
     const actions = document.querySelectorAll('.fab-action');
@@ -297,7 +189,7 @@ window.toggleFab = function() {
 }
 
 // ==========================================
-// 6. FORMULARIOS (MODALES BOOTSTRAP ESTILIZADOS)
+// 6. FORMULARIOS COMPLETOS (LÓGICA RESTAURADA)
 // ==========================================
 
 function renderRegistrarIngreso() {
@@ -320,6 +212,7 @@ function renderRegistrarIngreso() {
                             <div class="input-group input-group-sm w-50">
                                 <span class="input-group-text fw-bold"># RECIBO</span>
                                 <input type="number" id="nRec" class="form-control fw-bold text-end" value="${next}" ${!tal?'disabled':''}>
+                                <div id="reciboFeedback" class="validation-msg text-end w-100"></div>
                             </div>
                         </div>
 
@@ -371,9 +264,7 @@ function renderRegistrarIngreso() {
                             <label>Nota Adicional</label>
                         </div>
 
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-success btn-lg fw-bold" style="border-radius: 50px;">GUARDAR</button>
-                        </div>
+                        <div class="d-grid"><button type="submit" id="btnGuardar" class="btn btn-success btn-lg fw-bold" style="border-radius: 50px;">GUARDAR</button></div>
                     </form>
                 </div>
             </div>
@@ -381,6 +272,7 @@ function renderRegistrarIngreso() {
     </div>`;
 
     toggleCampos('Ofrenda');
+    setupValidacionRecibo(tal, 'nRec', 'reciboFeedback', 'btnGuardar');
     
     document.getElementById('fIng').onsubmit = async(e) => {
         e.preventDefault();
@@ -422,6 +314,7 @@ function renderRegistrarEgreso() {
                             <div class="input-group input-group-sm w-50">
                                 <span class="input-group-text fw-bold">DOC #</span>
                                 <input type="number" id="nDoc" class="form-control fw-bold text-end" value="${next}" ${!tal?'disabled':''}>
+                                <div id="docFeedback" class="validation-msg text-end w-100"></div>
                             </div>
                         </div>
 
@@ -445,14 +338,14 @@ function renderRegistrarEgreso() {
                             <label>Descripción del Gasto</label>
                         </div>
 
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-danger btn-lg fw-bold" style="border-radius: 50px;">REGISTRAR</button>
-                        </div>
+                        <div class="d-grid"><button type="submit" id="btnGuardarEg" class="btn btn-danger btn-lg fw-bold" style="border-radius: 50px;">REGISTRAR</button></div>
                     </form>
                 </div>
             </div>
         </div>
     </div>`;
+
+    setupValidacionRecibo(tal, 'nDoc', 'docFeedback', 'btnGuardarEg');
 
     document.getElementById('fEgr').onsubmit = async(e) => {
         e.preventDefault();
@@ -467,13 +360,72 @@ function renderRegistrarEgreso() {
     };
 }
 
+function renderAperturaCuenta() {
+    const saldoExistente = transacciones.find(t => t.categoria === 'SALDO INICIAL');
+    const valorActual = saldoExistente ? saldoExistente.monto : '';
+    const fechaActual = saldoExistente ? new Date(saldoExistente.fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
+    document.getElementById('vistaFinanzas').innerHTML = `
+    <div class="row justify-content-center pt-4">
+        <div class="col-md-6">
+            <div class="md-card p-0">
+                <div class="p-3 bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold">Apertura / Ajuste de Caja</h5>
+                    <button class="btn-close" onclick="cargarDashboardFinanzas()"></button>
+                </div>
+                <div class="p-4">
+                    <form id="formApertura">
+                        <div class="form-floating mb-3">
+                            <input type="number" step="0.01" id="montoApertura" class="form-control fw-bold" value="${valorActual}" required placeholder="0">
+                            <label>Monto Inicial</label>
+                        </div>
+                        <div class="form-floating mb-4">
+                            <input type="date" id="fechaApertura" class="form-control" value="${fechaActual}">
+                            <label>Fecha de Corte</label>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-warning btn-lg fw-bold" style="border-radius: 50px;">GUARDAR AJUSTE</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    document.getElementById('formApertura').onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await authFetch('/api/finanzas/transacciones', { method: 'POST', body: JSON.stringify({ fecha: document.getElementById('fechaApertura').value, tipo: 'ingreso', categoria: 'SALDO INICIAL', descripcion: 'Apertura / Ajuste', monto: parseFloat(document.getElementById('montoApertura').value), recibo_no: 'APERTURA' }) });
+            Swal.fire({ title: 'Ajuste Guardado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            cargarDashboardFinanzas();
+        } catch (err) { Swal.fire('Error', err.message, 'error'); }
+    };
+}
+
 // ==========================================
-// 7. FUNCIONES CRUD & HELPERS
+// 7. FUNCIONES CRUD & HELPERS (LÓGICA RESTAURADA)
 // ==========================================
+
 function toggleCampos(v) {
     const c=document.getElementById('boxCul'), d=document.getElementById('boxDon');
     if(v==='Ofrenda'||v==='Actividad'){c.style.display='flex';d.style.display='none'}
     else{c.style.display='none';d.style.display='block'}
+}
+
+function setupValidacionRecibo(tal, iId, fId, bId) {
+    const inp = document.getElementById(iId); 
+    const f = document.getElementById(fId); 
+    const b = document.getElementById(bId);
+    inp.addEventListener('input', () => {
+        if (!tal) return;
+        const v = parseInt(inp.value);
+        inp.classList.remove('is-invalid', 'is-valid');
+        b.disabled = false;
+        if (isNaN(v)) { f.innerHTML = ''; return; }
+        if (v < tal.inicio || v > tal.fin) { inp.classList.add('is-invalid'); f.innerHTML = 'Fuera de rango'; f.className = 'validation-msg text-danger text-end'; b.disabled = true; } 
+        else if (tal.usados.includes(v)) { inp.classList.add('is-invalid'); f.innerHTML = 'Ya utilizado'; f.className = 'validation-msg text-danger text-end'; b.disabled = true; } 
+        else { inp.classList.add('is-valid'); f.innerHTML = '<span class="text-success">Disponible</span>'; f.className = 'validation-msg text-end'; }
+    });
 }
 
 async function addMem() {
@@ -486,7 +438,7 @@ async function addMem() {
 }
 
 async function eliminarTransaccion(id) {
-    if((await Swal.fire({title:'¿Eliminar?',text:"Afectará el saldo actual.",icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'})).isConfirmed){
+    if((await Swal.fire({title:'¿Eliminar?',text:"Afectará el saldo actual.",icon:'warning',showCancelButton:true,confirmButtonColor:'#d33',confirmButtonText:'Sí, eliminar'})).isConfirmed){
         await authFetch(`/api/finanzas/transacciones/${id}`,{method:'DELETE'});
         cargarDashboardFinanzas();
     }
@@ -494,29 +446,56 @@ async function eliminarTransaccion(id) {
 
 async function editarTransaccion(idx) {
     const t = transacciones[idx];
-    const {value:v} = await Swal.fire({
+    const fechaISO = new Date(t.fecha).toISOString().split('T')[0];
+    
+    // Recuperamos el modal detallado de la versión anterior
+    const { value: formValues } = await Swal.fire({
         title: 'Editar Transacción',
-        html: `<input id="sw-f" type="date" class="swal2-input" value="${t.fecha.split('T')[0]}"><input id="sw-d" class="swal2-input" value="${t.descripcion}"><input id="sw-m" type="number" class="swal2-input" value="${t.monto}">`,
-        preConfirm: () => ({fecha:document.getElementById('sw-f').value, descripcion:document.getElementById('sw-d').value, monto:document.getElementById('sw-m').value})
+        html: `
+            <div class="text-start fs-6">
+                <div class="row g-2 mb-3">
+                    <div class="col-6"><label class="small fw-bold">Fecha</label><input id="sw-f" type="date" class="form-control" value="${fechaISO}"></div>
+                    <div class="col-6"><label class="small fw-bold">Doc/Recibo</label><input id="sw-r" type="text" class="form-control" value="${t.recibo_no}"></div>
+                </div>
+                <div class="mb-3"><label class="small fw-bold">Categoría</label><input id="sw-c" type="text" class="form-control" value="${t.categoria}"></div>
+                <div class="mb-3"><label class="small fw-bold">Descripción</label><textarea id="sw-d" class="form-control" rows="2">${t.descripcion}</textarea></div>
+                <div class="row g-2">
+                    <div class="col-6"><label class="small fw-bold">Monto</label><input id="sw-m" type="number" step="0.01" class="form-control fw-bold" value="${t.monto}"></div>
+                    <div class="col-6"><label class="small fw-bold">Comulgantes</label><input id="sw-co" type="number" class="form-control" value="${t.comulgantes||0}"></div>
+                </div>
+            </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        focusConfirm: false,
+        preConfirm: () => ({
+            fecha: document.getElementById('sw-f').value, recibo_no: document.getElementById('sw-r').value,
+            categoria: document.getElementById('sw-c').value, descripcion: document.getElementById('sw-d').value,
+            monto: document.getElementById('sw-m').value, comulgantes: document.getElementById('sw-co').value
+        })
     });
-    if(v) {
-        await authFetch(`/api/finanzas/transacciones/${t.id}`,{method:'PUT',body:JSON.stringify({...t,...v})});
+    
+    if(formValues) {
+        await authFetch(`/api/finanzas/transacciones/${t.id}`,{method:'PUT',body:JSON.stringify(formValues)});
+        Swal.fire({icon:'success',title:'Actualizado',toast:true,position:'top-end',showConfirmButton:false,timer:1500});
         cargarDashboardFinanzas();
     }
 }
 
+// ==========================================
+// 8. CONFIGURACIÓN TALONARIOS Y CATEGORÍAS (LÓGICA ROBUSTA RESTAURADA)
+// ==========================================
+
 function renderConfigFinanzas() {
-    // Reutilizando el diseño de cards material
     const card = (t, i, tp) => `
     <div class="col-md-6">
         <div class="md-card p-3 border-start border-4 ${tp==='ingreso'?'border-success':'border-danger'}">
-            <div class="d-flex justify-content-between mb-2"><span class="fw-bold">${t.nombre}</span>${t.activo?'<span class="badge bg-success">Activo</span>':'<span class="badge bg-secondary">Inactivo</span>'}</div>
+            <div class="d-flex justify-content-between mb-2"><span class="fw-bold text-dark">${t.nombre}</span>${t.activo?'<span class="badge bg-success">Activo</span>':'<span class="badge bg-secondary">Inactivo</span>'}</div>
             <div class="d-flex justify-content-between align-items-end">
-                <small class="text-muted">${t.inicio} - ${t.fin}<br><strong class="fs-5 text-dark">#${t.actual}</strong></small>
+                <small class="text-muted">Rango: ${t.inicio} - ${t.fin}<br><strong class="fs-5 text-dark">#${t.actual}</strong></small>
                 <div>
-                    ${!t.activo?`<button onclick="actTal(${t.id},'${tp}')" class="btn btn-sm btn-outline-dark"><i class="bi bi-power"></i></button>`:''}
-                    <button onclick="editTal('${tp}',${i})" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></button>
-                    <button onclick="delTal(${t.id})" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    ${!t.activo?`<button onclick="actTal(${t.id},'${tp}')" class="btn btn-sm btn-outline-dark" title="Activar"><i class="bi bi-power"></i></button>`:''}
+                    <button onclick="editarTalonario('${tp}',${i})" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></button>
+                    <button onclick="delTal(${t.id})" class="btn btn-sm btn-outline-danger" title="Borrar"><i class="bi bi-trash"></i></button>
                 </div>
             </div>
         </div>
@@ -533,8 +512,8 @@ function renderConfigFinanzas() {
                 <div class="md-card p-4">
                     <ul class="nav nav-tabs mb-3"><li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tIng">Ingresos</a></li><li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tEgr">Egresos</a></li></ul>
                     <div class="tab-content">
-                        <div class="tab-pane active" id="tIng"><button onclick="newTal('ingreso')" class="btn btn-success w-100 mb-3">Nuevo Talonario</button><div class="row g-3">${talonariosIngreso.map((t,i)=>card(t,i,'ingreso')).join('')}</div></div>
-                        <div class="tab-pane" id="tEgr"><button onclick="newTal('egreso')" class="btn btn-danger w-100 mb-3">Nueva Chequera</button><div class="row g-3">${talonariosEgreso.map((t,i)=>card(t,i,'egreso')).join('')}</div></div>
+                        <div class="tab-pane active" id="tIng"><button onclick="nuevoTalonario('ingreso')" class="btn btn-success w-100 mb-3">Nuevo Talonario</button><div class="row g-3">${talonariosIngreso.map((t,i)=>card(t,i,'ingreso')).join('')}</div></div>
+                        <div class="tab-pane" id="tEgr"><button onclick="nuevoTalonario('egreso')" class="btn btn-danger w-100 mb-3">Nueva Chequera</button><div class="row g-3">${talonariosEgreso.map((t,i)=>card(t,i,'egreso')).join('')}</div></div>
                     </div>
                 </div>
             </div>
@@ -542,18 +521,68 @@ function renderConfigFinanzas() {
                 <div class="md-card p-4">
                     <h6 class="fw-bold mb-3">Categorías</h6>
                     <div class="input-group mb-3"><input id="nCat" class="form-control" placeholder="Nueva..."><button onclick="addCat()" class="btn btn-dark"><i class="bi bi-plus"></i></button></div>
-                    <div>${categoriasEgresos.map(c=>`<span class="md-chip me-1 mb-1">${c.nombre} <i class="bi bi-x text-danger ms-1 cursor-pointer" onclick="delCat(${c.id})"></i></span>`).join('')}</div>
+                    <div>${categoriasEgresos.map(c=>`<span class="md-chip me-1 mb-1 bg-light border">${c.nombre} <i class="bi bi-x text-danger ms-1 cursor-pointer" onclick="delCat(${c.id})"></i></span>`).join('')}</div>
                 </div>
             </div>
         </div>
     </div>`;
 }
 
-// Helpers Config (Short versions)
-async function newTal(tp){const{value:f}=await Swal.fire({title:`Nuevo (${tp})`,html:`<input id="n" class="swal2-input" placeholder="Nombre"><input id="i" type="number" class="swal2-input" placeholder="Inicio"><input id="f" type="number" class="swal2-input" placeholder="Fin">`,preConfirm:()=>[document.getElementById('n').value,document.getElementById('i').value,document.getElementById('f').value]});if(f)await authFetch('/api/finanzas/talonarios',{method:'POST',body:JSON.stringify({nombre:f[0],inicio:f[1],fin:f[2],actual:f[1]-1,tipo:tp})});renderConfigFinanzas();}
-async function editTal(tp,i){const t=(tp==='ingreso'?talonariosIngreso:talonariosEgreso)[i];const{value:f}=await Swal.fire({title:'Editar',html:`<input id="n" class="swal2-input" value="${t.nombre}"><input id="i" type="number" class="swal2-input" value="${t.inicio}"><input id="f" type="number" class="swal2-input" value="${t.fin}">`,preConfirm:()=>[document.getElementById('n').value,document.getElementById('i').value,document.getElementById('f').value]});if(f){await authFetch(`/api/finanzas/talonarios/${t.id}`,{method:'PUT',body:JSON.stringify({nombre:f[0],inicio:f[1],fin:f[2]})});renderConfigFinanzas();}}
-async function actTal(id,tp){await authFetch(`/api/finanzas/talonarios/${id}`,{method:'PUT',body:JSON.stringify({activo:true,tipo:tp})});cargarDashboardFinanzas();}
-async function delTal(id){if((await Swal.fire({title:'¿Borrar?',icon:'warning',showCancelButton:true})).isConfirmed){await authFetch(`/api/finanzas/talonarios/${id}`,{method:'DELETE'});renderConfigFinanzas();}}
-async function addCat(){const v=document.getElementById('nCat').value;if(v){await authFetch('/api/finanzas/categorias',{method:'POST',body:JSON.stringify({nombre:v})});renderConfigFinanzas();}}
-async function delCat(id){await authFetch(`/api/finanzas/categorias/${id}`,{method:'DELETE'});renderConfigFinanzas();}
-function renderAperturaCuenta(){renderRegistrarIngreso();} // Placeholder para mantener el FAB funcionando
+// Helpers Restaurados con Formularios Bootstrap dentro de SweetAlert
+async function nuevoTalonario(tipo) {
+    const { value: f } = await Swal.fire({
+        title: `Nuevo (${tipo})`,
+        html: `
+            <div class="text-start">
+                <div class="mb-2"><label class="small fw-bold">Nombre</label><input id="sw-nom" class="form-control" placeholder="Ej: Serie A"></div>
+                <div class="row g-2">
+                    <div class="col-6"><label class="small fw-bold">Inicio</label><input id="sw-ini" type="number" class="form-control" placeholder="1"></div>
+                    <div class="col-6"><label class="small fw-bold">Fin</label><input id="sw-fin" type="number" class="form-control" placeholder="100"></div>
+                </div>
+            </div>`,
+        focusConfirm: false,
+        showCancelButton: true,
+        preConfirm: () => [document.getElementById('sw-nom').value, document.getElementById('sw-ini').value, document.getElementById('sw-fin').value]
+    });
+
+    if (f && f[0]) {
+        try { 
+            await authFetch('/api/finanzas/talonarios', { method: 'POST', body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]), actual: parseInt(f[1])-1, tipo: tipo }) }); 
+            // Recargar silenciosamente
+            const d = await authFetch('/api/finanzas/datos');
+            const mapped = d.talonarios.map(t => ({...t, inicio: t.rango_inicio, fin: t.rango_fin, usados: []}));
+            talonariosIngreso = mapped.filter(t => t.tipo === 'ingreso');
+            talonariosEgreso = mapped.filter(t => t.tipo === 'egreso');
+            renderConfigFinanzas();
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
+    }
+}
+
+async function editarTalonario(tipo, idx) {
+    const lista = tipo === 'ingreso' ? talonariosIngreso : talonariosEgreso;
+    const t = lista[idx];
+    const { value: f } = await Swal.fire({
+        title: 'Editar Rango',
+        html: `
+            <div class="text-start">
+                <div class="mb-2"><label class="small fw-bold">Nombre</label><input id="sw-nom" class="form-control" value="${t.nombre}"></div>
+                <div class="row g-2">
+                    <div class="col-6"><label class="small fw-bold">Inicio</label><input id="sw-ini" type="number" class="form-control" value="${t.inicio}"></div>
+                    <div class="col-6"><label class="small fw-bold">Fin</label><input id="sw-fin" type="number" class="form-control" value="${t.fin}"></div>
+                </div>
+            </div>`,
+        showCancelButton: true,
+        preConfirm: () => [document.getElementById('sw-nom').value, document.getElementById('sw-ini').value, document.getElementById('sw-fin').value]
+    });
+
+    if (f) {
+        await authFetch(`/api/finanzas/talonarios/${t.id}`, { method: 'PUT', body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]) }) });
+        t.nombre = f[0]; t.inicio = parseInt(f[1]); t.fin = parseInt(f[2]);
+        renderConfigFinanzas();
+    }
+}
+
+async function actTal(id,tp){await authFetch(`/api/finanzas/talonarios/${id}`,{method:'PUT',body:JSON.stringify({activo:true,tipo:tp})});cargarDashboardFinanzas();setTimeout(renderConfigFinanzas,300);}
+async function delTal(id){if((await Swal.fire({title:'¿Borrar?',icon:'warning',showCancelButton:true})).isConfirmed){await authFetch(`/api/finanzas/talonarios/${id}`,{method:'DELETE'});cargarDashboardFinanzas();setTimeout(renderConfigFinanzas,300);}}
+async function addCat(){const v=document.getElementById('nCat').value;if(v){await authFetch('/api/finanzas/categorias',{method:'POST',body:JSON.stringify({nombre:v})});const d=await authFetch('/api/finanzas/datos');categoriasEgresos=d.categorias;renderConfigFinanzas();}}
+async function delCat(id){await authFetch(`/api/finanzas/categorias/${id}`,{method:'DELETE'});const d=await authFetch('/api/finanzas/datos');categoriasEgresos=d.categorias;renderConfigFinanzas();}
