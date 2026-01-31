@@ -298,65 +298,45 @@
         <div id="vistaFinanzas" style="display:none;"></div>
 
         <div id="vistaMiembros" style="display:none;">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold m-0">Miembros</h3>
-            </div>
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <div class="saas-card sticky-top" style="top: 20px; z-index: 1;">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-success bg-opacity-10 text-success p-2 rounded me-2"><i class="bi bi-person-plus-fill"></i></div>
-                            <h5 class="fw-bold m-0">Nuevo Fiel</h5>
-                        </div>
-                        <form id="miembroForm">
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Nombre Completo</label>
-                                <input type="text" id="mNombre" class="form-control" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Fecha Nacimiento</label>
-                                <input type="date" id="mFecha" class="form-control" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Congregación</label>
-                                <input type="text" id="mCongregacion" class="form-control" placeholder="Ej: Central">
-                            </div>
-                            <div class="d-flex gap-3 mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="mBautizado">
-                                    <label class="form-check-label small">Bautizado</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="mConfirmado">
-                                    <label class="form-check-label small">Confirmado</label>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-success w-100 btn-custom">Registrar Miembro</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="col-lg-8">
-                    <div class="saas-card p-0 overflow-hidden">
-                        <div class="p-3 border-bottom bg-light">
-                             <h6 class="fw-bold m-0 text-muted text-uppercase small">Directorio</h6>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-white border-bottom">
-                                    <tr>
-                                        <th class="ps-4 py-3">Nombre</th>
-                                        <th>Edad</th>
-                                        <th>Estado</th>
-                                        <th class="text-end pe-4">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaMiembros"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h3 class="fw-bold m-0">Directorio de Miembros</h3>
+            <p class="text-muted small m-0">Gestión de la congregación</p>
         </div>
+        
+        <div class="d-flex gap-2 w-100 w-md-auto">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" id="busquedaMiembro" class="form-control border-start-0 ps-0" placeholder="Buscar por nombre..." onkeyup="filtrarMiembros()">
+            </div>
+            
+            <button class="btn btn-primary btn-custom d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalCrearMiembro">
+                <i class="bi bi-person-plus-fill"></i> <span class="d-none d-md-inline">Nuevo</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="saas-card p-0 overflow-hidden shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold">Miembro</th>
+                        <th class="py-3 text-secondary small text-uppercase fw-bold">Congregación</th>
+                        <th class="py-3 text-secondary small text-uppercase fw-bold">Sacramentos</th>
+                        <th class="text-end pe-4 py-3 text-secondary small text-uppercase fw-bold">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaMiembros">
+                    </tbody>
+            </table>
+        </div>
+        <div id="noMiembros" class="text-center py-5 text-muted" style="display:none;">
+            <i class="bi bi-people fs-1 opacity-25"></i>
+            <p class="mt-2 small">No se encontraron miembros.</p>
+        </div>
+    </div>
+</div>
 
         <div id="vistaEquipo" style="display:none;">
              <div class="text-center mb-5">
