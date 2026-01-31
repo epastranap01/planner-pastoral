@@ -3,386 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planner Pastoral</title>
+    <title>Planner Pastoral | Dashboard</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; }
-        
-        /* HEADER AZUL INSTITUCIONAL */
-        .header-bg {
-            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        :root {
+            --primary: #2563eb;       /* Azul Royal SaaS */
+            --primary-dark: #1d4ed8;
+            --bg-body: #f3f4f6;       /* Gris Fondo Suave */
+            --surface: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --radius: 16px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding-top: 80px; /* Espacio para el navbar fijo */
+        }
+
+        h1, h2, h3, h4, h5, h6, .navbar-brand {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* --- NAVBAR SAAS STYLE --- */
+        .navbar-saas {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            padding: 0.8rem 0;
+        }
+
+        .brand-logo {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
-            padding: 3rem 0;
-            margin-bottom: -3rem;
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 10px;
+            margin-right: 12px;
+            font-size: 1.2rem;
         }
 
+        /* --- CARDS & CONTAINERS --- */
         .main-card {
-            border: none; border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            background: white; overflow: hidden;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.2s;
         }
 
-        /* --- ARREGLO DE VISIBILIDAD (CURSOR Y TEXTO) --- */
-        /* Solo aplicamos esto a las cajas de texto, NO a los checkboxes */
-        .form-control, .form-select {
-            background-color: #ffffff !important; /* Fondo Blanco */
-            color: #212529 !important;           /* Texto Negro Oscuro */
-            border: 1px solid #ced4da;
-            border-radius: 10px; 
-            padding: 12px;
+        /* --- MENÚ DE NAVEGACIÓN (TIPO TABS) --- */
+        .nav-pills-saas {
+            display: flex;
+            gap: 8px;
+            background: white;
+            padding: 6px;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
-        /* Al hacer clic para escribir */
-        .form-control:focus, .form-select:focus {
-            background-color: #ffffff !important;
-            color: #212529 !important;
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        .btn-nav {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
         }
 
-        /* Botones personalizados */
-        .btn-custom {
-            border-radius: 10px; padding: 12px; font-weight: 600;
-            background-color: #0d6efd; border: none; transition: all 0.3s;
+        .btn-nav:hover {
+            background: var(--bg-body);
+            color: var(--text-main);
         }
-        .btn-custom:hover { background-color: #0b5ed7; transform: translateY(-2px); }
 
-        /* TABLAS (DISEÑO PC) */
+        /* Estado Activo simulado (se maneja con JS añadiendo clase active-nav si quisieras, 
+           pero por defecto tus botones usan onclick. Les daremos estilo al hacer focus/click) */
+        .btn-nav:focus, .btn-nav.active {
+            background: #eff6ff; /* Azul muy claro */
+            color: var(--primary);
+        }
+
+        /* --- TABLAS MODERNAS --- */
+        .table-custom {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
         .table-custom thead th {
-            background-color: #f8f9fa; color: #6c757d; font-weight: 600;
-            border: none; text-transform: uppercase; font-size: 0.85rem; padding: 15px;
+            background: #f9fafb;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
         }
         .table-custom tbody td {
-            padding: 15px; vertical-align: middle; border-bottom: 1px solid #f0f0f0;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            font-size: 0.95rem;
         }
-        .badge-date {
-            background-color: #e7f1ff; color: #0d6efd; padding: 6px 10px;
-            border-radius: 8px; font-weight: 600; font-size: 0.85rem;
-            display: inline-block; min-width: 80px; text-align: center;
-        }
-        
+        .table-custom tr:last-child td { border-bottom: none; }
+        .table-custom tr:hover td { background-color: #f9fafb; }
 
-        /* --- MODO MÓVIL (TIPO FICHA) --- */
+        /* --- FORMULARIOS --- */
+        .form-control, .form-select {
+            background-color: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.95rem;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .form-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+
+        /* --- BOTONES --- */
+        .btn-custom { border-radius: 10px; padding: 10px 20px; font-weight: 600; border: none; transition: 0.2s; }
+        .btn-primary { background: var(--primary); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-success { background: #10b981; border: none; }
+
+        /* --- RESPONSIVE MOBILE (CARD VIEW) --- */
         @media (max-width: 768px) {
-            .header-bg { padding: 2rem 0; margin-bottom: -2rem; }
+            body { padding-top: 70px; }
+            .main-card { padding: 1.5rem; }
             
-            .btn-group { flex-wrap: wrap; width: 100%; }
-            .btn-group button { flex: 1 1 40%; margin: 2px; font-size: 0.85rem; }
+            .nav-pills-saas {
+                border-radius: 16px;
+                padding: 10px;
+                justify-content: stretch;
+            }
+            .btn-nav { flex: 1 1 45%; justify-content: center; font-size: 0.8rem; }
 
             .table-custom thead { display: none; }
-            
             .table-custom tbody tr {
                 display: block;
                 background: white;
-                border-radius: 15px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-                margin-bottom: 1.5rem;
-                padding: 1.5rem;
-                border: 1px solid #f0f0f0;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                margin-bottom: 1rem;
+                padding: 1rem;
+                box-shadow: var(--shadow);
             }
-
             .table-custom td {
-                display: flex;
-                flex-direction: column; 
-                align-items: flex-start;
-                justify-content: center;
-                text-align: left !important;
-                padding: 0.5rem 0 !important;
-                border: none;
-                width: 100%;
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 0.5rem 0 !important; border: none; text-align: right;
             }
-
             .table-custom td::before {
                 content: attr(data-label);
-                font-size: 0.7rem;
-                color: #adb5bd; 
-                font-weight: 700;
-                text-transform: uppercase;
-                margin-bottom: 4px;
-                letter-spacing: 1px;
+                font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+                margin-right: 10px;
             }
-
-            /* Etiquetas Manuales */
-            #tablaMiembros td:nth-of-type(1)::before { content: "Nombre"; }
-            #tablaMiembros td:nth-of-type(2)::before { content: "Edad"; }
-            #tablaMiembros td:nth-of-type(3)::before { content: "Congregación"; }
-            #tablaMiembros td:nth-of-type(4)::before { content: "Bautizado"; }
-            #tablaMiembros td:nth-of-type(5)::before { content: "Confirmado"; }
-            
+            /* Labels Manuales */
             #tablaActividades td:nth-of-type(1)::before { content: "Fecha"; }
             #tablaActividades td:nth-of-type(2)::before { content: "Actividad"; }
             #tablaActividades td:nth-of-type(3)::before { content: "Detalles"; }
-            
-            #tablaUsuarios td:nth-of-type(1)::before { content: "ID"; }
             #tablaUsuarios td:nth-of-type(2)::before { content: "Usuario"; }
             #tablaUsuarios td:nth-of-type(3)::before { content: "Rol"; }
             
-            /* Botones de acción */
             .table-custom td:last-child {
-                flex-direction: row; 
-                justify-content: flex-end; 
-                border-top: 1px solid #f8f9fa;
-                margin-top: 1rem;
-                padding-top: 1rem !important;
-                gap: 10px;
+                border-top: 1px solid var(--border); margin-top: 0.5rem; padding-top: 1rem !important; justify-content: flex-end; gap: 10px;
             }
             .table-custom td:last-child::before { display: none; }
         }
-        #tablaActividades td:nth-child(3) {
-    white-space: pre-wrap; 
-    min-width: 250px; /* Le damos buen espacio para que el texto respire */
-}
+        
+        #tablaActividades td:nth-child(3) { white-space: pre-wrap; }
     </style>
 </head>
 <body>
 
-    <div class="header-bg">
-        <div class="container d-flex justify-content-between align-items-center">
-            <div class="text-white">
-                <h2 class="fw-bold mb-0"><i class="bi bi-calendar-check-fill me-2"></i>Iglesia Cristiana Luterana El Buen Pastor</h2>
-                <p class="opacity-75 mb-0" style="font-size: 0.9rem;">Programacion de actividades</p>
+    <nav class="navbar navbar-saas fixed-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
+                <div class="brand-logo"><i class="bi bi-cross"></i></div>
+                <div>
+                    <span class="d-block" style="line-height: 1.1;">Buen Pastor</span>
+                    <small class="text-muted fw-normal" style="font-size: 0.75rem;">Panel Administrativo</small>
+                </div>
+            </a>
+            <button id="btnSalir" class="btn btn-sm btn-outline-danger fw-bold rounded-pill px-3">
+                <i class="bi bi-box-arrow-right"></i> Salir
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="d-flex justify-content-center mb-5" id="navAdmin" style="display:none !important;">
+            <div class="nav-pills-saas">
+                <button onclick="cambiarVista('planner')" class="btn-nav active" id="btnPlanner">
+                    <i class="bi bi-calendar-event"></i> Agenda
+                </button>
+                <button onclick="cambiarVista('usuarios')" class="btn-nav" id="btnUsuarios">
+                    <i class="bi bi-people"></i> Usuarios
+                </button>
+                <button onclick="cambiarVista('miembros')" class="btn-nav" id="btnMiembros">
+                    <i class="bi bi-person-vcard"></i> Miembros
+                </button>
+                <button onclick="cambiarVista('equipo')" class="btn-nav" id="btnEquipo">
+                    <i class="bi bi-diagram-3"></i> Equipo
+                </button>
+                <button onclick="cambiarVista('finanzas')" class="btn-nav" id="btnFinanzas">
+                    <i class="bi bi-cash-stack"></i> Finanzas
+                </button>
             </div>
-            
-            <button id="btnSalir" class="btn btn-outline-light btn-sm px-3 rounded-pill">
-                <i class="bi bi-box-arrow-right me-1"></i> Salir
-            </button>
         </div>
-    </div>
-
-   <div class="container pb-5">
-
-    <div class="d-flex justify-content-center my-4" id="navAdmin" style="display:none !important;">
-        <div class="btn-group shadow-sm bg-white rounded-pill p-1">
-            <button onclick="cambiarVista('planner')" class="btn btn-primary rounded-pill px-4" id="btnPlanner">
-                <i class="bi bi-calendar-event me-2"></i>Actividades
-            </button>
-            <button onclick="cambiarVista('usuarios')" class="btn btn-light rounded-pill px-4" id="btnUsuarios">
-                <i class="bi bi-people-fill me-2"></i>Usuarios
-            </button>
-            <button onclick="cambiarVista('miembros')" class="btn btn-light rounded-pill px-4" id="btnMiembros">
-                <i class="bi bi-person-vcard-fill me-2"></i>Miembros
-            </button>
-            <button onclick="cambiarVista('equipo')" class="btn btn-light rounded-pill px-4" id="btnEquipo">
-                <i class="bi bi-diagram-3-fill me-2"></i>Equipo
-            </button>
-            <button onclick="cambiarVista('finanzas')" class="btn btn-light rounded-pill px-4" id="btnFinanzas">
-                <i class="bi bi-cash-coin me-2"></i>Finanzas
-            </button>
-        </div>
-    </div>
 
         <div class="row justify-content-center">
-            <div class="col-lg-10">
+            <div class="col-lg-12">
                 
-                <div id="vistaPlanner" class="card main-card mb-5">
-                    <div class="card-body p-4 p-md-5">
-                        
-                        <div id="seccionCumpleaneros" class="mb-4" style="display: none;">
-                            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #42a5f5 0%, #0d47a1 100%); color: white;">
-                                <div class="card-body p-4">
-                                    <h5 class="fw-bold mb-3"><i class="bi bi-cake2-fill me-2"></i>Cumpleañeros del Mes</h5>
-                                    <div id="listaCumpleaneros" class="row g-3">
-                                        </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="seccionCrear">
-                            <h5 class="text-primary mb-4 fw-bold"><i class="bi bi-plus-circle me-2"></i>Nueva Actividad</h5>
-                            <form id="actividadForm">
-                                <div class="row g-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label text-muted small">Fecha</label>
-                                        <input type="date" id="fecha" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label text-muted small">Actividad</label>
-                                        <input type="text" id="actividad" class="form-control" placeholder="Ej: Ayuno" required>
-                                    </div>
-                                    <div class="col-md-5">
-    <label class="form-label text-muted small">Detalles</label>
-    <textarea id="detalles" class="form-control" placeholder="Encargado... (Enter para nueva línea)" rows="1" style="resize: none; height: 50px;"></textarea>
-</div>
-                                </div>
-                                <div class="mt-4 text-end">
-                                    <button type="submit" class="btn btn-primary btn-custom px-5 text-white">Guardar</button>
-                                </div>
-                            </form>
-                            <hr class="my-5 opacity-25">
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-    <h5 class="text-dark fw-bold m-0">
-        <i class="bi bi-list-task me-2"></i>Próximas Actividades
-    </h5>
-    <button onclick="generarPDF()" class="btn btn-danger btn-sm text-white px-3" style="border-radius: 8px;">
-        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Imprimir PDF
-    </button>
-</div>
-                        <div class="table-responsive">
-                            <table class="table table-custom table-hover">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 15%;">Fecha</th>
-                                        <th style="width: 30%;">Actividad</th>
-                                        <th style="width: 40%;">Detalles</th>
-                                        <th style="width: 15%; text-align: right;">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaActividades"></tbody>
-                            </table>
-                            <div id="loading" class="text-center py-4 text-muted" style="display:none;">
-                                <div class="spinner-border spinner-border-sm me-2"></div> Cargando...
+                <div id="vistaPlanner" class="main-card">
+                    <div id="seccionCumpleaneros" class="mb-4" style="display: none;">
+                        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border-radius: 12px;">
+                            <div class="card-body p-4">
+                                <h6 class="fw-bold mb-3 text-uppercase opacity-75" style="letter-spacing: 1px; font-size: 0.8rem;"><i class="bi bi-cake2-fill me-2"></i>Celebraciones del Mes</h6>
+                                <div id="listaCumpleaneros" class="row g-3"></div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="vistaUsuarios" class="card main-card mb-5" style="display:none;">
-                    <div class="card-body p-4 p-md-5">
-                        <h5 class="text-primary mb-4 fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Registrar Usuario</h5>
-                        
-                        <form id="usuarioForm">
-                            <div class="row g-3 align-items-end">
-                                <div class="col-md-4">
-                                    <label class="form-label text-muted small">Usuario</label>
-                                    <input type="text" id="newUsername" class="form-control" placeholder="Ej: pastor_juan" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label text-muted small">Contraseña</label>
-                                    <input type="password" id="newPassword" class="form-control" required>
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label text-muted small">Rol</label>
-                                    <select id="newRol" class="form-select">
-                                        <option value="invitado">Invitado</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <button type="submit" class="btn btn-success w-100 btn-custom">Crear</button>
-                                </div>
-                            </div>
-                        </form>
-
-                        <hr class="my-5 opacity-25">
-
-                        <h5 class="text-dark mb-4 fw-bold"><i class="bi bi-people me-2"></i>Lista de Usuarios</h5>
-                        <div class="table-responsive">
-                            <table class="table table-custom table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Usuario</th>
-                                        <th>Rol</th>
-                                        <th class="text-end">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaUsuarios"></tbody>
-                            </table>
+                    <div id="seccionCrear" class="mb-5">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3"><i class="bi bi-plus-lg fs-5"></i></div>
+                            <h5 class="fw-bold m-0">Nueva Actividad</h5>
                         </div>
-                    </div>
-                </div>
-
-                <div id="vistaMiembros" class="card main-card mb-5" style="display:none;">
-                    <div class="card-body p-4 p-md-5">
-                        <h5 class="text-primary mb-4 fw-bold"><i class="bi bi-person-lines-fill me-2"></i>Nuevo Miembro</h5>
                         
-                        <form id="miembroForm">
+                        <form id="actividadForm" class="p-4 bg-light rounded-4 border">
                             <div class="row g-3">
-                                <div class="col-12 col-md-4">
-                                    <label class="form-label text-muted small fw-bold">Nombre Completo</label>
-                                    <input type="text" id="mNombre" class="form-control" required>
+                                <div class="col-md-3">
+                                    <label class="form-label">Fecha</label>
+                                    <input type="date" id="fecha" class="form-control" required>
                                 </div>
-                                
-                                <div class="col-12 col-md-2">
-                                    <label class="form-label text-muted small fw-bold">F. Nacimiento</label>
-                                    <input type="date" id="mFecha" class="form-control" required>
+                                <div class="col-md-4">
+                                    <label class="form-label">Actividad</label>
+                                    <input type="text" id="actividad" class="form-control" placeholder="Ej: Culto Dominical" required>
                                 </div>
-                                
-                                <div class="col-12 col-md-3">
-                                    <label class="form-label text-muted small fw-bold">Congregación</label>
-                                    <input type="text" id="mCongregacion" class="form-control" placeholder="Ej: Central">
-                                </div>
-                                
-                                <div class="col-12 col-md-3 d-flex align-items-center justify-content-around pt-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="mBautizado">
-                                        <label class="form-check-label small">Bautizado</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="mConfirmado">
-                                        <label class="form-check-label small">Confirmado</label>
-                                    </div>
-                                </div>
-
-                                <div class="col-12 text-end mt-3">
-                                    <button type="submit" class="btn btn-success btn-custom px-4 w-100 w-md-auto">Agregar Fiel</button>
+                                <div class="col-md-5">
+                                    <label class="form-label">Detalles / Encargado</label>
+                                    <textarea id="detalles" class="form-control" rows="1" placeholder="Detalles opcionales..." style="resize: none;"></textarea>
                                 </div>
                             </div>
+                            <div class="mt-3 text-end">
+                                <button type="submit" class="btn btn-primary btn-custom">Guardar Actividad</button>
+                            </div>
                         </form>
+                    </div>
 
-                        <hr class="my-5 opacity-25">
-
-                        <h5 class="text-dark mb-4 fw-bold"><i class="bi bi-list-columns-reverse me-2"></i>Directorio de la Congregación</h5>
-                        <div class="table-responsive">
-                            <table class="table table-custom table-hover text-center">
-                                <thead>
-                                    <tr>
-                                        <th class="text-start">Nombre</th>
-                                        <th>Edad</th>
-                                        <th>Congregación</th>
-                                        <th>Bautizado</th>
-                                        <th>Confirmado</th>
-                                        <th class="text-end">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaMiembros"></tbody>
-                            </table>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0 text-dark">Calendario de Actividades</h5>
+                        <button onclick="generarPDF()" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">
+                            <i class="bi bi-file-pdf-fill me-1"></i> PDF
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-custom">
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%;">Fecha</th>
+                                    <th style="width: 25%;">Actividad</th>
+                                    <th style="width: 45%;">Detalles</th>
+                                    <th style="width: 15%; text-align: right;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaActividades"></tbody>
+                        </table>
+                        <div id="loading" class="text-center py-5 text-muted" style="display:none;">
+                            <div class="spinner-border text-primary" role="status"></div>
                         </div>
+                    </div>
+                </div>
+
+                <div id="vistaUsuarios" class="main-card" style="display:none;">
+                    <div class="d-flex align-items-center mb-4">
+                         <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3"><i class="bi bi-shield-lock-fill fs-5"></i></div>
+                         <h5 class="fw-bold m-0">Gestión de Usuarios</h5>
+                    </div>
+                    <form id="usuarioForm" class="p-4 bg-light rounded-4 border mb-5">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label">Usuario</label>
+                                <input type="text" id="newUsername" class="form-control" placeholder="nombre.apellido" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Contraseña</label>
+                                <input type="password" id="newPassword" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Rol</label>
+                                <select id="newRol" class="form-select">
+                                    <option value="invitado">Invitado</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-success w-100 btn-custom">Crear</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="table-responsive">
+                        <table class="table table-custom">
+                            <thead><tr><th>ID</th><th>Usuario</th><th>Rol</th><th class="text-end">Acciones</th></tr></thead>
+                            <tbody id="tablaUsuarios"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="vistaMiembros" class="main-card" style="display:none;">
+                     <div class="d-flex align-items-center mb-4">
+                         <div class="bg-success bg-opacity-10 text-success p-2 rounded-3 me-3"><i class="bi bi-person-hearts fs-5"></i></div>
+                         <h5 class="fw-bold m-0">Directorio de la Congregación</h5>
+                    </div>
+                    
+                    <form id="miembroForm" class="p-4 bg-light rounded-4 border mb-5">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Nombre Completo</label>
+                                <input type="text" id="mNombre" class="form-control" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Fecha Nacimiento</label>
+                                <input type="date" id="mFecha" class="form-control" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Congregación</label>
+                                <input type="text" id="mCongregacion" class="form-control" placeholder="Ej: Central">
+                            </div>
+                            <div class="col-md-2 d-flex flex-column justify-content-center gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="mBautizado">
+                                    <label class="form-check-label small">Bautizado</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="mConfirmado">
+                                    <label class="form-check-label small">Confirmado</label>
+                                </div>
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-success btn-custom px-4">Agregar Fiel</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="table-responsive">
+                        <table class="table table-custom text-center">
+                            <thead>
+                                <tr>
+                                    <th class="text-start">Nombre</th>
+                                    <th>Edad</th>
+                                    <th>Congregación</th>
+                                    <th>Bautizado</th>
+                                    <th>Confirmado</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaMiembros"></tbody>
+                        </table>
                     </div>
                 </div>
 
                 <div id="vistaEquipo" class="mb-5" style="display:none;">
                     <div class="text-center mb-5">
-                        <h3 class="fw-bold text-primary">Equipo Pastoral</h3>
+                        <h3 class="fw-bold text-dark">Equipo Pastoral</h3>
                         <p class="text-muted">Estructura de Liderazgo y Servicio</p>
                     </div>
                     <div id="contenedorEquipo" class="d-flex flex-column align-items-center gap-4"></div>
                 </div>
+
                 <div id="vistaFinanzas" class="mb-5" style="display:none;"></div>
+            
             </div>
         </div>
     </div>
 
     <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar Actividad</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold">Editar Actividad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <form id="formEditar">
                         <input type="hidden" id="editId"> 
                         <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold">Fecha</label>
+                            <label class="form-label">Fecha</label>
                             <input type="date" id="editFecha" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold">Actividad</label>
+                            <label class="form-label">Actividad</label>
                             <input type="text" id="editActividad" class="form-control" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold">Detalles</label>
-                            <textarea id="editDetalles" class="form-control" rows="2"></textarea>
+                        <div class="mb-4">
+                            <label class="form-label">Detalles</label>
+                            <textarea id="editDetalles" class="form-control" rows="3"></textarea>
                         </div>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-custom">Guardar Cambios</button>
@@ -395,41 +434,23 @@
 
     <div class="modal fade" id="modalEditarMiembro" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-success text-white"> 
-                    <h5 class="modal-title fw-bold"><i class="bi bi-person-gear me-2"></i>Editar Miembro</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-bottom-0 pb-0"> 
+                    <h5 class="modal-title fw-bold">Editar Miembro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <form id="formEditarMiembro">
                         <input type="hidden" id="editMemId">
-                        
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Nombre Completo</label>
-                            <input type="text" id="editMemNombre" class="form-control" required>
+                        <div class="mb-3"><label class="form-label">Nombre</label><input type="text" id="editMemNombre" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Fecha Nacimiento</label><input type="date" id="editMemFecha" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Congregación</label><input type="text" id="editMemCongregacion" class="form-control"></div>
+                        <div class="d-flex gap-3 mb-4 p-3 bg-light rounded-3">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="editMemBautizado"><label class="form-check-label">Bautizado</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="editMemConfirmado"><label class="form-check-label">Confirmado</label></div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Fecha de Nacimiento</label>
-                            <input type="date" id="editMemFecha" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Congregación</label>
-                            <input type="text" id="editMemCongregacion" class="form-control">
-                        </div>
-
-                        <div class="d-flex justify-content-around mb-4 border p-2 rounded bg-light">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editMemBautizado">
-                                <label class="form-check-label">Bautizado</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editMemConfirmado">
-                                <label class="form-check-label">Confirmado</label>
-                            </div>
-                        </div>
-                        
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-success btn-custom">Guardar Cambios</button>
+                            <button type="submit" class="btn btn-success btn-custom">Actualizar Datos</button>
                         </div>
                     </form>
                 </div>
@@ -440,7 +461,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="finance.js?v=2"></script>
-    <script src="script.js?v=6"></script> 
+    
+    <script src="finance.js?v=21"></script> <script src="script.js?v=7"></script> 
 </body>
 </html>
