@@ -377,6 +377,56 @@
 
     </main>
 
+    <div class="modal fade" id="modalCrearMiembro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-success">
+                    <i class="bi bi-person-plus-fill me-2"></i>Nuevo Miembro
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="miembroForm">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre Completo</label>
+                        <input type="text" id="mNombre" class="form-control" placeholder="Ej: Maria Lopez" required>
+                    </div>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">F. Nacimiento</label>
+                            <input type="date" id="mFecha" class="form-control" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Congregación</label>
+                            <input type="text" id="mCongregacion" class="form-control" placeholder="Central">
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 mb-4 border">
+                        <label class="form-label small fw-bold mb-2 text-muted">Sacramentos</label>
+                        <div class="d-flex gap-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="mBautizado">
+                                <label class="form-check-label small" for="mBautizado">Bautizado</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="mConfirmado">
+                                <label class="form-check-label small" for="mConfirmado">Confirmado</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-custom py-2 fw-bold">Guardar Registro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
     <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow rounded-4">
@@ -396,6 +446,7 @@
             </div>
         </div>
     </div>
+
 
     <div class="modal fade" id="modalEditarMiembro" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
