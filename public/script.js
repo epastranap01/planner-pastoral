@@ -298,39 +298,48 @@ function calcularEdad(fechaNacimiento) {
     if (m < 0 || (m === 0 && hoy.getDate() < cumpleanos.getDate())) { edad--; }
     return edad;
 }
-// --- VARIABLES GLOBALES PARA MIEMBROS ---
-let listaMiembrosCache = []; // Para el buscador
+// ==========================================
+// MÓDULO DE MIEMBROS (Lógica Full + Modales)
+// ==========================================
 
-// --- 5. CARGAR MIEMBROS (NUEVO DISEÑO) ---
+let listaMiembrosCache = []; // Almacenamos aquí para editar sin volver a consultar la API
+
+// 1. CARGAR Y RENDERIZAR MIEMBROS
 async function cargarMiembros() {
     const tbody = document.getElementById('tablaMiembros');
     if (!tbody) return;
 
+    // Spinner de carga mientras llegan los datos
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+
     try {
         const token = localStorage.getItem('token');
         const res = await fetch('/api/miembros', { headers: { 'Authorization': token } });
-        listaMiembrosCache = await res.json(); // Guardamos en caché para buscar rápido
+        if(!res.ok) throw new Error("Error al obtener miembros");
         
+        listaMiembrosCache = await res.json(); // Guardamos en memoria
         renderizarTablaMiembros(listaMiembrosCache);
+        
     } catch (error) {
         console.error(error);
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error cargando miembros</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-3">Error cargando datos.</td></tr>`;
     }
 }
 
+// 2. RENDERIZAR TABLA (Con Avatares y Badges)
 function renderizarTablaMiembros(miembros) {
     const tbody = document.getElementById('tablaMiembros');
     const noResults = document.getElementById('noMiembros');
     tbody.innerHTML = '';
 
-    if (miembros.length === 0) {
+    if (!miembros || miembros.length === 0) {
         if(noResults) noResults.style.display = 'block';
         return;
     }
     if(noResults) noResults.style.display = 'none';
 
     miembros.forEach(m => {
-        // Calcular edad
+        // Calcular Edad
         let edad = '-';
         if (m.fecha_nacimiento) {
             const hoy = new Date();
@@ -340,91 +349,204 @@ function renderizarTablaMiembros(miembros) {
             if (mdiff < 0 || (mdiff === 0 && hoy.getDate() < nac.getDate())) edad--;
         }
 
-        // Iniciales para Avatar
-        const iniciales = m.nombre.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-        // Color aleatorio suave para el avatar basado en el nombre
-        const colores = ['#ebf8ff', '#f0fdf4', '#fef2f2', '#fff7ed', '#f3f4f6'];
-        const coloresTxt = ['#0369a1', '#15803d', '#b91c1c', '#c2410c', '#4b5563'];
-        const colorIdx = m.nombre.length % colores.length;
+        // Crear Avatar (Iniciales)
+        const nombreArr = m.nombre.split(' ');
+        const iniciales = (nombreArr[0][0] + (nombreArr[1] ? nombreArr[1][0] : '')).toUpperCase();
         
-        // Badges de sacramentos
-        const bautizadoBadge = m.bautizado 
+        // Colores aleatorios consistentes
+        const colores = ['#ebf8ff', '#f0fdf4', '#fef2f2', '#fff7ed', '#f3f4f6']; // Fondos
+        const coloresTxt = ['#0369a1', '#15803d', '#b91c1c', '#c2410c', '#4b5563']; // Textos
+        const colorIdx = m.id % colores.length; // Usamos el ID para que el color siempre sea el mismo para esa persona
+
+        // Iconos de estado
+        const iconBautizo = m.bautizado 
             ? `<span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill me-1" title="Bautizado"><i class="bi bi-droplet-fill"></i></span>` 
-            : `<span class="badge bg-light text-muted border rounded-pill me-1 opacity-25"><i class="bi bi-droplet"></i></span>`;
+            : `<span class="badge bg-light text-muted border rounded-pill me-1 opacity-25" title="No Bautizado"><i class="bi bi-droplet"></i></span>`;
             
-        const confirmadoBadge = m.confirmado 
+        const iconConfirm = m.confirmado 
             ? `<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill" title="Confirmado"><i class="bi bi-check-circle-fill"></i></span>` 
-            : `<span class="badge bg-light text-muted border rounded-pill opacity-25"><i class="bi bi-circle"></i></span>`;
+            : `<span class="badge bg-light text-muted border rounded-pill opacity-25" title="No Confirmado"><i class="bi bi-circle"></i></span>`;
 
         tbody.innerHTML += `
             <tr>
                 <td class="ps-4">
                     <div class="d-flex align-items-center">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" 
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-3 flex-shrink-0" 
                              style="width: 40px; height: 40px; background-color: ${colores[colorIdx]}; color: ${coloresTxt[colorIdx]}; font-size: 0.85rem;">
                             ${iniciales}
                         </div>
                         <div>
-                            <div class="fw-bold text-dark">${m.nombre}</div>
+                            <div class="fw-bold text-dark text-truncate" style="max-width: 180px;">${m.nombre}</div>
                             <div class="small text-muted">${edad} años</div>
                         </div>
                     </div>
                 </td>
                 <td><span class="text-secondary fw-medium">${m.congregacion || 'General'}</span></td>
                 <td>
-                    <div class="d-flex align-items-center">${bautizadoBadge} ${confirmadoBadge}</div>
+                    <div class="d-flex align-items-center">${iconBautizo} ${iconConfirm}</div>
                 </td>
                 <td class="text-end pe-4">
-                    <button onclick="editarMiembro(${m.id})" class="btn btn-sm btn-light border text-primary shadow-sm"><i class="bi bi-pencil-square"></i></button>
-                    <button onclick="eliminarMiembro(${m.id})" class="btn btn-sm btn-light border text-danger shadow-sm ms-1"><i class="bi bi-trash"></i></button>
+                    <button onclick="prepararEdicionMiembro(${m.id})" class="btn btn-sm btn-light border text-primary shadow-sm" title="Editar"><i class="bi bi-pencil-square"></i></button>
+                    <button onclick="eliminarMiembro(${m.id})" class="btn btn-sm btn-light border text-danger shadow-sm ms-1" title="Eliminar"><i class="bi bi-trash"></i></button>
                 </td>
             </tr>
         `;
     });
 }
 
-// Función de búsqueda en tiempo real
-function filtrarMiembros() {
+// 3. LOGICA DE AGREGAR (CORREGIDA)
+const formCrearMiembro = document.getElementById('miembroForm');
+if (formCrearMiembro) {
+    formCrearMiembro.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const nuevoMiembro = {
+            nombre: document.getElementById('mNombre').value,
+            fecha_nacimiento: document.getElementById('mFecha').value,
+            congregacion: document.getElementById('mCongregacion').value,
+            bautizado: document.getElementById('mBautizado').checked,
+            confirmado: document.getElementById('mConfirmado').checked
+        };
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/miembros', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                body: JSON.stringify(nuevoMiembro)
+            });
+
+            if (res.ok) {
+                // 1. Cerrar Modal
+                const modalEl = document.getElementById('modalCrearMiembro');
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if(modalInstance) modalInstance.hide();
+                
+                // 2. Limpiar formulario
+                formCrearMiembro.reset();
+                
+                // 3. Recargar tabla y notificar
+                cargarMiembros();
+                if(typeof cargarCumpleaneros === 'function') cargarCumpleaneros(); // Actualizar widget cumpleaños también
+                Swal.fire({ icon: 'success', title: 'Miembro Registrado', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+            } else {
+                Swal.fire('Error', 'No se pudo guardar', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'Error de conexión', 'error');
+        }
+    });
+}
+
+// 4. LOGICA DE EDITAR (CORREGIDA)
+
+// A. Abrir el modal con los datos cargados
+window.prepararEdicionMiembro = (id) => {
+    // Buscar en caché (más rápido que llamar a la API de nuevo)
+    const m = listaMiembrosCache.find(x => x.id === id);
+    if (!m) return;
+
+    // Llenar campos del modal de edición
+    document.getElementById('editMemId').value = m.id;
+    document.getElementById('editMemNombre').value = m.nombre;
+    document.getElementById('editMemCongregacion').value = m.congregacion;
+    document.getElementById('editMemBautizado').checked = m.bautizado;
+    document.getElementById('editMemConfirmado').checked = m.confirmado;
+
+    // Formatear fecha para el input type="date" (YYYY-MM-DD)
+    if (m.fecha_nacimiento) {
+        const fechaISO = new Date(m.fecha_nacimiento).toISOString().split('T')[0];
+        document.getElementById('editMemFecha').value = fechaISO;
+    }
+
+    // Mostrar Modal (Bootstrap 5)
+    const modalEl = document.getElementById('modalEditarMiembro');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+};
+
+// B. Guardar los cambios
+const formEditarMiembro = document.getElementById('formEditarMiembro');
+if (formEditarMiembro) {
+    formEditarMiembro.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById('editMemId').value;
+        const datosActualizados = {
+            nombre: document.getElementById('editMemNombre').value,
+            fecha_nacimiento: document.getElementById('editMemFecha').value,
+            congregacion: document.getElementById('editMemCongregacion').value,
+            bautizado: document.getElementById('editMemBautizado').checked,
+            confirmado: document.getElementById('editMemConfirmado').checked
+        };
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/miembros/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                body: JSON.stringify(datosActualizados)
+            });
+
+            if (res.ok) {
+                // Cerrar modal
+                const modalEl = document.getElementById('modalEditarMiembro');
+                const modal = bootstrap.Modal.getInstance(modalEl); // Obtener instancia existente
+                if(modal) modal.hide();
+
+                // Recargar
+                cargarMiembros();
+                if(typeof cargarCumpleaneros === 'function') cargarCumpleaneros();
+                
+                Swal.fire({ icon: 'success', title: 'Datos Actualizados', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+            } else {
+                Swal.fire('Error', 'No se pudo actualizar', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'Error de conexión', 'error');
+        }
+    });
+}
+
+// 5. LOGICA DE ELIMINAR (Ya funcionaba, pero la incluimos para mantener todo junto)
+window.eliminarMiembro = async (id) => {
+    const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Se eliminará permanentemente.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`/api/miembros/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': token }
+            });
+            cargarMiembros();
+            if(typeof cargarCumpleaneros === 'function') cargarCumpleaneros();
+            Swal.fire('Eliminado', 'El registro ha sido borrado.', 'success');
+        } catch (error) {
+            Swal.fire('Error', 'No se pudo eliminar', 'error');
+        }
+    }
+};
+
+// 6. BUSCADOR EN TIEMPO REAL
+window.filtrarMiembros = () => {
     const texto = document.getElementById('busquedaMiembro').value.toLowerCase();
     const filtrados = listaMiembrosCache.filter(m => 
         m.nombre.toLowerCase().includes(texto) || 
         (m.congregacion && m.congregacion.toLowerCase().includes(texto))
     );
     renderizarTablaMiembros(filtrados);
-}
-const formMiembro = document.getElementById('miembroForm');
-if(formMiembro) {
-    formMiembro.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nuevo = { nombre: document.getElementById('mNombre').value, fecha_nacimiento: document.getElementById('mFecha').value, congregacion: document.getElementById('mCongregacion').value, bautizado: document.getElementById('mBautizado').checked, confirmado: document.getElementById('mConfirmado').checked };
-        await fetch('/api/miembros', { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': token}, body: JSON.stringify(nuevo) });
-        Swal.fire('Guardado', '', 'success'); formMiembro.reset(); cargarMiembros();
-    });
-}
-window.abrirModalEditarMiembro = (id) => {
-    if(userRol !== 'admin') return;
-    const m = miembrosActuales.find(x => x.id === id); if (!m) return;
-    document.getElementById('editMemId').value = m.id; document.getElementById('editMemNombre').value = m.nombre;
-    document.getElementById('editMemCongregacion').value = m.congregacion || ''; document.getElementById('editMemBautizado').checked = m.bautizado;
-    document.getElementById('editMemConfirmado').checked = m.confirmado;
-    if(m.fecha_nacimiento) document.getElementById('editMemFecha').value = new Date(m.fecha_nacimiento).toISOString().split('T')[0];
-    new bootstrap.Modal(document.getElementById('modalEditarMiembro')).show();
-};
-const formEditarMem = document.getElementById('formEditarMiembro');
-if(formEditarMem) {
-    formEditarMem.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('editMemId').value;
-        const datos = { nombre: document.getElementById('editMemNombre').value, fecha_nacimiento: document.getElementById('editMemFecha').value, congregacion: document.getElementById('editMemCongregacion').value, bautizado: document.getElementById('editMemBautizado').checked, confirmado: document.getElementById('editMemConfirmado').checked };
-        await fetch(`/api/miembros/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json', 'Authorization': token}, body: JSON.stringify(datos) });
-        bootstrap.Modal.getInstance(document.getElementById('modalEditarMiembro')).hide(); Swal.fire('Actualizado', '', 'success'); cargarMiembros();
-    });
-}
-window.eliminarMiembro = async (id) => {
-    if(userRol !== 'admin') return;
-    if ((await Swal.fire({ title: '¿Eliminar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' })).isConfirmed) {
-        await fetch(`/api/miembros/${id}`, { method: 'DELETE', headers: { 'Authorization': token } }); cargarMiembros(); Swal.fire('Eliminado', '', 'success');
-    }
 };
 
 // --- 7. EQUIPO PASTORAL ---
