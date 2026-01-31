@@ -105,23 +105,33 @@
             height: 100%; 
         }
 
-        /* --- WIDGET CUMPLEAÑEROS --- */
-        .birthday-card {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            color: white;
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            position: relative;
-            overflow: hidden;
-            /* Altura mínima para que no se vea aplastado si solo hay 1 cumple */
-            min-height: 220px; 
-        }
-        .birthday-card::after {
-            content: "\F1FD"; /* Icono de pastel de Bootstrap */
-            font-family: bootstrap-icons;
-            position: absolute; right: -10px; bottom: -20px;
-            font-size: 8rem; opacity: 0.1; transform: rotate(-15deg);
-        }
+        /* --- CUMPLEAÑEROS WIDGET CON LOGO (MARCA DE AGUA) --- */
+.birthday-card {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    min-height: 220px;
+}
+
+.birthday-card::after {
+    content: "";
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+    width: 150px;
+    height: 150px;
+    
+    /* RUTA ACTUALIZADA APUNTANDO A LA CARPETA IMG */
+    background-image: url('img/LogoICLEB.svg'); 
+    
+    background-repeat: no-repeat;
+    background-size: contain;
+    opacity: 0.2; /* Transparencia para efecto marca de agua */
+    transform: rotate(-10deg);
+}
 
         /* --- RESPONSIVE MOBILE --- */
         @media (max-width: 768px) {
