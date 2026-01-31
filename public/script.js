@@ -440,7 +440,17 @@ if (formCrearMiembro) {
 }
 
 // 4. LOGICA DE EDITAR (CORREGIDA)
+// A. Abrir Modal de Creación (Manual para evitar error de backdrop)
+window.abrirModalCrearMiembro = () => {
+    // 1. Limpiamos el formulario por si quedaron datos viejos
+    const form = document.getElementById('miembroForm');
+    if(form) form.reset();
 
+    // 2. Abrimos el modal manualmente
+    const modalEl = document.getElementById('modalCrearMiembro');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+};
 // A. Abrir el modal con los datos cargados
 window.prepararEdicionMiembro = (id) => {
     // Buscar en caché (más rápido que llamar a la API de nuevo)
