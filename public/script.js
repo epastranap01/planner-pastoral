@@ -373,12 +373,12 @@ window.editarCargo = async (id, cargo, nombreActual) => {
 async function cargarCumpleaneros() {
     const contenedor = document.getElementById('listaCumpleaneros');
     const seccion = document.getElementById('seccionCumpleaneros');
-    const emptyState = document.getElementById('noBirthdays'); // <--- NUEVO ELEMENTO
+    const emptyState = document.getElementById('noBirthdays');
 
     if (!contenedor || !seccion || !emptyState) return;
 
     try {
-        const token = localStorage.getItem('token'); // Aseguramos el token
+        const token = localStorage.getItem('token');
         const res = await fetch('/api/miembros', { headers: { 'Authorization': token } });
         const miembros = await res.json();
         
@@ -386,7 +386,7 @@ async function cargarCumpleaneros() {
         const mesActual = hoy.getMonth();
         const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         
-        // Filtramos cumpleañeros del mes
+        // Filtramos cumpleañeros
         const cumplenEsteMes = miembros.filter(m => {
             if (!m.fecha_nacimiento) return false;
             const partes = new Date(m.fecha_nacimiento).toISOString().split('T')[0].split('-'); 
@@ -394,48 +394,51 @@ async function cargarCumpleaneros() {
             return mesNac === mesActual;
         });
 
-        // --- LÓGICA DE VISIBILIDAD (EL FIX) ---
+        // --- LÓGICA CORREGIDA (Toggle d-flex) ---
         if (cumplenEsteMes.length === 0) {
-            // Caso: NADIE CUMPLE
-            seccion.style.display = 'none';           // Ocultamos la lista
-            emptyState.style.display = 'flex';        // Mostramos el aviso (flex para centrar)
-            return;
+            // MOSTRAR ESTADO VACÍO
+            seccion.style.display = 'none';
+            
+            emptyState.style.display = 'flex'; // Activamos display
+            emptyState.classList.add('d-flex'); // Activamos flexbox de bootstrap
         } else {
-            // Caso: SÍ HAY CUMPLEAÑEROS
-            seccion.style.display = 'block';          // Mostramos la lista
-            emptyState.style.display = 'none';        // Ocultamos el aviso
+            // MOSTRAR LISTA
+            seccion.style.display = 'block';
+            
+            emptyState.style.display = 'none'; // Ocultamos
+            emptyState.classList.remove('d-flex'); // Quitamos flex para evitar conflictos
         }
 
-        // Ordenar por día
-        cumplenEsteMes.sort((a, b) => {
-            const diaA = parseInt(new Date(a.fecha_nacimiento).toISOString().split('T')[0].split('-')[2]);
-            const diaB = parseInt(new Date(b.fecha_nacimiento).toISOString().split('T')[0].split('-')[2]);
-            return diaA - diaB;
-        });
+        if (cumplenEsteMes.length > 0) {
+            // Ordenar y Renderizar (Igual que antes)
+            cumplenEsteMes.sort((a, b) => {
+                const diaA = parseInt(new Date(a.fecha_nacimiento).toISOString().split('T')[0].split('-')[2]);
+                const diaB = parseInt(new Date(b.fecha_nacimiento).toISOString().split('T')[0].split('-')[2]);
+                return diaA - diaB;
+            });
 
-        // --- GENERAR HTML (DISEÑO ADAPTADO AL WIDGET) ---
-        contenedor.innerHTML = '';
-        cumplenEsteMes.forEach(m => {
-            const fecha = new Date(m.fecha_nacimiento).toISOString().split('T')[0].split('-');
-            const dia = fecha[2];
-            const anioNac = parseInt(fecha[0]);
-            const edad = hoy.getFullYear() - anioNac;
-            const nombreCorto = m.nombre.split(' ')[0] + ' ' + (m.nombre.split(' ')[1] || '');
+            contenedor.innerHTML = '';
+            cumplenEsteMes.forEach(m => {
+                const fecha = new Date(m.fecha_nacimiento).toISOString().split('T')[0].split('-');
+                const dia = fecha[2];
+                const anioNac = parseInt(fecha[0]);
+                const edad = hoy.getFullYear() - anioNac;
+                const nombreCorto = m.nombre.split(' ')[0] + ' ' + (m.nombre.split(' ')[1] || '');
 
-            // Diseño tipo lista (más limpio para el sidebar)
-            contenedor.innerHTML += `
-                <div class="d-flex align-items-center bg-white bg-opacity-25 p-2 rounded border border-white border-opacity-25">
-                    <div class="bg-white text-primary rounded-3 text-center me-3 d-flex flex-column justify-content-center p-1" style="min-width: 45px; height: 45px;">
-                        <span class="fw-bold" style="line-height: 1; font-size: 1.1rem;">${dia}</span>
-                        <span class="small text-uppercase" style="font-size: 0.6rem; line-height: 1;">${nombresMeses[mesActual].substring(0,3)}</span>
+                contenedor.innerHTML += `
+                    <div class="d-flex align-items-center bg-white bg-opacity-25 p-2 rounded border border-white border-opacity-25">
+                        <div class="bg-white text-primary rounded-3 text-center me-3 d-flex flex-column justify-content-center p-1" style="min-width: 45px; height: 45px;">
+                            <span class="fw-bold" style="line-height: 1; font-size: 1.1rem;">${dia}</span>
+                            <span class="small text-uppercase" style="font-size: 0.6rem; line-height: 1;">${nombresMeses[mesActual].substring(0,3)}</span>
+                        </div>
+                        <div class="text-white">
+                            <div class="fw-bold text-truncate" style="max-width: 140px;">${nombreCorto}</div>
+                            <div class="small opacity-75"><i class="bi bi-gift-fill me-1"></i>Cumple ${edad}</div>
+                        </div>
                     </div>
-                    <div class="text-white">
-                        <div class="fw-bold text-truncate" style="max-width: 140px;">${nombreCorto}</div>
-                        <div class="small opacity-75"><i class="bi bi-gift-fill me-1"></i>Cumple ${edad}</div>
-                    </div>
-                </div>
-            `;
-        });
+                `;
+            });
+        }
 
     } catch (error) {
         console.error("Error cargando cumpleaños:", error);
