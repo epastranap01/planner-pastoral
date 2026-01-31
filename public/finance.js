@@ -24,80 +24,107 @@ const tiposCultos = [
 try {
     const styleSheet = document.createElement("style");
     styleSheet.innerText = `
-        /* --- TARJETAS DASHBOARD --- */
-        .pro-card {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.02);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .pro-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-        }
-        
-        /* --- ICONOS DE ESTADÍSTICAS --- */
-        .stat-icon {
-            width: 50px; height: 50px;
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.6rem;
-        }
+    /* --- FUENTE & BASE --- */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+        --primary: #6366f1; /* Indigo moderno en vez de azul básico */
+        --success: #10b981;
+        --danger: #ef4444;
+        --bg-body: #f3f4f6;
+        --bg-card: #ffffff;
+        --text-main: #111827;
+        --text-muted: #6b7280;
+    }
 
-        /* --- BADGES MODERNOS --- */
-        .badge-soft-success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-        .badge-soft-danger { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
-        .badge-soft-warning { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
-        .badge-soft-info { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+    }
 
-        /* --- CHIPS DE CATEGORÍAS --- */
-        .cat-chip {
-            display: inline-flex; align-items: center;
-            padding: 6px 14px;
-            background: #f8f9fa; border: 1px solid #dee2e6;
-            border-radius: 50px;
-            font-size: 0.85rem; font-weight: 600; color: #495057;
-            transition: all 0.2s;
-        }
-        .cat-chip:hover { background: #e9ecef; border-color: #ced4da; }
-        .cat-chip.leaving { opacity: 0; transform: scale(0.8); }
+    /* --- TARJETAS PREMIUM --- */
+    .pro-card {
+        background: var(--bg-card);
+        border: 1px solid rgba(255,255,255,0.5);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px -5px rgba(0,0,0,0.06); /* Sombra difusa y elegante */
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .pro-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1);
+    }
 
-        /* --- TABLA PROFESIONAL --- */
-        .table-pro thead th {
-            background-color: #f8f9fa;
-            text-transform: uppercase;
-            font-size: 0.75rem; font-weight: 700; color: #6c757d;
-            letter-spacing: 0.5px;
-            padding: 14px 10px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .table-pro tbody td {
-            padding: 12px 10px;
-            vertical-align: middle;
-            border-bottom: 1px solid #f1f3f5;
-            color: #343a40; font-size: 0.9rem;
-        }
-        .table-pro tbody tr:hover { background-color: #f8f9fa; }
+    /* Decoración sutil de fondo para las tarjetas */
+    .pro-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 4px;
+        background: linear-gradient(90deg, var(--primary), #a855f7);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .pro-card:hover::before { opacity: 1; }
 
-        /* --- BOTONES ACCIÓN --- */
-        .btn-action {
-            width: 34px; height: 34px;
-            padding: 0;
-            border-radius: 8px;
-            display: inline-flex; align-items: center; justify-content: center;
-            transition: background 0.2s;
-            border: none; background: transparent;
-        }
-        .btn-action:hover { background-color: #e9ecef; }
-        .btn-action.edit:hover { color: #0d6efd; background-color: #cfe2ff; }
-        .btn-action.delete:hover { color: #dc3545; background-color: #f8d7da; }
+    /* --- TIPOGRAFÍA DE DATOS --- */
+    .stat-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 2.25rem; /* Números grandes */
+        font-weight: 700;
+        color: var(--text-main);
+        letter-spacing: -0.03em; /* Kerning apretado para números */
+        line-height: 1.1;
+    }
 
-        /* --- VALIDACIONES --- */
-        .form-control.is-invalid { border-color: #dc3545; background-image: none; }
-        .form-control.is-valid { border-color: #198754; background-image: none; }
-        .validation-msg { font-size: 0.75rem; font-weight: 700; margin-top: 4px; display: block; }
-    `;
+    /* --- ICONOS CON FONDO SUAVE --- */
+    .icon-box {
+        width: 48px; height: 48px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .icon-box.blue { background: #e0e7ff; color: #4338ca; }
+    .icon-box.green { background: #d1fae5; color: #047857; }
+    .icon-box.red { background: #fee2e2; color: #b91c1c; }
+
+    /* --- TABLA FLOTANTE --- */
+    .table-container {
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+    .table-pro thead th {
+        background: #f9fafb;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        border: none;
+    }
+    .table-pro tbody td {
+        padding: 1.25rem 1.5rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.95rem;
+    }
+    .table-pro tbody tr:last-child td { border-bottom: none; }
+    .table-pro tbody tr:hover { background-color: #f9fafb; }
+`;
     document.head.appendChild(styleSheet);
 } catch (e) { console.error("Error aplicando estilos:", e); }
 
