@@ -1,282 +1,293 @@
-// finance.js - Módulo Financiero v17 (UI Pro + CRUD Completo + Código Legible)
-console.log("Cargando Módulo Financiero v17 Estabilizado...");
+// finance.js - Módulo Financiero v20 (SaaS Pro Design + Full Logic)
+console.log("Cargando Módulo Financiero v20 (SaaS UI)...");
 
 // ==========================================
-// 1. VARIABLES GLOBALES Y CONFIGURACIÓN
+// 1. VARIABLES GLOBALES
 // ==========================================
-let talonariosIngreso = [];
-let talonariosEgreso = [];
-let categoriasEgresos = [];
-let transacciones = [];
-let miembrosFinanzas = []; 
-let saldoActual = 0;
-let ingresosMes = 0;
-let egresosMes = 0;
-
-const tiposCultos = [
-    'Culto Dominical', 'Escuela Dominical', 'Culto de Oración', 
-    'Culto de Enseñanza', 'Reunión de Jóvenes', 'Reunión de Damas', 'Vigilia'
-];
+let talonariosIngreso = [], talonariosEgreso = [], categoriasEgresos = [], transacciones = [], miembrosFinanzas = [];
+let saldoActual = 0, ingresosMes = 0, egresosMes = 0;
+const tiposCultos = ['Culto Dominical', 'Escuela Dominical', 'Culto de Oración', 'Culto de Enseñanza', 'Reunión de Jóvenes', 'Reunión de Damas', 'Vigilia'];
 
 // ==========================================
-// 2. ESTILOS VISUALES (UI SYSTEM)
+// 2. ESTILOS SAAS PRO (Inyectados)
 // ==========================================
 try {
     const styleSheet = document.createElement("style");
     styleSheet.innerText = `
-        /* --- TARJETAS DASHBOARD --- */
-        .pro-card {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.02);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        :root {
+            --saas-primary: #2563eb;       /* Azul Royal */
+            --saas-primary-dark: #1d4ed8;
+            --saas-bg: #f3f4f6;            /* Gris muy claro */
+            --saas-surface: #ffffff;
+            --saas-text-main: #111827;     /* Casi negro */
+            --saas-text-muted: #6b7280;    /* Gris medio */
+            --saas-border: #e5e7eb;
+            --saas-radius: 16px;
+            --saas-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
         }
-        .pro-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .saas-container {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--saas-text-main);
+            background-color: transparent; /* El fondo lo pone la app principal */
         }
-        
-        /* --- ICONOS DE ESTADÍSTICAS --- */
-        .stat-icon {
-            width: 50px; height: 50px;
+
+        /* --- TARJETAS (CARDS) --- */
+        .saas-card {
+            background: var(--saas-surface);
+            border-radius: var(--saas-radius);
+            box-shadow: var(--saas-shadow);
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 1.5rem;
+            height: 100%;
+            transition: transform 0.2s ease;
+        }
+        .saas-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* --- METRIC CARDS --- */
+        .metric-icon-box {
+            width: 48px; height: 48px;
             border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.6rem;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
         }
+        .metric-label { font-size: 0.875rem; color: var(--saas-text-muted); font-weight: 500; }
+        .metric-value { font-size: 1.75rem; font-weight: 700; color: var(--saas-text-main); letter-spacing: -0.5px; }
 
-        /* --- BADGES MODERNOS --- */
-        .badge-soft-success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-        .badge-soft-danger { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
-        .badge-soft-warning { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
-        .badge-soft-info { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
+        /* --- BOTONES SAAS --- */
+        .btn-saas {
+            border: none;
+            border-radius: 12px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-saas-primary { background: var(--saas-primary); color: white; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
+        .btn-saas-primary:hover { background: var(--saas-primary-dark); transform: translateY(-1px); }
+        
+        .btn-saas-secondary { background: white; border: 1px solid var(--saas-border); color: var(--saas-text-main); }
+        .btn-saas-secondary:hover { background: #f9fafb; border-color: #d1d5db; }
 
-        /* --- CHIPS DE CATEGORÍAS --- */
-        .cat-chip {
-            display: inline-flex; align-items: center;
-            padding: 6px 14px;
-            background: #f8f9fa; border: 1px solid #dee2e6;
-            border-radius: 50px;
-            font-size: 0.85rem; font-weight: 600; color: #495057;
+        .btn-saas-danger { background: #fee2e2; color: #991b1b; }
+        .btn-saas-danger:hover { background: #fecaca; }
+
+        .btn-saas-success { background: #dcfce7; color: #166534; }
+        .btn-saas-success:hover { background: #bbf7d0; }
+
+        /* --- TABLA SAAS --- */
+        .saas-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .saas-table th {
+            text-align: left;
+            padding: 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--saas-text-muted);
+            border-bottom: 1px solid var(--saas-border);
+            font-weight: 600;
+        }
+        .saas-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--saas-border);
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+        .saas-table tr:last-child td { border-bottom: none; }
+        .saas-table tr:hover td { background-color: #f9fafb; }
+
+        /* --- INPUTS PRO --- */
+        .form-saas {
+            background: #f9fafb;
+            border: 1px solid var(--saas-border);
+            border-radius: 10px;
+            padding: 0.75rem;
+            width: 100%;
+            font-size: 0.95rem;
             transition: all 0.2s;
         }
-        .cat-chip:hover { background: #e9ecef; border-color: #ced4da; }
-        .cat-chip.leaving { opacity: 0; transform: scale(0.8); }
-
-        /* --- TABLA PROFESIONAL --- */
-        .table-pro thead th {
-            background-color: #f8f9fa;
-            text-transform: uppercase;
-            font-size: 0.75rem; font-weight: 700; color: #6c757d;
-            letter-spacing: 0.5px;
-            padding: 14px 10px;
-            border-bottom: 2px solid #e9ecef;
+        .form-saas:focus {
+            background: white;
+            border-color: var(--saas-primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
-        .table-pro tbody td {
-            padding: 12px 10px;
-            vertical-align: middle;
-            border-bottom: 1px solid #f1f3f5;
-            color: #343a40; font-size: 0.9rem;
-        }
-        .table-pro tbody tr:hover { background-color: #f8f9fa; }
+        .input-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--saas-text-muted); margin-bottom: 6px; }
 
-        /* --- BOTONES ACCIÓN --- */
-        .btn-action {
-            width: 34px; height: 34px;
-            padding: 0;
-            border-radius: 8px;
-            display: inline-flex; align-items: center; justify-content: center;
-            transition: background 0.2s;
-            border: none; background: transparent;
+        /* --- BADGES --- */
+        .badge-saas {
+            padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+            display: inline-block;
         }
-        .btn-action:hover { background-color: #e9ecef; }
-        .btn-action.edit:hover { color: #0d6efd; background-color: #cfe2ff; }
-        .btn-action.delete:hover { color: #dc3545; background-color: #f8d7da; }
+        .bg-blue-light { background: #eff6ff; color: #1d4ed8; }
+        .bg-green-light { background: #f0fdf4; color: #15803d; }
+        .bg-red-light { background: #fef2f2; color: #b91c1c; }
+        .bg-gray-light { background: #f3f4f6; color: #4b5563; }
 
-        /* --- VALIDACIONES --- */
-        .form-control.is-invalid { border-color: #dc3545; background-image: none; }
-        .form-control.is-valid { border-color: #198754; background-image: none; }
-        .validation-msg { font-size: 0.75rem; font-weight: 700; margin-top: 4px; display: block; }
+        /* --- UTILS --- */
+        .icon-btn {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            border: none; background: transparent; color: var(--saas-text-muted);
+            transition: all 0.2s;
+        }
+        .icon-btn:hover { background: var(--saas-bg); color: var(--saas-text-main); }
+        .text-truncate-200 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; display: inline-block; vertical-align: bottom;}
     `;
     document.head.appendChild(styleSheet);
-} catch (e) { console.error("Error aplicando estilos:", e); }
+} catch (e) { console.error(e); }
 
 // ==========================================
-// 3. UTILIDADES Y FORMATO
+// 3. UTILIDADES
 // ==========================================
-const formatoMoneda = (monto) => new Intl.NumberFormat('es-HN', { style: 'currency', currency: 'HNL' }).format(monto);
+const formatoMoneda = (m) => new Intl.NumberFormat('es-HN', { style: 'currency', currency: 'HNL' }).format(m);
+const formatoFecha = (f) => { if(!f)return'-'; const d=new Date(f); return new Date(d.getTime()+d.getTimezoneOffset()*60000).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase().replace('.',''); };
 
-const formatoFecha = (fechaStr) => {
-    if (!fechaStr) return '-';
-    const fecha = new Date(fechaStr);
-    const userTimezoneOffset = fecha.getTimezoneOffset() * 60000;
-    const fechaCorregida = new Date(fecha.getTime() + userTimezoneOffset);
-    return fechaCorregida.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase().replace('.', '');
-};
-
-// ==========================================
-// 4. COMUNICACIÓN CON SERVIDOR
-// ==========================================
-async function authFetch(url, options = {}) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        Swal.fire('Sesión Expirada', 'Inicia sesión nuevamente', 'warning');
-        window.location.reload();
-        throw new Error('No token');
-    }
-    const headers = { 'Content-Type': 'application/json', 'Authorization': token, ...options.headers };
-    const response = await fetch(url, { ...options, headers });
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error en servidor');
-    }
-    return response.json();
+async function authFetch(url, opts={}) {
+    const t = localStorage.getItem('token');
+    if(!t) { window.location.reload(); throw new Error('No token'); }
+    const h = {'Content-Type':'application/json','Authorization':t,...opts.headers};
+    const r = await fetch(url,{...opts,headers:h});
+    if(!r.ok) throw new Error((await r.json()).error || 'Error');
+    return r.json();
 }
 
 // ==========================================
-// 5. CARGA DE DATOS Y MÉTRICAS
+// 4. CARGA DE DATOS
 // ==========================================
 async function cargarDashboardFinanzas() {
-    const contenedor = document.getElementById('vistaFinanzas');
-    if (!contenedor) return;
-    
-    contenedor.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted fw-bold">Sincronizando Finanzas...</p></div>';
+    const el = document.getElementById('vistaFinanzas');
+    if(!el) return;
+    el.innerHTML = '<div class="d-flex justify-content-center align-items-center py-5"><div class="spinner-border text-primary"></div></div>';
 
     try {
-        const [dataFinanzas, dataMiembros] = await Promise.all([
-            authFetch('/api/finanzas/datos'),
-            authFetch('/api/miembros')
-        ]);
+        const [dFin, dMiem] = await Promise.all([authFetch('/api/finanzas/datos'), authFetch('/api/miembros')]);
+        
+        transacciones = dFin.transacciones;
+        categoriasEgresos = dFin.categorias;
+        miembrosFinanzas = dMiem;
 
-        transacciones = dataFinanzas.transacciones;
-        categoriasEgresos = dataFinanzas.categorias;
-        miembrosFinanzas = dataMiembros;
-
-        // Procesar Talonarios y sus usos
-        const todosTalonarios = dataFinanzas.talonarios.map(t => ({
-            ...t, inicio: t.rango_inicio, fin: t.rango_fin, usados: []
-        }));
-
-        todosTalonarios.forEach(tal => {
-            const tipoTx = tal.tipo === 'egreso' ? 'egreso' : 'ingreso';
-            const recibos = transacciones
-                .filter(tx => tx.tipo === tipoTx && tx.recibo_no && tx.recibo_no !== 'S/N' && tx.recibo_no !== 'APERTURA' && tx.recibo_no !== '-')
-                .map(tx => parseInt(tx.recibo_no))
-                .filter(num => num >= tal.inicio && num <= tal.fin);
-            tal.usados = recibos;
+        const todosTal = dFin.talonarios.map(t => ({...t, inicio:t.rango_inicio, fin:t.rango_fin, usados:[]}));
+        todosTal.forEach(tal => {
+            const tipo = tal.tipo === 'egreso' ? 'egreso' : 'ingreso';
+            tal.usados = transacciones.filter(x => x.tipo===tipo && parseInt(x.recibo_no)).map(x=>parseInt(x.recibo_no));
         });
-
-        talonariosIngreso = todosTalonarios.filter(t => t.tipo === 'ingreso');
-        talonariosEgreso = todosTalonarios.filter(t => t.tipo === 'egreso');
+        talonariosIngreso = todosTal.filter(t => t.tipo==='ingreso');
+        talonariosEgreso = todosTal.filter(t => t.tipo==='egreso');
 
         calcularMetricas();
         renderizarVistaPrincipal();
-
-    } catch (error) {
-        console.error(error);
-        contenedor.innerHTML = `<div class="alert alert-danger m-4 shadow-sm border-0"><strong>Error:</strong> ${error.message}</div>`;
-    }
+    } catch (e) { el.innerHTML = `<div class="alert alert-danger m-3">Error: ${e.message}</div>`; }
 }
 
 function calcularMetricas() {
-    saldoActual = 0;
-    ingresosMes = 0;
-    egresosMes = 0;
-
-    const hoy = new Date();
-    const mesActual = hoy.getMonth();
-    const anioActual = hoy.getFullYear();
-
+    saldoActual=0; ingresosMes=0; egresosMes=0;
+    const now = new Date();
     transacciones.forEach(t => {
-        const monto = parseFloat(t.monto);
-        const fechaT = new Date(t.fecha);
-        const esMesActual = (fechaT.getMonth() === mesActual && fechaT.getFullYear() === anioActual);
-
-        if (t.tipo === 'ingreso') {
-            saldoActual += monto;
-            if(esMesActual) ingresosMes += monto;
+        const m = parseFloat(t.monto);
+        const f = new Date(t.fecha);
+        if(t.tipo==='ingreso') {
+            saldoActual+=m;
+            if(f.getMonth()===now.getMonth() && f.getFullYear()===now.getFullYear()) ingresosMes+=m;
         } else {
-            saldoActual -= monto;
-            if(esMesActual) egresosMes += monto;
+            saldoActual-=m;
+            if(f.getMonth()===now.getMonth() && f.getFullYear()===now.getFullYear()) egresosMes+=m;
         }
     });
 }
 
 // ==========================================
-// 6. RENDERIZADO DEL DASHBOARD (VISTA PRINCIPAL)
+// 5. VISTA PRINCIPAL (SAAS DASHBOARD UI)
 // ==========================================
 function renderizarVistaPrincipal() {
-    const contenedor = document.getElementById('vistaFinanzas');
+    const container = document.getElementById('vistaFinanzas');
     
-    let html = `
-    <div class="container-fluid px-0">
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
-                <div class="pro-card h-100 p-4 d-flex align-items-center justify-content-between border-start border-4 border-primary">
-                    <div>
-                        <small class="text-uppercase text-muted fw-bold" style="font-size:0.75rem;">Saldo Disponible</small>
-                        <h2 class="fw-bold text-dark mb-0">${formatoMoneda(saldoActual)}</h2>
+    container.innerHTML = `
+    <div class="saas-container container-fluid p-2 p-md-4">
+        
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 gap-3">
+            <div>
+                <h3 class="fw-bold mb-1 text-dark">Panel Financiero</h3>
+                <p class="text-muted m-0 small">Resumen de tesorería y movimientos</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button onclick="renderConfigFinanzas()" class="btn-saas btn-saas-secondary"><i class="bi bi-gear"></i></button>
+                <button onclick="renderAperturaCuenta()" class="btn-saas btn-saas-secondary text-warning"><i class="bi bi-sliders"></i> Ajuste</button>
+                <div class="vr mx-1"></div>
+                <button onclick="renderRegistrarEgreso()" class="btn-saas btn-saas-danger"><i class="bi bi-dash-lg"></i> Gasto</button>
+                <button onclick="renderRegistrarIngreso()" class="btn-saas btn-saas-primary"><i class="bi bi-plus-lg"></i> Nuevo Ingreso</button>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-12 col-md-4">
+                <div class="saas-card d-flex flex-column justify-content-between">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="metric-label">Saldo Total</div>
+                            <div class="metric-value">${formatoMoneda(saldoActual)}</div>
+                        </div>
+                        <div class="metric-icon-box bg-blue-light text-primary">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
                     </div>
-                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
-                        <i class="bi bi-wallet2"></i>
+                    <div class="mt-3">
+                        <span class="badge-saas bg-gray-light text-muted"><i class="bi bi-shield-check me-1"></i>Disponible</span>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="pro-card h-100 p-4 d-flex align-items-center justify-content-between border-start border-4 border-success">
-                    <div>
-                        <small class="text-uppercase text-muted fw-bold" style="font-size:0.75rem;">Ingresos (Mes)</small>
-                        <h3 class="fw-bold text-success mb-0">+${formatoMoneda(ingresosMes)}</h3>
+
+            <div class="col-6 col-md-4">
+                <div class="saas-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="metric-label">Ingresos (Mes)</div>
+                            <div class="metric-value text-success">${formatoMoneda(ingresosMes)}</div>
+                        </div>
+                        <div class="metric-icon-box bg-green-light text-success">
+                            <i class="bi bi-arrow-up-right"></i>
+                        </div>
                     </div>
-                    <div class="stat-icon bg-success bg-opacity-10 text-success">
-                        <i class="bi bi-graph-up-arrow"></i>
-                    </div>
+                    <div class="mt-3 small text-muted">Este mes</div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="pro-card h-100 p-4 d-flex align-items-center justify-content-between border-start border-4 border-danger">
-                    <div>
-                        <small class="text-uppercase text-muted fw-bold" style="font-size:0.75rem;">Gastos (Mes)</small>
-                        <h3 class="fw-bold text-danger mb-0">-${formatoMoneda(egresosMes)}</h3>
+
+            <div class="col-6 col-md-4">
+                <div class="saas-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="metric-label">Gastos (Mes)</div>
+                            <div class="metric-value text-danger">${formatoMoneda(egresosMes)}</div>
+                        </div>
+                        <div class="metric-icon-box bg-red-light text-danger">
+                            <i class="bi bi-arrow-down-left"></i>
+                        </div>
                     </div>
-                    <div class="stat-icon bg-danger bg-opacity-10 text-danger">
-                        <i class="bi bi-graph-down-arrow"></i>
-                    </div>
+                    <div class="mt-3 small text-muted">Este mes</div>
                 </div>
             </div>
         </div>
 
-        <div class="pro-card p-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-                <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-columns-reverse me-2"></i>Movimientos</h5>
-                
-                <div class="d-flex gap-2">
-                    <button onclick="renderAperturaCuenta()" class="btn btn-sm btn-outline-warning fw-bold px-3">
-                        <i class="bi bi-sliders me-1"></i>Ajuste
-                    </button>
-                    <button onclick="renderRegistrarIngreso()" class="btn btn-sm btn-success fw-bold px-3 shadow-sm">
-                        <i class="bi bi-plus-lg me-1"></i>Ingreso
-                    </button>
-                    <button onclick="renderRegistrarEgreso()" class="btn btn-sm btn-danger fw-bold px-3 shadow-sm">
-                        <i class="bi bi-dash-lg me-1"></i>Gasto
-                    </button>
-                    <button onclick="renderConfigFinanzas()" class="btn btn-sm btn-dark px-3 shadow-sm" title="Configuración">
-                        <i class="bi bi-gear-fill"></i>
-                    </button>
-                </div>
+        <div class="saas-card p-0 overflow-hidden">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white">
+                <h6 class="fw-bold m-0">Transacciones Recientes</h6>
+                <span class="badge-saas bg-gray-light">${transacciones.length} registros</span>
             </div>
-
             <div class="table-responsive">
-                <table class="table table-pro w-100">
+                <table class="saas-table">
                     <thead>
                         <tr>
-                            <th style="width: 12%;">FECHA</th>
-                            <th style="width: 10%;">REC/DOC</th>
-                            <th style="width: 15%;">CATEGORÍA</th>
-                            <th style="width: 25%;">DESCRIPCIÓN</th>
-                            <th style="width: 10%; text-align: center;">COMULG.</th>
-                            <th style="width: 15%; text-align: right;">MONTO</th>
-                            <th style="width: 13%; text-align: center;">ACCIONES</th>
+                            <th class="ps-4">Fecha</th>
+                            <th>Recibo / Doc</th>
+                            <th>Categoría</th>
+                            <th>Descripción</th>
+                            <th class="text-end pe-4">Monto</th>
+                            <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>${generarFilasTabla()}</tbody>
@@ -284,195 +295,75 @@ function renderizarVistaPrincipal() {
             </div>
         </div>
     </div>`;
-    contenedor.innerHTML = html;
 }
 
 function generarFilasTabla() {
-    if (!transacciones.length) return '<tr><td colspan="7" class="text-center py-5 text-muted"><i>No hay movimientos registrados</i></td></tr>';
+    if(!transacciones.length) return '<tr><td colspan="6" class="text-center py-5 text-muted">No hay movimientos registrados</td></tr>';
     
-    return transacciones.map((t, index) => {
+    return transacciones.map((t, idx) => {
         const esIng = t.tipo === 'ingreso';
-        const colorMonto = esIng ? 'text-success' : 'text-danger';
         const signo = esIng ? '+' : '-';
+        const colorClass = esIng ? 'text-success fw-bold' : 'text-danger fw-bold';
+        const bgCat = esIng ? 'bg-green-light' : 'bg-red-light';
         
-        // Badge de Recibo
-        let reciboHtml = '<span class="text-muted small">-</span>';
-        if (t.recibo_no === 'APERTURA') reciboHtml = '<span class="badge badge-soft-warning text-dark">INICIO</span>';
-        else if (t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') reciboHtml = `<span class="fw-bold text-dark small">#${t.recibo_no}</span>`;
-
-        // Badge de Categoría
-        const catBadge = esIng ? 'badge-soft-success' : 'badge-soft-danger';
+        let recibo = '<span class="text-muted small">-</span>';
+        if(t.recibo_no === 'APERTURA') recibo = '<span class="badge-saas bg-yellow-light text-warning border">INICIO</span>';
+        else if(t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') recibo = `<span class="fw-bold text-dark small">#${t.recibo_no}</span>`;
         
-        // Comulgantes
-        const comulgantesHtml = (t.comulgantes && t.comulgantes > 0) 
-            ? `<span class="badge badge-soft-info text-dark"><i class="bi bi-person-fill me-1"></i>${t.comulgantes}</span>` 
-            : '<span class="text-muted small">-</span>';
+        const comulgantes = (t.comulgantes > 0) ? `<span class="badge-saas bg-blue-light ms-2" title="Comulgantes"><i class="bi bi-people-fill"></i> ${t.comulgantes}</span>` : '';
 
         return `
         <tr>
-            <td class="text-nowrap"><span class="fw-bold text-secondary" style="font-size:0.85rem">${formatoFecha(t.fecha)}</span></td>
-            <td>${reciboHtml}</td>
-            <td><span class="badge ${catBadge}">${t.categoria}</span></td>
-            <td><span class="d-inline-block text-truncate text-muted" style="max-width:220px;" title="${t.descripcion}">${t.descripcion}</span></td>
-            <td class="text-center">${comulgantesHtml}</td>
-            <td class="text-end fw-bold ${colorMonto}">${signo} ${formatoMoneda(t.monto)}</td>
+            <td class="ps-4"><span class="fw-medium text-dark">${formatoFecha(t.fecha)}</span></td>
+            <td>${recibo}</td>
+            <td><span class="badge-saas ${bgCat}">${t.categoria}</span></td>
+            <td>
+                <span class="text-truncate-200 text-muted" title="${t.descripcion}">${t.descripcion}</span>
+                ${comulgantes}
+            </td>
+            <td class="text-end pe-4"><span class="${colorClass}">${signo} ${formatoMoneda(t.monto)}</span></td>
             <td class="text-center">
-                <button onclick="editarTransaccion(${index})" class="btn-action edit" title="Editar"><i class="bi bi-pencil-square"></i></button>
-                <button onclick="eliminarTransaccion(${t.id})" class="btn-action delete" title="Eliminar"><i class="bi bi-trash3"></i></button>
+                <button class="icon-btn d-inline-flex" onclick="editarTransaccion(${idx})" title="Editar"><i class="bi bi-pencil-square"></i></button>
+                <button class="icon-btn d-inline-flex text-danger" onclick="eliminarTransaccion(${t.id})" title="Eliminar"><i class="bi bi-trash3"></i></button>
             </td>
         </tr>`;
     }).join('');
 }
 
 // ==========================================
-// 7. FUNCIONES CRUD (EDITAR / ELIMINAR)
-// ==========================================
-async function eliminarTransaccion(id) {
-    const result = await Swal.fire({
-        title: '¿Eliminar registro?',
-        text: "Esta acción afectará el saldo y los totales. ¿Estás seguro?",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    });
-
-    if (result.isConfirmed) {
-        try {
-            await authFetch(`/api/finanzas/transacciones/${id}`, { method: 'DELETE' });
-            
-            Swal.fire({
-                title: 'Eliminado',
-                icon: 'success',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 1500
-            });
-            
-            cargarDashboardFinanzas();
-        } catch (e) {
-            Swal.fire('Error', e.message, 'error');
-        }
-    }
-}
-
-async function editarTransaccion(index) {
-    const t = transacciones[index];
-    const fechaISO = new Date(t.fecha).toISOString().split('T')[0];
-
-    const { value: formValues } = await Swal.fire({
-        title: 'Editar Transacción',
-        html: `
-            <div class="text-start fs-6">
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="form-label small fw-bold text-muted">FECHA</label>
-                        <input id="sw-fecha" type="date" class="form-control" value="${fechaISO}">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label small fw-bold text-muted">DOC / RECIBO</label>
-                        <input id="sw-recibo" type="text" class="form-control" value="${t.recibo_no}">
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">CATEGORÍA</label>
-                    <input id="sw-cat" type="text" class="form-control" value="${t.categoria}">
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">DESCRIPCIÓN</label>
-                    <textarea id="sw-desc" class="form-control" rows="2">${t.descripcion}</textarea>
-                </div>
-                
-                <div class="row g-2">
-                    <div class="col-6">
-                        <label class="form-label small fw-bold text-muted">MONTO</label>
-                        <input id="sw-monto" type="number" step="0.01" class="form-control fw-bold" value="${t.monto}">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label small fw-bold text-info">COMULGANTES</label>
-                        <input id="sw-comu" type="number" class="form-control" value="${t.comulgantes || 0}">
-                    </div>
-                </div>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Guardar Cambios',
-        focusConfirm: false,
-        preConfirm: () => {
-            return {
-                fecha: document.getElementById('sw-fecha').value,
-                recibo_no: document.getElementById('sw-recibo').value,
-                categoria: document.getElementById('sw-cat').value,
-                descripcion: document.getElementById('sw-desc').value,
-                monto: document.getElementById('sw-monto').value,
-                comulgantes: document.getElementById('sw-comu').value
-            }
-        }
-    });
-
-    if (formValues) {
-        try {
-            await authFetch(`/api/finanzas/transacciones/${t.id}`, {
-                method: 'PUT',
-                body: JSON.stringify(formValues)
-            });
-            Swal.fire({ icon: 'success', title: 'Actualizado', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-            cargarDashboardFinanzas();
-        } catch (error) {
-            Swal.fire('Error', error.message, 'error');
-        }
-    }
-}
-
-// ==========================================
-// 8. FORMULARIOS (INGRESO / EGRESO)
+// 6. FORMULARIOS (ESTILO SAAS MODAL)
 // ==========================================
 
 function renderRegistrarIngreso() {
     const tal = talonariosIngreso.find(t => t.activo);
-    const siguienteSugerido = tal ? tal.actual + 1 : '';
-    
-    // Generar opciones de miembros
-    let optsMiembros = '<option value="">-- Seleccionar --</option>';
-    if (miembrosFinanzas && miembrosFinanzas.length > 0) {
-        miembrosFinanzas.forEach(m => optsMiembros += `<option value="${m.nombre}">${m.nombre}</option>`);
-    }
-    
-    // Renderizar Formulario
+    const next = tal ? tal.actual + 1 : '';
+    const optsMem = miembrosFinanzas.map(m => `<option value="${m.nombre}">${m.nombre}</option>`).join('');
+
     document.getElementById('vistaFinanzas').innerHTML = `
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="pro-card p-5 border-top border-4 border-success">
-                <div class="d-flex justify-content-between mb-4">
-                    <h5 class="fw-bold text-success"><i class="bi bi-plus-circle-fill me-2"></i>Nuevo Ingreso</h5>
-                    <button onclick="cargarDashboardFinanzas()" class="btn-close"></button>
-                </div>
-                
-                <form id="formIngreso">
-                    <div class="bg-light p-3 rounded-3 mb-4 d-flex justify-content-between align-items-center border">
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-receipt-cutoff fs-3 text-success me-3"></i>
-                            <div>
-                                <small class="text-muted fw-bold" style="font-size:0.7rem;">TALONARIO ACTIVO</small>
-                                <div class="fw-bold text-dark">${tal ? tal.nombre : '<span class="text-danger">Ninguno</span>'}</div>
-                            </div>
+    <div class="container d-flex justify-content-center pt-5">
+        <div class="saas-card p-0 col-md-6 shadow-lg border-0">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white rounded-top">
+                <h5 class="fw-bold m-0 text-primary">Registrar Ingreso</h5>
+                <button class="btn-close" onclick="cargarDashboardFinanzas()"></button>
+            </div>
+            <div class="p-4 bg-light">
+                <form id="fIng">
+                    <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded border">
+                        <div>
+                            <label class="input-label mb-1">Talonario Activo</label>
+                            <span class="badge-saas bg-green-light fs-6">${tal ? tal.nombre : 'Ninguno'}</span>
                         </div>
-                        <div style="width: 120px;">
-                            <label class="form-label small fw-bold mb-1">RECIBO #</label>
-                            <input type="number" id="numRecibo" class="form-control form-control-sm fw-bold text-end border-success" 
-                                placeholder="${siguienteSugerido}" ${!tal ? 'disabled' : ''}>
-                            <div id="reciboFeedback" class="validation-msg text-end"></div>
+                        <div style="width: 140px;">
+                            <label class="input-label">No. Recibo</label>
+                            <input type="number" id="nRec" class="form-saas text-end fw-bold" value="${next}" ${!tal?'disabled':''}>
+                            <div id="reciboFeedback" class="text-end small mt-1 fw-bold"></div>
                         </div>
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-6">
-                            <label class="form-label small fw-bold text-muted">TIPO</label>
-                            <select class="form-select" id="tipoIngreso" onchange="toggleCamposIngreso(this.value)">
+                            <label class="input-label">Tipo de Ingreso</label>
+                            <select class="form-saas" id="tIng" onchange="toggleCampos(this.value)">
                                 <option value="Ofrenda">Ofrenda</option>
                                 <option value="Diezmo">Diezmo</option>
                                 <option value="Actividad">Actividad</option>
@@ -480,342 +371,129 @@ function renderRegistrarIngreso() {
                             </select>
                         </div>
                         <div class="col-6">
-                            <label class="form-label small fw-bold text-muted">MONTO</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white text-success fw-bold">L.</span>
-                                <input type="number" step="0.01" id="montoIngreso" class="form-control fw-bold text-success" required>
-                            </div>
+                            <label class="input-label">Monto (L.)</label>
+                            <input type="number" step="0.01" class="form-saas fw-bold text-success" id="mIng" required placeholder="0.00">
                         </div>
                     </div>
 
-                    <div id="divCultos" class="row g-2 mb-3">
+                    <div id="boxCul" class="row g-3 mb-3">
                         <div class="col-8">
-                            <label class="form-label small fw-bold text-primary">CULTO</label>
-                            <select class="form-select text-primary fw-bold" id="selectCulto">
-                                <option value="General">General</option>
-                                ${tiposCultos.map(c => `<option value="${c}">${c}</option>`).join('')}
-                            </select>
+                            <label class="input-label">Culto / Servicio</label>
+                            <select id="sCul" class="form-saas">${tiposCultos.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
                         </div>
                         <div class="col-4">
-                            <label class="form-label small fw-bold text-muted" title="Personas que comulgaron">COMULG.</label>
-                            <input type="number" id="cantComulgantes" class="form-control text-center" placeholder="0">
+                            <label class="input-label">Comulgantes</label>
+                            <input type="number" id="nCom" class="form-saas text-center" placeholder="0">
                         </div>
                     </div>
 
-                    <div id="divDonante" class="mb-3" style="display:none;">
-                        <label class="form-label small fw-bold text-muted">DONANTE</label>
-                        <div class="input-group">
-                            <select class="form-select" id="miembroIngreso">${optsMiembros}</select>
-                            <button class="btn btn-outline-secondary" type="button" onclick="agregarMiembroRapido()">
-                                <i class="bi bi-person-plus-fill"></i>
-                            </button>
+                    <div id="boxDon" class="mb-3" style="display:none">
+                        <label class="input-label">Miembro / Donante</label>
+                        <div class="d-flex gap-2">
+                            <select id="sMem" class="form-saas"><option value="">-- Seleccionar --</option>${optsMem}</select>
+                            <button type="button" class="btn-saas btn-saas-secondary" onclick="addMem()"><i class="bi bi-person-plus"></i></button>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted">NOTA ADICIONAL</label>
-                        <input type="text" id="detalleIngreso" class="form-control" placeholder="Opcional...">
+                        <label class="input-label">Nota Adicional</label>
+                        <input type="text" id="detIng" class="form-saas" placeholder="Detalle opcional...">
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" id="btnGuardarIngreso" class="btn btn-success fw-bold py-2 shadow-sm">
-                            Guardar Ingreso
-                        </button>
+                        <button type="submit" id="btnGuardar" class="btn-saas btn-saas-primary justify-content-center py-3">Guardar Transacción</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>`;
+
+    toggleCampos('Ofrenda');
+    setupValidacionRecibo(tal, 'nRec', 'reciboFeedback', 'btnGuardar');
     
-    // Inicializar lógica visual
-    toggleCamposIngreso('Ofrenda');
-    setupValidacionRecibo(tal, 'numRecibo', 'reciboFeedback', 'btnGuardarIngreso');
-
-    // Manejar Submit
-    document.getElementById('formIngreso').addEventListener('submit', async (e) => {
+    document.getElementById('fIng').onsubmit = async(e) => {
         e.preventDefault();
-        const nRecibo = parseInt(document.getElementById('numRecibo').value);
+        const nr = parseInt(document.getElementById('nRec').value);
+        if(tal && (isNaN(nr) || nr < tal.inicio || nr > tal.fin || tal.usados.includes(nr))) return Swal.fire('Error','Recibo inválido','error');
         
-        // Validación final antes de enviar
-        if (tal && (isNaN(nRecibo) || nRecibo < tal.inicio || nRecibo > tal.fin || tal.usados.includes(nRecibo))) {
-            return Swal.fire('Error', 'El número de recibo no es válido o ya fue usado.', 'error');
-        }
-
-        const tipo = document.getElementById('tipoIngreso').value;
-        const culto = document.getElementById('selectCulto').value;
-        const miembro = document.getElementById('miembroIngreso').value;
-        const comulgantes = parseInt(document.getElementById('cantComulgantes').value) || 0;
-
-        let desc = (tipo === 'Ofrenda' || tipo === 'Actividad') 
-            ? ((tipo === 'Actividad' ? 'Actividad: ' : '') + culto) 
-            : (tipo + (miembro ? ` - ${miembro}` : ''));
-            
-        if (document.getElementById('detalleIngreso').value) {
-            desc += ` (${document.getElementById('detalleIngreso').value})`;
-        }
-
+        const tipo = document.getElementById('tIng').value;
+        const culto = document.getElementById('sCul').value;
+        const mem = document.getElementById('sMem').value;
+        let desc = (tipo==='Ofrenda'||tipo==='Actividad') ? ((tipo==='Actividad'?'Actividad: ':'')+culto) : (tipo+(mem?` - ${mem}`:''));
+        if(document.getElementById('detIng').value) desc += ` (${document.getElementById('detIng').value})`;
+        
         try {
-            await authFetch('/api/finanzas/transacciones', { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    fecha: new Date().toISOString(), 
-                    tipo: 'ingreso', 
-                    categoria: tipo, 
-                    descripcion: desc, 
-                    monto: parseFloat(document.getElementById('montoIngreso').value), 
-                    recibo_no: nRecibo ? String(nRecibo).padStart(6,'0') : 'S/N',
-                    comulgantes: comulgantes 
-                }) 
-            });
-            
-            if (tal && nRecibo > tal.actual) {
-                await authFetch(`/api/finanzas/talonarios/${tal.id}`, { 
-                    method: 'PUT', 
-                    body: JSON.stringify({ actual: nRecibo, tipo: 'ingreso' }) 
-                });
-            }
-            
-            Swal.fire({ title: 'Guardado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            await authFetch('/api/finanzas/transacciones',{method:'POST',body:JSON.stringify({fecha:new Date().toISOString(),tipo:'ingreso',categoria:tipo,descripcion:desc,monto:parseFloat(document.getElementById('mIng').value),recibo_no:nr?String(nr).padStart(6,'0'):'S/N',comulgantes:parseInt(document.getElementById('nCom').value)||0})});
+            if(tal && nr > tal.actual) await authFetch(`/api/finanzas/talonarios/${tal.id}`,{method:'PUT',body:JSON.stringify({actual:nr,tipo:'ingreso'})});
+            Swal.fire({icon:'success',title:'Guardado',toast:true,position:'top-end',showConfirmButton:false,timer:1500});
             cargarDashboardFinanzas();
-            
-        } catch (err) { Swal.fire('Error', err.message, 'error'); }
-    });
+        } catch(err){Swal.fire('Error',err.message,'error')}
+    };
 }
 
 function renderRegistrarEgreso() {
     const tal = talonariosEgreso.find(t => t.activo);
-    const siguienteSugerido = tal ? tal.actual + 1 : '';
-    const cats = categoriasEgresos.length > 0 ? categoriasEgresos.map(c => c.nombre) : ['Varios'];
-    let opts = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    const next = tal ? tal.actual + 1 : '';
+    const opts = categoriasEgresos.map(c => `<option value="${c}">${c}</option>`).join('');
 
     document.getElementById('vistaFinanzas').innerHTML = `
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="pro-card p-5 border-top border-4 border-danger">
-                <div class="d-flex justify-content-between mb-4">
-                    <h5 class="fw-bold text-danger"><i class="bi bi-dash-circle-fill me-2"></i>Nuevo Gasto</h5>
-                    <button onclick="cargarDashboardFinanzas()" class="btn-close"></button>
-                </div>
-                
-                <form id="formEgreso">
-                    <div class="bg-light p-3 rounded-3 mb-4 d-flex justify-content-between align-items-center border">
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-file-earmark-spreadsheet-fill fs-3 text-danger me-3"></i>
-                            <div>
-                                <small class="text-muted fw-bold" style="font-size:0.7rem;">CHEQUERA / VOUCHER</small>
-                                <div class="fw-bold text-dark">${tal ? tal.nombre : '<span class="text-secondary">Sin Talonario</span>'}</div>
-                            </div>
+    <div class="container d-flex justify-content-center pt-5">
+        <div class="saas-card p-0 col-md-6 shadow-lg border-0">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white rounded-top">
+                <h5 class="fw-bold m-0 text-danger">Registrar Gasto</h5>
+                <button class="btn-close" onclick="cargarDashboardFinanzas()"></button>
+            </div>
+            <div class="p-4 bg-light">
+                <form id="fEgr">
+                     <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded border">
+                        <div>
+                            <label class="input-label mb-1">Chequera Activa</label>
+                            <span class="badge-saas bg-red-light fs-6">${tal ? tal.nombre : 'Ninguna'}</span>
                         </div>
-                        <div style="width: 120px;">
-                            <label class="form-label small fw-bold mb-1">DOC #</label>
-                            <input type="number" id="numDoc" class="form-control form-control-sm fw-bold text-end border-danger" 
-                                placeholder="${siguienteSugerido}" ${!tal ? 'disabled' : ''}>
-                            <div id="docFeedback" class="validation-msg text-end"></div>
+                        <div style="width: 140px;">
+                            <label class="input-label">No. Documento</label>
+                            <input type="number" id="nDoc" class="form-saas text-end fw-bold" value="${next}" ${!tal?'disabled':''}>
+                            <div id="docFeedback" class="text-end small mt-1 fw-bold"></div>
                         </div>
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-6">
-                            <label class="form-label small fw-bold text-muted">CATEGORÍA</label>
-                            <select class="form-select" id="catEgreso">
-                                ${opts}
-                                <option value="OTRO">OTRO</option>
-                            </select>
+                            <label class="input-label">Categoría</label>
+                            <select class="form-saas" id="cEgr">${opts}<option value="OTRO">OTRO</option></select>
                         </div>
                         <div class="col-6">
-                            <label class="form-label small fw-bold text-muted">MONTO</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white text-danger fw-bold">L.</span>
-                                <input type="number" step="0.01" id="montoEgreso" class="form-control fw-bold text-danger" required>
-                            </div>
+                            <label class="input-label">Monto (L.)</label>
+                            <input type="number" step="0.01" class="form-saas fw-bold text-danger" id="mEgr" required placeholder="0.00">
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted">DESCRIPCIÓN</label>
-                        <textarea id="descEgreso" class="form-control" rows="2" placeholder="Detalles de la compra..."></textarea>
+                        <label class="input-label">Descripción</label>
+                        <textarea id="dEgr" class="form-saas" rows="2" placeholder="Detalle de la compra..."></textarea>
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" id="btnGuardarEgreso" class="btn btn-danger fw-bold py-2 shadow-sm">
-                            Registrar Gasto
-                        </button>
+                        <button type="submit" id="btnGuardarEg" class="btn-saas btn-saas-danger justify-content-center py-3">Registrar Gasto</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>`;
 
-    setupValidacionRecibo(tal, 'numDoc', 'docFeedback', 'btnGuardarEgreso');
+    setupValidacionRecibo(tal, 'nDoc', 'docFeedback', 'btnGuardarEg');
 
-    document.getElementById('formEgreso').addEventListener('submit', async (e) => {
+    document.getElementById('fEgr').onsubmit = async(e) => {
         e.preventDefault();
-        const nDoc = parseInt(document.getElementById('numDoc').value);
-        
-        if (tal && (isNaN(nDoc) || nDoc < tal.inicio || nDoc > tal.fin || tal.usados.includes(nDoc))) {
-            return Swal.fire('Error', 'Número de documento inválido.', 'error');
-        }
-
+        const nd = parseInt(document.getElementById('nDoc').value);
+        if(tal && (isNaN(nd) || nd < tal.inicio || nd > tal.fin || tal.usados.includes(nd))) return Swal.fire('Error','Doc inválido','error');
         try {
-            await authFetch('/api/finanzas/transacciones', { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    fecha: new Date().toISOString(), 
-                    tipo: 'egreso', 
-                    categoria: document.getElementById('catEgreso').value, 
-                    descripcion: document.getElementById('descEgreso').value, 
-                    monto: parseFloat(document.getElementById('montoEgreso').value), 
-                    recibo_no: nDoc ? String(nDoc).padStart(6,'0') : '-' 
-                }) 
-            });
-            
-            if (tal && nDoc > tal.actual) {
-                await authFetch(`/api/finanzas/talonarios/${tal.id}`, { 
-                    method: 'PUT', 
-                    body: JSON.stringify({ actual: nDoc, tipo: 'egreso' }) 
-                });
-            }
-            
-            Swal.fire({ title: 'Guardado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            await authFetch('/api/finanzas/transacciones',{method:'POST',body:JSON.stringify({fecha:new Date().toISOString(),tipo:'egreso',categoria:document.getElementById('cEgr').value,descripcion:document.getElementById('dEgr').value,monto:parseFloat(document.getElementById('mEgr').value),recibo_no:nd?String(nd).padStart(6,'0'):'-'})});
+            if(tal && nd > tal.actual) await authFetch(`/api/finanzas/talonarios/${tal.id}`,{method:'PUT',body:JSON.stringify({actual:nd,tipo:'egreso'})});
+            Swal.fire({icon:'success',title:'Guardado',toast:true,position:'top-end',showConfirmButton:false,timer:1500});
             cargarDashboardFinanzas();
-        } catch (err) { Swal.fire('Error', err.message, 'error'); }
-    });
-}
-
-// ==========================================
-// 9. CONFIGURACIÓN (TALONARIOS Y CATEGORÍAS)
-// ==========================================
-function renderConfigFinanzas() {
-    const cardTalonario = (t, idx, type) => {
-        const borderClass = type === 'ingreso' ? 'border-success' : 'border-danger';
-        const badge = t.activo 
-            ? '<span class="badge badge-soft-success">Activo</span>' 
-            : '<span class="badge badge-soft-warning">Inactivo</span>';
-
-        return `
-        <div class="col-md-6 col-lg-12 col-xl-6">
-            <div class="pro-card p-3 border-start border-4 ${borderClass} h-100">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="fw-bold text-dark">${t.nombre}</span>
-                    ${badge}
-                </div>
-                <div class="d-flex justify-content-between align-items-end">
-                    <div class="small text-muted">
-                        Rango: ${t.inicio} - ${t.fin}<br>
-                        <strong class="text-dark fs-5">#${t.actual}</strong>
-                    </div>
-                    <div class="btn-group">
-                        ${!t.activo ? `<button onclick="activarTalonario(${t.id}, '${type}')" class="btn btn-sm btn-light border" title="Activar"><i class="bi bi-power"></i></button>` : ''}
-                        <button onclick="editarTalonario('${type}', ${idx})" class="btn btn-sm btn-light border" title="Editar"><i class="bi bi-pencil"></i></button>
-                        <button onclick="borrarTalonario(${t.id})" class="btn btn-sm btn-light border text-danger" title="Borrar"><i class="bi bi-trash"></i></button>
-                    </div>
-                </div>
-            </div>
-        </div>`;
+        } catch(err){Swal.fire('Error',err.message,'error')}
     };
-
-    const listaIng = talonariosIngreso.map((t, i) => cardTalonario(t, i, 'ingreso')).join('') || '<div class="col-12 text-center py-4 text-muted border rounded bg-light">No hay talonarios</div>';
-    const listaEgr = talonariosEgreso.map((t, i) => cardTalonario(t, i, 'egreso')).join('') || '<div class="col-12 text-center py-4 text-muted border rounded bg-light">No hay talonarios</div>';
-
-    document.getElementById('vistaFinanzas').innerHTML = `
-    <div class="pro-card p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-bold text-dark m-0">Configuración</h5>
-            <button onclick="cargarDashboardFinanzas()" class="btn btn-light border">Volver</button>
-        </div>
-
-        <div class="row g-5">
-            <div class="col-lg-7">
-                <ul class="nav nav-pills mb-3" id="pills-tab">
-                    <li class="nav-item me-2">
-                        <button class="nav-link active py-1 px-3 small" data-bs-toggle="pill" data-bs-target="#tab-ingresos">Ingresos</button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link py-1 px-3 small" data-bs-toggle="pill" data-bs-target="#tab-egresos">Egresos</button>
-                    </li>
-                </ul>
-                
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="tab-ingresos">
-                        <div class="d-flex justify-content-end mb-2">
-                            <button onclick="nuevoTalonario('ingreso')" class="btn btn-sm btn-success fw-bold">+ Nuevo</button>
-                        </div>
-                        <div class="row g-3">${listaIng}</div>
-                    </div>
-                    <div class="tab-pane fade" id="tab-egresos">
-                        <div class="d-flex justify-content-end mb-2">
-                            <button onclick="nuevoTalonario('egreso')" class="btn btn-sm btn-danger fw-bold">+ Nuevo</button>
-                        </div>
-                        <div class="row g-3">${listaEgr}</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-5 border-start">
-                <h6 class="fw-bold mb-3 ms-2 text-muted">Categorías de Gastos</h6>
-                <div class="input-group mb-3 px-2">
-                    <input type="text" id="newCat" class="form-control form-control-sm" placeholder="Nueva categoría...">
-                    <button onclick="agregarCategoria()" class="btn btn-dark btn-sm shadow-sm"><i class="bi bi-plus-lg"></i></button>
-                </div>
-                <div class="px-2 d-flex flex-wrap gap-2">
-                    ${categoriasEgresos.map(c => `
-                        <span class="cat-chip">
-                            ${c.nombre} 
-                            <i class="bi bi-x text-danger cursor-pointer ms-2" onclick="borrarCategoria(${c.id}, this)"></i>
-                        </span>
-                    `).join('')}
-                </div>
-            </div>
-        </div>
-    </div>`;
-}
-
-// ==========================================
-// 10. LÓGICA DE APOYO (HELPERS)
-// ==========================================
-
-function toggleCamposIngreso(val) {
-    const divCultos = document.getElementById('divCultos');
-    const divDonante = document.getElementById('divDonante');
-    if (val === 'Ofrenda' || val === 'Actividad') { 
-        divCultos.style.display = 'flex'; 
-        divDonante.style.display = 'none'; 
-    } else { 
-        divCultos.style.display = 'none'; 
-        document.getElementById('selectCulto').value = 'General'; 
-        divDonante.style.display = 'block'; 
-    }
-}
-
-function setupValidacionRecibo(tal, iId, fId, bId) {
-    const inp = document.getElementById(iId); 
-    const f = document.getElementById(fId); 
-    const b = document.getElementById(bId);
-    
-    inp.addEventListener('input', () => {
-        if (!tal) return;
-        const v = parseInt(inp.value);
-        inp.classList.remove('is-invalid', 'is-valid');
-        b.disabled = false;
-        
-        if (isNaN(v)) { f.innerHTML = ''; return; }
-        
-        if (v < tal.inicio || v > tal.fin) { 
-            inp.classList.add('is-invalid'); 
-            f.innerHTML = 'Fuera rango'; 
-            f.className = 'validation-msg text-danger text-end'; 
-            b.disabled = true; 
-        } else if (tal.usados.includes(v)) { 
-            inp.classList.add('is-invalid'); 
-            f.innerHTML = 'Ya usado'; 
-            f.className = 'validation-msg text-danger text-end'; 
-            b.disabled = true; 
-        } else { 
-            inp.classList.add('is-valid'); 
-            f.innerHTML = '<span class="text-success"><i class="bi bi-check"></i> Disponible</span>'; 
-            f.className = 'validation-msg text-end'; 
-        }
-    });
 }
 
 function renderAperturaCuenta() {
@@ -824,260 +502,167 @@ function renderAperturaCuenta() {
     const fechaActual = saldoExistente ? new Date(saldoExistente.fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
     document.getElementById('vistaFinanzas').innerHTML = `
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="pro-card p-5 border-top border-4 border-warning">
-                <h5 class="fw-bold mb-4">Apertura / Ajuste de Caja</h5>
+    <div class="container d-flex justify-content-center pt-5">
+        <div class="saas-card p-0 col-md-5 shadow-lg border-0">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white rounded-top">
+                <h5 class="fw-bold m-0 text-warning">Apertura / Ajuste de Caja</h5>
+                <button class="btn-close" onclick="cargarDashboardFinanzas()"></button>
+            </div>
+            <div class="p-4 bg-light">
                 <form id="formApertura">
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">MONTO INICIAL</label>
-                        <input type="number" step="0.01" id="montoApertura" class="form-control fw-bold" value="${valorActual}" required>
+                        <label class="input-label">Monto Inicial</label>
+                        <input type="number" step="0.01" id="montoApertura" class="form-saas fw-bold" value="${valorActual}" required placeholder="0.00">
                     </div>
                     <div class="mb-4">
-                        <label class="form-label fw-bold small">FECHA CORTE</label>
-                        <input type="date" id="fechaApertura" class="form-control" value="${fechaActual}">
+                        <label class="input-label">Fecha de Corte</label>
+                        <input type="date" id="fechaApertura" class="form-saas" value="${fechaActual}">
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light border w-50" onclick="cargarDashboardFinanzas()">Cancelar</button>
-                        <button type="submit" class="btn btn-warning w-50 fw-bold">Guardar</button>
+                    <div class="d-grid">
+                        <button type="submit" class="btn-saas btn-saas-secondary justify-content-center text-warning fw-bold py-3">Guardar Ajuste</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>`;
 
-    document.getElementById('formApertura').addEventListener('submit', async (e) => {
+    document.getElementById('formApertura').onsubmit = async (e) => {
         e.preventDefault();
         try {
-            await authFetch('/api/finanzas/transacciones', {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    fecha: document.getElementById('fechaApertura').value, 
-                    tipo: 'ingreso', 
-                    categoria: 'SALDO INICIAL', 
-                    descripcion: 'Apertura / Ajuste', 
-                    monto: parseFloat(document.getElementById('montoApertura').value), 
-                    recibo_no: 'APERTURA' 
-                })
-            });
-            Swal.fire({ title: 'Guardado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            await authFetch('/api/finanzas/transacciones', { method: 'POST', body: JSON.stringify({ fecha: document.getElementById('fechaApertura').value, tipo: 'ingreso', categoria: 'SALDO INICIAL', descripcion: 'Apertura / Ajuste', monto: parseFloat(document.getElementById('montoApertura').value), recibo_no: 'APERTURA' }) });
+            Swal.fire({ title: 'Ajuste Guardado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
             cargarDashboardFinanzas();
         } catch (err) { Swal.fire('Error', err.message, 'error'); }
-    });
+    };
 }
 
 // ==========================================
-// 11. GESTIÓN TALONARIOS Y CATEGORÍAS (CRUD MEJORADO)
+// 7. FUNCIONES CRUD & HELPERS
 // ==========================================
+function toggleCampos(v) {
+    const c=document.getElementById('boxCul'), d=document.getElementById('boxDon');
+    if(v==='Ofrenda'||v==='Actividad'){c.style.display='flex';d.style.display='none'}
+    else{c.style.display='none';d.style.display='block'}
+}
+function setupValidacionRecibo(tal, iId, fId, bId) {
+    const inp = document.getElementById(iId); 
+    const f = document.getElementById(fId); 
+    const b = document.getElementById(bId);
+    inp.addEventListener('input', () => {
+        if (!tal) return;
+        const v = parseInt(inp.value);
+        inp.classList.remove('is-invalid', 'is-valid');
+        b.disabled = false;
+        if (isNaN(v)) { f.innerHTML = ''; return; }
+        if (v < tal.inicio || v > tal.fin) { inp.classList.add('is-invalid'); f.innerHTML = '<span class="text-danger">Fuera de rango</span>'; b.disabled = true; } 
+        else if (tal.usados.includes(v)) { inp.classList.add('is-invalid'); f.innerHTML = '<span class="text-danger">Ya utilizado</span>'; b.disabled = true; } 
+        else { inp.classList.add('is-valid'); f.innerHTML = '<span class="text-success">Disponible</span>'; }
+    });
+}
+async function addMem() {
+    const {value:n} = await Swal.fire({title:'Nuevo Donante',input:'text',showCancelButton:true});
+    if(n){
+        await authFetch('/api/miembros',{method:'POST',body:JSON.stringify({nombre:n,fecha_nacimiento:'2000-01-01',congregacion:'General',bautizado:false,confirmado:false})});
+        miembrosFinanzas.push({nombre:n});
+        const o=document.createElement("option"); o.text=n; o.value=n; o.selected=true; document.getElementById('sMem').add(o);
+    }
+}
+async function eliminarTransaccion(id) {
+    if((await Swal.fire({title:'¿Eliminar?',text:"Esta acción es irreversible.",icon:'warning',showCancelButton:true,confirmButtonColor:'#d33',confirmButtonText:'Sí, eliminar'})).isConfirmed){
+        await authFetch(`/api/finanzas/transacciones/${id}`,{method:'DELETE'});
+        cargarDashboardFinanzas();
+    }
+}
+async function editarTransaccion(idx) {
+    const t = transacciones[idx];
+    const fechaISO = new Date(t.fecha).toISOString().split('T')[0];
+    const { value: formValues } = await Swal.fire({
+        title: 'Editar Transacción',
+        html: `<div class="text-start">
+            <div class="mb-2"><label class="small fw-bold">Fecha</label><input id="sw-f" type="date" class="form-control" value="${fechaISO}"></div>
+            <div class="mb-2"><label class="small fw-bold">Recibo</label><input id="sw-r" class="form-control" value="${t.recibo_no}"></div>
+            <div class="mb-2"><label class="small fw-bold">Descripción</label><input id="sw-d" class="form-control" value="${t.descripcion}"></div>
+            <div class="row g-2"><div class="col"><label class="small fw-bold">Monto</label><input id="sw-m" type="number" class="form-control" value="${t.monto}"></div>
+            <div class="col"><label class="small fw-bold">Comulg.</label><input id="sw-co" type="number" class="form-control" value="${t.comulgantes||0}"></div></div>
+        </div>`,
+        showCancelButton: true,
+        preConfirm: () => ({
+            fecha: document.getElementById('sw-f').value, recibo_no: document.getElementById('sw-r').value,
+            descripcion: document.getElementById('sw-d').value, monto: document.getElementById('sw-m').value, comulgantes: document.getElementById('sw-co').value, categoria: t.categoria 
+        })
+    });
+    if(formValues) {
+        await authFetch(`/api/finanzas/transacciones/${t.id}`,{method:'PUT',body:JSON.stringify(formValues)});
+        Swal.fire({icon:'success',title:'Actualizado',toast:true,position:'top-end',showConfirmButton:false,timer:1500});
+        cargarDashboardFinanzas();
+    }
+}
 
-async function nuevoTalonario(tipo) {
-    const titulo = tipo === 'ingreso' ? 'Ingresos' : 'Egresos';
-    const color = tipo === 'ingreso' ? '#198754' : '#dc3545'; // Verde o Rojo
-
-    const { value: f } = await Swal.fire({
-        title: `Nuevo Talonario (${titulo})`,
-        // Usamos HTML con clases de Bootstrap para que se vea ordenado
-        html: `
-            <div class="text-start fs-6">
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">NOMBRE DE LA SERIE</label>
-                    <input id="sw-nom" class="form-control" placeholder="Ej: Serie A - 2026">
+// ==========================================
+// 8. CONFIGURACIÓN (SAAS UI)
+// ==========================================
+function renderConfigFinanzas() {
+    const card = (t, i, tp) => `
+    <div class="col-md-6 mb-3">
+        <div class="saas-card p-3 d-flex justify-content-between align-items-center">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="fw-bold">${t.nombre}</span>
+                    ${t.activo?'<span class="badge-saas bg-green-light">Activo</span>':'<span class="badge-saas bg-gray-light">Inactivo</span>'}
                 </div>
-                <div class="row g-3">
-                    <div class="col-6">
-                        <label class="form-label small fw-bold text-muted">INICIO</label>
-                        <input id="sw-ini" type="number" class="form-control fw-bold" placeholder="1">
+                <div class="small text-muted">Rango: ${t.inicio} - ${t.fin} &bull; Último: <strong>#${t.actual}</strong></div>
+            </div>
+            <div class="d-flex gap-1">
+                ${!t.activo?`<button onclick="actTal(${t.id},'${tp}')" class="icon-btn text-success"><i class="bi bi-power"></i></button>`:''}
+                <button onclick="editarTalonario('${tp}',${i})" class="icon-btn text-primary"><i class="bi bi-pencil"></i></button>
+                <button onclick="delTal(${t.id})" class="icon-btn text-danger"><i class="bi bi-trash"></i></button>
+            </div>
+        </div>
+    </div>`;
+    
+    document.getElementById('vistaFinanzas').innerHTML = `
+    <div class="container pt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold m-0">Configuración</h4>
+            <button onclick="cargarDashboardFinanzas()" class="btn-saas btn-saas-secondary">Volver al Panel</button>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="saas-card p-4">
+                    <ul class="nav nav-tabs mb-4 border-bottom-0" role="tablist">
+                        <li class="nav-item"><a class="nav-link active fw-bold border-0 bg-transparent" data-bs-toggle="tab" href="#tIng" style="color:var(--saas-primary)">Ingresos</a></li>
+                        <li class="nav-item"><a class="nav-link fw-bold border-0 bg-transparent text-muted" data-bs-toggle="tab" href="#tEgr">Egresos</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="tIng">
+                            <button onclick="nuevoTalonario('ingreso')" class="btn-saas btn-saas-primary w-100 mb-4 justify-content-center">Crear Nuevo Talonario</button>
+                            <div class="row g-0">${talonariosIngreso.map((t,i)=>card(t,i,'ingreso')).join('')}</div>
+                        </div>
+                        <div class="tab-pane" id="tEgr">
+                            <button onclick="nuevoTalonario('egreso')" class="btn-saas btn-saas-danger w-100 mb-4 justify-content-center">Crear Nueva Chequera</button>
+                            <div class="row g-0">${talonariosEgreso.map((t,i)=>card(t,i,'egreso')).join('')}</div>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <label class="form-label small fw-bold text-muted">FIN</label>
-                        <input id="sw-fin" type="number" class="form-control fw-bold" placeholder="100">
-                    </div>
-                </div>
-                <div class="mt-3 p-2 bg-light border rounded small text-muted">
-                    <i class="bi bi-info-circle me-1"></i> El conteo iniciará automáticamente desde el valor "Inicio".
                 </div>
             </div>
-        `,
-        showCancelButton: true,
-        confirmButtonColor: color,
-        confirmButtonText: 'Crear Talonario',
-        cancelButtonText: 'Cancelar',
-        focusConfirm: false,
-        preConfirm: () => {
-            const nom = document.getElementById('sw-nom').value;
-            const ini = document.getElementById('sw-ini').value;
-            const fin = document.getElementById('sw-fin').value;
-            if (!nom || !ini || !fin) {
-                Swal.showValidationMessage('Por favor completa todos los campos');
-                return false;
-            }
-            return [nom, ini, fin];
-        }
-    });
-
-    if (f && f[0]) {
-        try { 
-            await authFetch('/api/finanzas/talonarios', { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    nombre: f[0], 
-                    inicio: parseInt(f[1]), 
-                    fin: parseInt(f[2]), 
-                    actual: parseInt(f[1])-1, // El actual empieza uno antes del inicio
-                    tipo: tipo 
-                }) 
-            }); 
-            
-            // Recarga completa de datos
-            const d = await authFetch('/api/finanzas/datos');
-            const mapped = d.talonarios.map(t => ({...t, inicio: t.rango_inicio, fin: t.rango_fin, usados: []}));
-            talonariosIngreso = mapped.filter(t => t.tipo === 'ingreso');
-            talonariosEgreso = mapped.filter(t => t.tipo === 'egreso');
-            
-            renderConfigFinanzas(); 
-            Swal.fire({ icon: 'success', title: 'Creado', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-        } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    }
-}
-
-async function editarTalonario(tipo, idx) {
-    const lista = tipo === 'ingreso' ? talonariosIngreso : talonariosEgreso;
-    const t = lista[idx];
-    
-    const { value: f } = await Swal.fire({
-        title: 'Editar Rango',
-        html: `
-            <div class="text-start fs-6">
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">NOMBRE</label>
-                    <input id="sw-nom" class="form-control" value="${t.nombre}">
-                </div>
-                <div class="row g-3 mb-3">
-                    <div class="col-6">
-                        <label class="form-label small fw-bold text-muted">INICIO</label>
-                        <input id="sw-ini" type="number" class="form-control" value="${t.inicio}">
+            <div class="col-lg-5">
+                <div class="saas-card p-4">
+                    <h6 class="fw-bold mb-3">Categorías de Gastos</h6>
+                    <div class="d-flex gap-2 mb-3">
+                        <input id="nCat" class="form-saas" placeholder="Nueva categoría...">
+                        <button onclick="addCat()" class="btn-saas btn-saas-secondary"><i class="bi bi-plus-lg"></i></button>
                     </div>
-                    <div class="col-6">
-                        <label class="form-label small fw-bold text-muted">FIN</label>
-                        <input id="sw-fin" type="number" class="form-control" value="${t.fin}">
-                    </div>
+                    <div>${categoriasEgresos.map(c=>`<span class="badge-saas bg-gray-light me-1 mb-2 border">${c.nombre} <i class="bi bi-x text-danger ms-1 cursor-pointer" onclick="delCat(${c.id})"></i></span>`).join('')}</div>
                 </div>
-                <div class="alert alert-warning d-flex align-items-center small p-2 mb-0" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
-                    <div>
-                        <strong>Cuidado:</strong> Modificar los rangos puede afectar la validación de recibos ya emitidos.
-                    </div>
-                </div>
-            </div>`,
-        showCancelButton: true,
-        confirmButtonText: 'Guardar Cambios',
-        cancelButtonText: 'Cancelar',
-        focusConfirm: false,
-        preConfirm: () => [document.getElementById('sw-nom').value, document.getElementById('sw-ini').value, document.getElementById('sw-fin').value]
-    });
-
-    if (f) {
-        try {
-            await authFetch(`/api/finanzas/talonarios/${t.id}`, { 
-                method: 'PUT', 
-                body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]) }) 
-            });
-            
-            // Actualización local rápida
-            t.nombre = f[0]; 
-            t.inicio = parseInt(f[1]); 
-            t.fin = parseInt(f[2]);
-            
-            renderConfigFinanzas();
-            Swal.fire({ icon: 'success', title: 'Actualizado', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-        } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    }
+            </div>
+        </div>
+    </div>`;
 }
 
-async function activarTalonario(id, tipo) { 
-    try {
-        await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'PUT', body: JSON.stringify({ activo: true, tipo: tipo }) }); 
-        cargarDashboardFinanzas(); 
-        // Pequeño delay para asegurar que la UI se refresque bien
-        setTimeout(renderConfigFinanzas, 300); 
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-}
-
-async function borrarTalonario(id) { 
-    const result = await Swal.fire({ 
-        title: '¿Borrar Talonario?', 
-        text: "Se perderá la configuración de rangos, pero los recibos ya emitidos se conservarán en el historial.", 
-        icon: 'warning', 
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Sí, borrar',
-        cancelButtonText: 'Cancelar'
-    });
-    
-    if (result.isConfirmed) {
-        try {
-            await authFetch(`/api/finanzas/talonarios/${id}`, { method: 'DELETE' }); 
-            cargarDashboardFinanzas(); 
-            setTimeout(renderConfigFinanzas, 300);
-            Swal.fire({ icon: 'success', title: 'Eliminado', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-        } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    }
-}
-
-async function agregarCategoria() { 
-    const v = document.getElementById('newCat').value; 
-    if (v) { 
-        try {
-            await authFetch('/api/finanzas/categorias', { method: 'POST', body: JSON.stringify({ nombre: v }) }); 
-            const d = await authFetch('/api/finanzas/datos'); 
-            categoriasEgresos = d.categorias; 
-            renderConfigFinanzas(); 
-            document.getElementById('newCat').value = ''; // Limpiar input
-        } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    } 
-}
-
-async function borrarCategoria(id, el) { 
-    // Animación visual antes de borrar
-    el.closest('.cat-chip').classList.add('leaving'); 
-    
-    setTimeout(async () => { 
-        try {
-            await authFetch(`/api/finanzas/categorias/${id}`, { method: 'DELETE' }); 
-            const d = await authFetch('/api/finanzas/datos'); 
-            categoriasEgresos = d.categorias; 
-            renderConfigFinanzas(); 
-        } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    }, 200); 
-}
-
-async function agregarMiembroRapido() {
-    const { value: n } = await Swal.fire({ 
-        title: 'Nuevo Donante', 
-        input: 'text', 
-        inputPlaceholder: 'Nombre completo',
-        showCancelButton: true,
-        confirmButtonText: 'Guardar'
-    });
-    
-    if (n) {
-        try {
-            await authFetch('/api/miembros', { 
-                method: 'POST', 
-                body: JSON.stringify({ nombre: n, fecha_nacimiento: '2000-01-01', congregacion: 'General', bautizado: false, confirmado: false }) 
-            });
-            
-            miembrosFinanzas.push({ nombre: n });
-            
-            // Agregar al select activo
-            const select = document.getElementById('miembroIngreso');
-            if(select) {
-                const o = document.createElement("option"); 
-                o.text = n; o.value = n; o.selected = true;
-                select.add(o);
-            }
-            
-            Swal.fire({ title: 'Guardado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-        } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    }
-}
+// Helpers Config
+async function nuevoTalonario(tp){const{value:f}=await Swal.fire({title:`Nuevo (${tp})`,html:`<div class="text-start"><label class="small fw-bold">Nombre</label><input id="n" class="form-control mb-2"><div class="row"><div class="col"><label class="small fw-bold">Inicio</label><input id="i" type="number" class="form-control"></div><div class="col"><label class="small fw-bold">Fin</label><input id="f" type="number" class="form-control"></div></div></div>`,showCancelButton:true,preConfirm:()=>[document.getElementById('n').value,document.getElementById('i').value,document.getElementById('f').value]});if(f)await authFetch('/api/finanzas/talonarios',{method:'POST',body:JSON.stringify({nombre:f[0],inicio:f[1],fin:f[2],actual:f[1]-1,tipo:tp})});renderConfigFinanzas(); const d=await authFetch('/api/finanzas/datos'); /*Recarga silenciosa*/ const mapped=d.talonarios.map(t=>({...t,inicio:t.rango_inicio,fin:t.rango_fin})); talonariosIngreso=mapped.filter(t=>t.tipo==='ingreso'); talonariosEgreso=mapped.filter(t=>t.tipo==='egreso'); renderConfigFinanzas();}
+async function editarTalonario(tp,i){const t=(tp==='ingreso'?talonariosIngreso:talonariosEgreso)[i];const{value:f}=await Swal.fire({title:'Editar',html:`<div class="text-start"><label class="small fw-bold">Nombre</label><input id="n" class="form-control mb-2" value="${t.nombre}"><div class="row"><div class="col"><label class="small fw-bold">Inicio</label><input id="i" type="number" class="form-control" value="${t.inicio}"></div><div class="col"><label class="small fw-bold">Fin</label><input id="f" type="number" class="form-control" value="${t.fin}"></div></div></div>`,showCancelButton:true,preConfirm:()=>[document.getElementById('n').value,document.getElementById('i').value,document.getElementById('f').value]});if(f){await authFetch(`/api/finanzas/talonarios/${t.id}`,{method:'PUT',body:JSON.stringify({nombre:f[0],inicio:f[1],fin:f[2]})}); t.nombre=f[0];t.inicio=f[1];t.fin=f[2]; renderConfigFinanzas();}}
+async function actTal(id,tp){await authFetch(`/api/finanzas/talonarios/${id}`,{method:'PUT',body:JSON.stringify({activo:true,tipo:tp})});cargarDashboardFinanzas();setTimeout(renderConfigFinanzas,300);}
+async function delTal(id){if((await Swal.fire({title:'¿Borrar?',icon:'warning',showCancelButton:true})).isConfirmed){await authFetch(`/api/finanzas/talonarios/${id}`,{method:'DELETE'});renderConfigFinanzas(); const d=await authFetch('/api/finanzas/datos'); /*Recarga*/ const mapped=d.talonarios.map(t=>({...t,inicio:t.rango_inicio,fin:t.rango_fin})); talonariosIngreso=mapped.filter(t=>t.tipo==='ingreso'); talonariosEgreso=mapped.filter(t=>t.tipo==='egreso'); renderConfigFinanzas();}}
+async function addCat(){const v=document.getElementById('nCat').value;if(v){await authFetch('/api/finanzas/categorias',{method:'POST',body:JSON.stringify({nombre:v})});const d=await authFetch('/api/finanzas/datos');categoriasEgresos=d.categorias;renderConfigFinanzas();}}
+async function delCat(id){await authFetch(`/api/finanzas/categorias/${id}`,{method:'DELETE'});const d=await authFetch('/api/finanzas/datos');categoriasEgresos=d.categorias;renderConfigFinanzas();}
