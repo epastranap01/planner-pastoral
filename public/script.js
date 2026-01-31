@@ -369,72 +369,69 @@ window.editarCargo = async (id, cargo, nombreActual) => {
     if (nuevoNombre) { await fetch(`/api/equipo/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': token }, body: JSON.stringify({ nombre: nuevoNombre }) }); Swal.fire('Asignado', '', 'success'); cargarEquipo(); }
 };
 
-// --- 8. CUMPLEAÑEROS DEL MES (NUEVO) ---
+// --- 8. CUMPLEAÑEROS DEL MES (CORREGIDO PARA V23) ---
 async function cargarCumpleaneros() {
     const contenedor = document.getElementById('listaCumpleaneros');
     const seccion = document.getElementById('seccionCumpleaneros');
-    if (!contenedor || !seccion) return;
+    const emptyState = document.getElementById('noBirthdays'); // <--- NUEVO ELEMENTO
+
+    if (!contenedor || !seccion || !emptyState) return;
 
     try {
-        // 1. Obtenemos miembros (reusamos la API)
+        const token = localStorage.getItem('token'); // Aseguramos el token
         const res = await fetch('/api/miembros', { headers: { 'Authorization': token } });
         const miembros = await res.json();
         
         const hoy = new Date();
-        const mesActual = hoy.getMonth(); // 0 = Enero, 11 = Diciembre
-        
-        // Nombres de meses para el título
+        const mesActual = hoy.getMonth();
         const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         
-        // Actualizamos título del bloque
-        seccion.querySelector('h5').innerHTML = `<i class="bi bi-cake2-fill me-2"></i>Cumpleañeros de ${nombresMeses[mesActual]}`;
-
-        // 2. Filtramos los que cumplen este mes
+        // Filtramos cumpleañeros del mes
         const cumplenEsteMes = miembros.filter(m => {
             if (!m.fecha_nacimiento) return false;
-            // Truco para evitar problemas de zona horaria: leemos el string directo "YYYY-MM-DD"
             const partes = new Date(m.fecha_nacimiento).toISOString().split('T')[0].split('-'); 
-            const mesNac = parseInt(partes[1]) - 1; // Mes del string (1-12) a (0-11)
+            const mesNac = parseInt(partes[1]) - 1;
             return mesNac === mesActual;
         });
 
-        // 3. Si no hay nadie, ocultamos la sección
+        // --- LÓGICA DE VISIBILIDAD (EL FIX) ---
         if (cumplenEsteMes.length === 0) {
-            seccion.style.display = 'none';
+            // Caso: NADIE CUMPLE
+            seccion.style.display = 'none';           // Ocultamos la lista
+            emptyState.style.display = 'flex';        // Mostramos el aviso (flex para centrar)
             return;
+        } else {
+            // Caso: SÍ HAY CUMPLEAÑEROS
+            seccion.style.display = 'block';          // Mostramos la lista
+            emptyState.style.display = 'none';        // Ocultamos el aviso
         }
 
-        // 4. Si hay, mostramos y ordenamos por día
-        seccion.style.display = 'block';
-        
-        // Ordenar por día del mes
+        // Ordenar por día
         cumplenEsteMes.sort((a, b) => {
             const diaA = parseInt(new Date(a.fecha_nacimiento).toISOString().split('T')[0].split('-')[2]);
             const diaB = parseInt(new Date(b.fecha_nacimiento).toISOString().split('T')[0].split('-')[2]);
             return diaA - diaB;
         });
 
-        // 5. Generar HTML "Macizo"
+        // --- GENERAR HTML (DISEÑO ADAPTADO AL WIDGET) ---
         contenedor.innerHTML = '';
         cumplenEsteMes.forEach(m => {
             const fecha = new Date(m.fecha_nacimiento).toISOString().split('T')[0].split('-');
             const dia = fecha[2];
-            
-            // Calcular edad que VA a cumplir
             const anioNac = parseInt(fecha[0]);
             const edad = hoy.getFullYear() - anioNac;
+            const nombreCorto = m.nombre.split(' ')[0] + ' ' + (m.nombre.split(' ')[1] || '');
 
+            // Diseño tipo lista (más limpio para el sidebar)
             contenedor.innerHTML += `
-                <div class="col-6 col-md-3 col-lg-2">
-                    <div class="bg-white text-dark rounded-3 p-2 text-center h-100 shadow-sm position-relative">
-                        <span class="badge bg-warning text-dark position-absolute top-0 start-50 translate-middle shadow-sm rounded-pill border border-white">
-                            ${dia} ${nombresMeses[mesActual].substring(0,3)}
-                        </span>
-                        <div class="mt-3 mb-1">
-                            <i class="bi bi-person-circle fs-1 text-secondary"></i>
-                        </div>
-                        <h6 class="fw-bold small mb-1 text-truncate">${m.nombre.split(' ')[0]} ${m.nombre.split(' ')[1] || ''}</h6>
-                        <small class="text-muted fw-bold" style="font-size: 0.75rem;">Cumple ${edad}</small>
+                <div class="d-flex align-items-center bg-white bg-opacity-25 p-2 rounded border border-white border-opacity-25">
+                    <div class="bg-white text-primary rounded-3 text-center me-3 d-flex flex-column justify-content-center p-1" style="min-width: 45px; height: 45px;">
+                        <span class="fw-bold" style="line-height: 1; font-size: 1.1rem;">${dia}</span>
+                        <span class="small text-uppercase" style="font-size: 0.6rem; line-height: 1;">${nombresMeses[mesActual].substring(0,3)}</span>
+                    </div>
+                    <div class="text-white">
+                        <div class="fw-bold text-truncate" style="max-width: 140px;">${nombreCorto}</div>
+                        <div class="small opacity-75"><i class="bi bi-gift-fill me-1"></i>Cumple ${edad}</div>
                     </div>
                 </div>
             `;
