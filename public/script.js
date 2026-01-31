@@ -42,79 +42,93 @@ function ejecutarSalida() {
     window.location.href = 'login.html';
 }
 
-// --- 3. NAVEGACIÓN ---
-const navAdmin = document.getElementById('navAdmin');
-if (navAdmin) navAdmin.style.display = 'flex';
+// --- 3. NAVEGACIÓN (LOGICA SIDEBAR SAAS) ---
 
+// Mostrar el menú si el usuario existe
+const navAdmin = document.getElementById('navAdmin');
+if (navAdmin) navAdmin.style.display = 'flex'; // En el CSS del sidebar esto es flex-direction: column
+
+// Ocultar botón de usuarios si no es admin
 const btnUsuarios = document.getElementById('btnUsuarios');
 if (userRol !== 'admin' && btnUsuarios) btnUsuarios.style.display = 'none';
 
 window.cambiarVista = (vista) => {
-    // 1. Referencias a Botones
-    const btnPlanner = document.getElementById('btnPlanner');
-    const btnUsuarios = document.getElementById('btnUsuarios');
-    const btnMiembros = document.getElementById('btnMiembros');
-    const btnEquipo = document.getElementById('btnEquipo');
-    const btnFinanzas = document.getElementById('btnFinanzas'); // <--- NUEVO
+    // ---------------------------------------------
+    // 1. GESTIÓN VISUAL (UI)
+    // ---------------------------------------------
 
-    // 2. Referencias a Divs (Vistas)
-    const divPlanner = document.getElementById('vistaPlanner');
-    const divUsuarios = document.getElementById('vistaUsuarios');
-    const divMiembros = document.getElementById('vistaMiembros');
-    const divEquipo = document.getElementById('vistaEquipo');
-    const divFinanzas = document.getElementById('vistaFinanzas'); // <--- NUEVO
+    // A. Ocultar TODAS las vistas (contenedores principales)
+    const vistas = ['vistaPlanner', 'vistaUsuarios', 'vistaMiembros', 'vistaEquipo', 'vistaFinanzas'];
+    vistas.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = 'none';
+    });
 
-    // 3. Resetear todo (Ocultar todo y poner botones en gris)
-    if(divPlanner) divPlanner.style.display = 'none';
-    if(divUsuarios) divUsuarios.style.display = 'none';
-    if(divMiembros) divMiembros.style.display = 'none';
-    if(divEquipo) divEquipo.style.display = 'none';
-    if(divFinanzas) divFinanzas.style.display = 'none'; // <--- NUEVO
+    // B. Resetear el menú: Quitar la clase 'active' de TODOS los botones
+    const botonesMenu = document.querySelectorAll('.nav-link');
+    botonesMenu.forEach(btn => {
+        btn.classList.remove('active');
+    });
 
-    if(btnPlanner) btnPlanner.classList.replace('btn-primary', 'btn-light');
-    if(btnUsuarios) btnUsuarios.classList.replace('btn-primary', 'btn-light');
-    if(btnMiembros) btnMiembros.classList.replace('btn-primary', 'btn-light');
-    if(btnEquipo) btnEquipo.classList.replace('btn-primary', 'btn-light');
-    if(btnFinanzas) btnFinanzas.classList.replace('btn-primary', 'btn-light'); // <--- NUEVO
+    // C. Activar el botón seleccionado (Ponerlo azul)
+    // Construimos el ID dinámicamente: 'btn' + PrimeraLetraMayuscula + resto
+    const idBotonActual = 'btn' + vista.charAt(0).toUpperCase() + vista.slice(1);
+    const botonActual = document.getElementById(idBotonActual);
+    if (botonActual) {
+        botonActual.classList.add('active');
+    }
 
-    // 4. Mostrar la vista seleccionada
+    // ---------------------------------------------
+    // 2. LÓGICA POR MÓDULO
+    // ---------------------------------------------
+
     if (vista === 'planner') {
-        if(divPlanner) divPlanner.style.display = 'block';
-        if(btnPlanner) btnPlanner.classList.replace('btn-light', 'btn-primary');
+        document.getElementById('vistaPlanner').style.display = 'block';
+        // Recargamos widgets por si hubo cambios
+        if(typeof cargarCumpleaneros === 'function') cargarCumpleaneros();
+        cargarActividades(); 
     } 
     else if (vista === 'usuarios') {
         if (userRol !== 'admin') return; 
-        if(divUsuarios) divUsuarios.style.display = 'block';
-        if(btnUsuarios) btnUsuarios.classList.replace('btn-light', 'btn-primary');
+        document.getElementById('vistaUsuarios').style.display = 'block';
         cargarUsuarios(); 
     } 
     else if (vista === 'miembros') {
-        if(divMiembros) divMiembros.style.display = 'block';
-        if(btnMiembros) btnMiembros.classList.replace('btn-light', 'btn-primary');
+        document.getElementById('vistaMiembros').style.display = 'block';
         cargarMiembros();
     }
     else if (vista === 'equipo') {
-        if(divEquipo) divEquipo.style.display = 'block';
-        if(btnEquipo) btnEquipo.classList.replace('btn-light', 'btn-primary');
+        document.getElementById('vistaEquipo').style.display = 'block';
         cargarEquipo();
     }
-    // --- NUEVO BLOQUE PARA FINANZAS ---
     else if (vista === 'finanzas') {
-        // Validación de seguridad (Solo Admin)
+        // Validación estricta de Admin
         if (userRol !== 'admin') {
-            Swal.fire('Acceso Denegado', 'Solo administradores pueden ver finanzas.', 'warning');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Acceso Restringido',
+                text: 'Solo los administradores pueden ver el módulo financiero.'
+            });
+            // Si intenta entrar sin permiso, lo devolvemos al planner
+            cambiarVista('planner');
             return;
         }
-        if(divFinanzas) divFinanzas.style.display = 'block';
-        if(btnFinanzas) btnFinanzas.classList.replace('btn-light', 'btn-primary');
         
-        // Llamamos a la función que está en finance.js
-        // Asegúrate de que finance.js esté cargado
+        document.getElementById('vistaFinanzas').style.display = 'block';
+        
+        // Carga segura del módulo externo
         if (typeof cargarDashboardFinanzas === 'function') {
             cargarDashboardFinanzas();
         } else {
-            console.error("Error: finance.js no se ha cargado correctamente.");
+            console.error("⚠️ finance.js no está cargado.");
+            document.getElementById('vistaFinanzas').innerHTML = '<div class="alert alert-danger">Error cargando módulo financiero.</div>';
         }
+    }
+    
+    // En móviles, cerrar el sidebar automáticamente al seleccionar una opción
+    const sidebar = document.querySelector('.sidebar');
+    if(sidebar && sidebar.classList.contains('show') && window.innerWidth < 768) {
+        sidebar.classList.remove('show');
     }
 };
 
