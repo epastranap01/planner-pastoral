@@ -383,7 +383,7 @@ window.editarCargo = async (id, cargo, nombreActual) => {
     if (nuevoNombre) { await fetch(`/api/equipo/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': token }, body: JSON.stringify({ nombre: nuevoNombre }) }); Swal.fire('Asignado', '', 'success'); cargarEquipo(); }
 };
 
-// --- 8. CUMPLEAÑEROS DEL MES (CORREGIDO PARA V23) ---
+// --- 8. CUMPLEAÑEROS DEL MES (MEJORADO: NOMBRE COMPLETO) ---
 async function cargarCumpleaneros() {
     const contenedor = document.getElementById('listaCumpleaneros');
     const seccion = document.getElementById('seccionCumpleaneros');
@@ -400,7 +400,6 @@ async function cargarCumpleaneros() {
         const mesActual = hoy.getMonth();
         const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         
-        // Filtramos cumpleañeros
         const cumplenEsteMes = miembros.filter(m => {
             if (!m.fecha_nacimiento) return false;
             const partes = new Date(m.fecha_nacimiento).toISOString().split('T')[0].split('-'); 
@@ -408,23 +407,18 @@ async function cargarCumpleaneros() {
             return mesNac === mesActual;
         });
 
-        // --- LÓGICA CORREGIDA (Toggle d-flex) ---
+        // Toggle visibilidad
         if (cumplenEsteMes.length === 0) {
-            // MOSTRAR ESTADO VACÍO
             seccion.style.display = 'none';
-            
-            emptyState.style.display = 'flex'; // Activamos display
-            emptyState.classList.add('d-flex'); // Activamos flexbox de bootstrap
+            emptyState.style.display = 'flex';
+            emptyState.classList.add('d-flex');
         } else {
-            // MOSTRAR LISTA
             seccion.style.display = 'block';
-            
-            emptyState.style.display = 'none'; // Ocultamos
-            emptyState.classList.remove('d-flex'); // Quitamos flex para evitar conflictos
+            emptyState.style.display = 'none';
+            emptyState.classList.remove('d-flex');
         }
 
         if (cumplenEsteMes.length > 0) {
-            // Ordenar y Renderizar (Igual que antes)
             cumplenEsteMes.sort((a, b) => {
                 const diaA = parseInt(new Date(a.fecha_nacimiento).toISOString().split('T')[0].split('-')[2]);
                 const diaB = parseInt(new Date(b.fecha_nacimiento).toISOString().split('T')[0].split('-')[2]);
@@ -437,17 +431,21 @@ async function cargarCumpleaneros() {
                 const dia = fecha[2];
                 const anioNac = parseInt(fecha[0]);
                 const edad = hoy.getFullYear() - anioNac;
-                const nombreCorto = m.nombre.split(' ')[0] + ' ' + (m.nombre.split(' ')[1] || '');
+                
+                // CAMBIO 1: Usamos el nombre completo sin cortar
+                const nombreCompleto = m.nombre; 
 
+                // CAMBIO 2: Diseño flexible (sin text-truncate y sin max-width fijo)
+                // Usamos 'lh-sm' para que si el nombre cae en 2 líneas, no se vea separado.
                 contenedor.innerHTML += `
                     <div class="d-flex align-items-center bg-white bg-opacity-25 p-2 rounded border border-white border-opacity-25">
-                        <div class="bg-white text-primary rounded-3 text-center me-3 d-flex flex-column justify-content-center p-1" style="min-width: 45px; height: 45px;">
+                        <div class="bg-white text-primary rounded-3 text-center me-3 d-flex flex-column justify-content-center p-1 flex-shrink-0" style="width: 45px; height: 45px;">
                             <span class="fw-bold" style="line-height: 1; font-size: 1.1rem;">${dia}</span>
                             <span class="small text-uppercase" style="font-size: 0.6rem; line-height: 1;">${nombresMeses[mesActual].substring(0,3)}</span>
                         </div>
-                        <div class="text-white">
-                            <div class="fw-bold text-truncate" style="max-width: 140px;">${nombreCorto}</div>
-                            <div class="small opacity-75"><i class="bi bi-gift-fill me-1"></i>Cumple ${edad}</div>
+                        <div class="text-white flex-grow-1" style="min-width: 0;">
+                            <div class="fw-bold lh-sm" style="font-size: 0.95rem;">${nombreCompleto}</div>
+                            <div class="small opacity-75 mt-1"><i class="bi bi-gift-fill me-1"></i>Cumple ${edad}</div>
                         </div>
                     </div>
                 `;
