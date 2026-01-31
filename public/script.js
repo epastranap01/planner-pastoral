@@ -298,29 +298,99 @@ function calcularEdad(fechaNacimiento) {
     if (m < 0 || (m === 0 && hoy.getDate() < cumpleanos.getDate())) { edad--; }
     return edad;
 }
-async function cargarMiembros() {
-    const formMiembro = document.getElementById('miembroForm');
-    const tituloForm = document.querySelector('#vistaMiembros h5');
-    if (userRol !== 'admin') { if(formMiembro) formMiembro.style.display = 'none'; if(tituloForm) tituloForm.style.display = 'none'; } 
-    else { if(formMiembro) formMiembro.style.display = 'block'; if(tituloForm) tituloForm.style.display = 'block'; }
+// --- VARIABLES GLOBALES PARA MIEMBROS ---
+let listaMiembrosCache = []; // Para el buscador
 
-    const tablaMiembros = document.getElementById('tablaMiembros');
-    if(!tablaMiembros) return;
+// --- 5. CARGAR MIEMBROS (NUEVO DISEÑO) ---
+async function cargarMiembros() {
+    const tbody = document.getElementById('tablaMiembros');
+    if (!tbody) return;
+
     try {
+        const token = localStorage.getItem('token');
         const res = await fetch('/api/miembros', { headers: { 'Authorization': token } });
-        const data = await res.json();
-        miembrosActuales = data;
-        tablaMiembros.innerHTML = '';
-        if(data.length === 0) { tablaMiembros.innerHTML = '<tr><td colspan="6" class="text-muted">Sin miembros</td></tr>'; return; }
-        data.forEach(m => {
-            const edad = calcularEdad(m.fecha_nacimiento);
-            const iBau = m.bautizado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-circle text-muted opacity-25 fs-5"></i>';
-            const iCon = m.confirmado ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>' : '<i class="bi bi-circle text-muted opacity-25 fs-5"></i>';
-            let botones = '';
-            if (userRol === 'admin') { botones = `<button onclick="abrirModalEditarMiembro(${m.id})" class="btn btn-outline-primary btn-sm me-1"><i class="bi bi-pencil-square"></i></button><button onclick="eliminarMiembro(${m.id})" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>`; }
-            tablaMiembros.innerHTML += `<tr><td data-label="Nombre" class="text-start fw-bold">${m.nombre}</td><td data-label="Edad"><span class="badge bg-primary bg-opacity-10 text-primary">${edad} años</span></td><td data-label="Congregación">${m.congregacion || '-'}</td><td data-label="Bautizado">${iBau}</td><td data-label="Confirmado">${iCon}</td><td class="text-end">${botones}</td></tr>`;
-        });
-    } catch (e) { console.error(e); }
+        listaMiembrosCache = await res.json(); // Guardamos en caché para buscar rápido
+        
+        renderizarTablaMiembros(listaMiembrosCache);
+    } catch (error) {
+        console.error(error);
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error cargando miembros</td></tr>`;
+    }
+}
+
+function renderizarTablaMiembros(miembros) {
+    const tbody = document.getElementById('tablaMiembros');
+    const noResults = document.getElementById('noMiembros');
+    tbody.innerHTML = '';
+
+    if (miembros.length === 0) {
+        if(noResults) noResults.style.display = 'block';
+        return;
+    }
+    if(noResults) noResults.style.display = 'none';
+
+    miembros.forEach(m => {
+        // Calcular edad
+        let edad = '-';
+        if (m.fecha_nacimiento) {
+            const hoy = new Date();
+            const nac = new Date(m.fecha_nacimiento);
+            edad = hoy.getFullYear() - nac.getFullYear();
+            const mdiff = hoy.getMonth() - nac.getMonth();
+            if (mdiff < 0 || (mdiff === 0 && hoy.getDate() < nac.getDate())) edad--;
+        }
+
+        // Iniciales para Avatar
+        const iniciales = m.nombre.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+        // Color aleatorio suave para el avatar basado en el nombre
+        const colores = ['#ebf8ff', '#f0fdf4', '#fef2f2', '#fff7ed', '#f3f4f6'];
+        const coloresTxt = ['#0369a1', '#15803d', '#b91c1c', '#c2410c', '#4b5563'];
+        const colorIdx = m.nombre.length % colores.length;
+        
+        // Badges de sacramentos
+        const bautizadoBadge = m.bautizado 
+            ? `<span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill me-1" title="Bautizado"><i class="bi bi-droplet-fill"></i></span>` 
+            : `<span class="badge bg-light text-muted border rounded-pill me-1 opacity-25"><i class="bi bi-droplet"></i></span>`;
+            
+        const confirmadoBadge = m.confirmado 
+            ? `<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill" title="Confirmado"><i class="bi bi-check-circle-fill"></i></span>` 
+            : `<span class="badge bg-light text-muted border rounded-pill opacity-25"><i class="bi bi-circle"></i></span>`;
+
+        tbody.innerHTML += `
+            <tr>
+                <td class="ps-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" 
+                             style="width: 40px; height: 40px; background-color: ${colores[colorIdx]}; color: ${coloresTxt[colorIdx]}; font-size: 0.85rem;">
+                            ${iniciales}
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark">${m.nombre}</div>
+                            <div class="small text-muted">${edad} años</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="text-secondary fw-medium">${m.congregacion || 'General'}</span></td>
+                <td>
+                    <div class="d-flex align-items-center">${bautizadoBadge} ${confirmadoBadge}</div>
+                </td>
+                <td class="text-end pe-4">
+                    <button onclick="editarMiembro(${m.id})" class="btn btn-sm btn-light border text-primary shadow-sm"><i class="bi bi-pencil-square"></i></button>
+                    <button onclick="eliminarMiembro(${m.id})" class="btn btn-sm btn-light border text-danger shadow-sm ms-1"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// Función de búsqueda en tiempo real
+function filtrarMiembros() {
+    const texto = document.getElementById('busquedaMiembro').value.toLowerCase();
+    const filtrados = listaMiembrosCache.filter(m => 
+        m.nombre.toLowerCase().includes(texto) || 
+        (m.congregacion && m.congregacion.toLowerCase().includes(texto))
+    );
+    renderizarTablaMiembros(filtrados);
 }
 const formMiembro = document.getElementById('miembroForm');
 if(formMiembro) {
