@@ -334,6 +334,7 @@ async function cargarMiembros() {
 }
 
 // 2. RENDERIZAR TABLA (Con Avatares y Badges)
+// 2. RENDERIZAR TABLA (DISEÑO PROFESIONAL: COLUMNAS + CHECKS)
 function renderizarTablaMiembros(miembros) {
     const tbody = document.getElementById('tablaMiembros');
     const noResults = document.getElementById('noMiembros');
@@ -356,24 +357,26 @@ function renderizarTablaMiembros(miembros) {
             if (mdiff < 0 || (mdiff === 0 && hoy.getDate() < nac.getDate())) edad--;
         }
 
-        // Crear Avatar (Iniciales)
+        // Avatar (Iniciales)
         const nombreArr = m.nombre.split(' ');
         const iniciales = (nombreArr[0][0] + (nombreArr[1] ? nombreArr[1][0] : '')).toUpperCase();
         
-        // Colores aleatorios consistentes
-        const colores = ['#ebf8ff', '#f0fdf4', '#fef2f2', '#fff7ed', '#f3f4f6']; // Fondos
-        const coloresTxt = ['#0369a1', '#15803d', '#b91c1c', '#c2410c', '#4b5563']; // Textos
-        const colorIdx = m.id % colores.length; // Usamos el ID para que el color siempre sea el mismo para esa persona
+        // Colores consistentes
+        const colores = ['#ebf8ff', '#f0fdf4', '#fef2f2', '#fff7ed', '#f3f4f6'];
+        const coloresTxt = ['#0369a1', '#15803d', '#b91c1c', '#c2410c', '#4b5563'];
+        const colorIdx = m.id % colores.length;
 
-        // Iconos de estado
-        const iconBautizo = m.bautizado 
-            ? `<span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill me-1" title="Bautizado"><i class="bi bi-droplet-fill"></i></span>` 
-            : `<span class="badge bg-light text-muted border rounded-pill me-1 opacity-25" title="No Bautizado"><i class="bi bi-droplet"></i></span>`;
-            
-        const iconConfirm = m.confirmado 
-            ? `<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill" title="Confirmado"><i class="bi bi-check-circle-fill"></i></span>` 
-            : `<span class="badge bg-light text-muted border rounded-pill opacity-25" title="No Confirmado"><i class="bi bi-circle"></i></span>`;
+        // --- ICONOS PROFESIONALES (Check / X) ---
+        // Usamos bi-check-lg (Check grande) y bi-x-lg (X grande)
+        // El 'text-opacity-25' en la X hace que se vea sutil y no agresiva.
+        
+        const checkIcon = `<i class="bi bi-check-lg text-success fs-5 fw-bold"></i>`;
+        const xIcon = `<i class="bi bi-x-lg text-secondary opacity-25 fs-6"></i>`;
 
+        const estadoBautizo = m.bautizado ? checkIcon : xIcon;
+        const estadoConfirm = m.confirmado ? checkIcon : xIcon;
+
+        // --- RENDERIZADO DE FILA ---
         tbody.innerHTML += `
             <tr>
                 <td class="ps-4">
@@ -383,15 +386,17 @@ function renderizarTablaMiembros(miembros) {
                             ${iniciales}
                         </div>
                         <div>
-                            <div class="fw-bold text-dark text-truncate" style="max-width: 180px;">${m.nombre}</div>
+                            <div class="fw-bold text-dark">${m.nombre}</div>
                             <div class="small text-muted">${edad} años</div>
                         </div>
                     </div>
                 </td>
                 <td><span class="text-secondary fw-medium">${m.congregacion || 'General'}</span></td>
-                <td>
-                    <div class="d-flex align-items-center">${iconBautizo} ${iconConfirm}</div>
-                </td>
+                
+                <td class="text-center">${estadoBautizo}</td>
+                
+                <td class="text-center">${estadoConfirm}</td>
+
                 <td class="text-end pe-4">
                     <button onclick="prepararEdicionMiembro(${m.id})" class="btn btn-sm btn-light border text-primary shadow-sm" title="Editar"><i class="bi bi-pencil-square"></i></button>
                     <button onclick="eliminarMiembro(${m.id})" class="btn btn-sm btn-light border text-danger shadow-sm ms-1" title="Eliminar"><i class="bi bi-trash"></i></button>

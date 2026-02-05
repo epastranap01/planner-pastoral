@@ -136,14 +136,14 @@ window.generarTarjetaPreview = (miembroInput) => {
                 <hr style="border-color: rgba(255,255,255,0.3); width: 50%; margin: 0 auto 1.5rem auto;">
 
                 <p class="fst-italic opacity-90 small px-2" style="font-family: 'Georgia', serif; line-height: 1.6;">
-                    "Jehová te bendiga, y te guarde; Jehová haga resplandecer su rostro sobre ti."
+                    "El Señor te bendiga, y te guarde; El Señor haga resplandecer su rostro sobre ti."
                     <br><strong class="mt-2 d-block text-uppercase" style="font-family: sans-serif; font-size: 0.7rem; letter-spacing: 1px;">Números 6:24</strong>
                 </p>
             </div>
 
             <div style="position: absolute; bottom: 20px; display: flex; align-items: center; gap: 6px; opacity: 0.8;">
                 <i class="bi bi-check-circle-fill small"></i>
-                <span style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Iglesia El Buen Pastor</span>
+                <span style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Iglesia Cristiana Luterana El Buen Pastor</span>
             </div>
         </div>
     `;
