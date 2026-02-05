@@ -427,7 +427,57 @@
             </div>
             <div id="contenedorEquipo" class="d-flex flex-column align-items-center gap-4"></div>
         </div>
+    <div id="vistaCalendario" style="display:none;">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold m-0">Celebraciones</h3>
+            <p class="text-muted small m-0">Calendario de cumpleaños y eventos.</p>
+        </div>
+    </div>
 
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="saas-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold m-0 text-primary" id="mesCalendarioTitulo">Cargando...</h4>
+                    <div class="btn-group shadow-sm">
+                        <button onclick="cambiarMes(-1)" class="btn btn-light border"><i class="bi bi-chevron-left"></i></button>
+                        <button onclick="cambiarMes(1)" class="btn btn-light border"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="calendar-header small text-uppercase mb-2">
+                    <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
+                </div>
+                
+                <div id="gridCalendario" class="calendar-grid">
+                    </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="saas-card bg-white border h-100">
+                <div class="text-center mb-4">
+                    <h6 class="fw-bold text-uppercase text-muted small">Vista Previa</h6>
+                    <h5 class="fw-bold text-dark">Tarjeta Digital</h5>
+                </div>
+
+                <div id="areaTarjeta" class="mb-4 d-flex justify-content-center bg-light rounded-4 p-2 border border-dashed">
+                    <div class="d-flex flex-column align-items-center justify-content-center text-muted p-5" style="aspect-ratio: 9/16; width: 100%; max-width: 300px;">
+                        <i class="bi bi-cursor-fill fs-1 mb-3 opacity-25"></i>
+                        <p class="small text-center m-0">Selecciona un cumpleañero en el calendario para ver su tarjeta.</p>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button id="btnDescargarTarjeta" class="btn btn-primary btn-custom py-3 shadow-sm" disabled onclick="descargarTarjeta()">
+                        <i class="bi bi-download me-2"></i>Descargar Imagen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
         <div id="vistaUsuarios" style="display:none;">
             <div class="row justify-content-center">
                 <div class="col-md-8">
@@ -549,58 +599,6 @@
                         </div>
                         <div class="d-grid"><button type="submit" class="btn btn-success btn-custom">Actualizar</button></div>
                     </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="vistaCalendario" style="display:none;">
-    
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="fw-bold m-0">Celebraciones</h3>
-            <p class="text-muted small m-0">Calendario de cumpleaños y eventos.</p>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="saas-card h-100">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="fw-bold m-0 text-primary" id="mesCalendarioTitulo">Cargando...</h4>
-                    <div class="btn-group shadow-sm">
-                        <button onclick="cambiarMes(-1)" class="btn btn-light border"><i class="bi bi-chevron-left"></i></button>
-                        <button onclick="cambiarMes(1)" class="btn btn-light border"><i class="bi bi-chevron-right"></i></button>
-                    </div>
-                </div>
-
-                <div class="calendar-header small text-uppercase mb-2">
-                    <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
-                </div>
-                
-                <div id="gridCalendario" class="calendar-grid">
-                    </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="saas-card bg-white border h-100">
-                <div class="text-center mb-4">
-                    <h6 class="fw-bold text-uppercase text-muted small">Vista Previa</h6>
-                    <h5 class="fw-bold text-dark">Tarjeta Digital</h5>
-                </div>
-
-                <div id="areaTarjeta" class="mb-4 d-flex justify-content-center bg-light rounded-4 p-2 border border-dashed">
-                    <div class="d-flex flex-column align-items-center justify-content-center text-muted p-5" style="aspect-ratio: 9/16; width: 100%; max-width: 300px;">
-                        <i class="bi bi-cursor-fill fs-1 mb-3 opacity-25"></i>
-                        <p class="small text-center m-0">Selecciona un cumpleañero en el calendario para ver su tarjeta.</p>
-                    </div>
-                </div>
-
-                <div class="d-grid">
-                    <button id="btnDescargarTarjeta" class="btn btn-primary btn-custom py-3 shadow-sm" disabled onclick="descargarTarjeta()">
-                        <i class="bi bi-download me-2"></i>Descargar Imagen
-                    </button>
                 </div>
             </div>
         </div>
