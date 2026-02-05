@@ -501,35 +501,38 @@
         </div>
     </div>
     </div>
-        <div id="vistaUsuarios" style="display:none;">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="saas-card">
-                         <h5 class="fw-bold mb-4">Gestión de Usuarios</h5>
-                         <form id="usuarioForm" class="mb-4">
-                            <div class="row g-2">
-                                <div class="col-4"><input type="text" id="newUsername" class="form-control" placeholder="Usuario" required></div>
-                                <div class="col-4"><input type="password" id="newPassword" class="form-control" placeholder="Contraseña" required></div>
-                                <div class="col-2">
-                                    <select id="newRol" class="form-select">
-                                        <option value="invitado">Invitado</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
-                                </div>
-                                <div class="col-2"><button type="submit" class="btn btn-primary w-100">Crear</button></div>
-                            </div>
-                         </form>
-                         <div class="table-responsive">
-                            <table class="table table-bordered align-middle">
-                                <thead class="table-light"><tr><th>Usuario</th><th>Rol</th><th class="text-end">Acciones</th></tr></thead>
-                                <tbody id="tablaUsuarios"></tbody>
-                            </table>
-                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
+        <div id="vistaUsuarios" style="display:none;">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h3 class="fw-bold m-0">Control de Acceso</h3>
+            <p class="text-muted small m-0">Administra quién puede entrar al sistema.</p>
+        </div>
+        <button class="btn btn-primary btn-custom shadow-sm" onclick="abrirModalUsuario()">
+            <i class="bi bi-shield-plus me-2"></i>Nuevo Usuario
+        </button>
+    </div>
+
+    <div class="saas-card p-0 overflow-hidden shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold">Usuario</th>
+                        <th class="py-3 text-secondary small text-uppercase fw-bold">Rol</th>
+                        <th class="py-3 text-secondary small text-uppercase fw-bold">Estado</th>
+                        <th class="text-end pe-4 py-3 text-secondary small text-uppercase fw-bold">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaUsuarios">
+                    </tbody>
+            </table>
+        </div>
+        <div id="noUsuarios" class="text-center py-5 text-muted" style="display:none;">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    </div>
+</div>
     </main>
 
     <div class="modal fade" id="modalCrearMiembro" tabindex="-1" aria-hidden="true">
@@ -626,6 +629,50 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary">
+                    <i class="bi bi-person-badge-fill me-2"></i>Credenciales
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formCrearUsuario">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre de Usuario</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-person"></i></span>
+                            <input type="text" id="usrNombre" class="form-control border-start-0" placeholder="Ej: pastor_juan" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Contraseña</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-key"></i></span>
+                            <input type="password" id="usrPass" class="form-control border-start-0" placeholder="******" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Rol de Acceso</label>
+                        <select id="usrRol" class="form-select">
+                            <option value="admin">Administrador (Total)</option>
+                            <option value="invitado">Invitado (Solo ver)</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-custom py-2">Crear Acceso</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

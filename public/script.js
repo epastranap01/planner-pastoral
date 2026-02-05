@@ -141,35 +141,149 @@ window.cambiarVista = (vista) => {
 
 // --- 4. GESTIÓN DE USUARIOS (¡ESTA ES LA QUE FALTABA!) ---
 async function cargarUsuarios() {
-    if(userRol !== 'admin') return;
+    const tbody = document.getElementById('tablaUsuarios');
+    const noData = document.getElementById('noUsuarios');
+    if (!tbody) return;
 
-    const tablaUsuarios = document.getElementById('tablaUsuarios');
-    if(!tablaUsuarios) return;
+    // Loader visual
+    tbody.innerHTML = '';
+    if(noData) noData.style.display = 'block';
 
     try {
+        const token = localStorage.getItem('token');
         const res = await fetch('/api/usuarios', { headers: { 'Authorization': token } });
         const usuarios = await res.json();
-        tablaUsuarios.innerHTML = '';
+        
+        if(noData) noData.style.display = 'none';
+        tbody.innerHTML = '';
 
-        usuarios.forEach(user => {
-            const badge = user.rol === 'admin' ? 'bg-primary' : 'bg-secondary';
-            tablaUsuarios.innerHTML += `
+        usuarios.forEach(u => {
+            // Estilos según rol
+            const esAdmin = u.rol === 'admin';
+            const badgeClass = esAdmin ? 'bg-primary bg-opacity-10 text-primary' : 'bg-secondary bg-opacity-10 text-secondary';
+            const iconRol = esAdmin ? '<i class="bi bi-shield-fill me-1"></i>' : '<i class="bi bi-eye-fill me-1"></i>';
+
+            // Avatar Generado
+            const inicial = u.username.charAt(0).toUpperCase();
+            const bgAvatar = esAdmin ? '#eff6ff' : '#f3f4f6'; // Azulito o Gris
+            const colorAvatar = esAdmin ? '#2563eb' : '#4b5563';
+
+            tbody.innerHTML += `
                 <tr>
-                    <td data-label="ID">#${user.id}</td>
-                    <td data-label="Usuario" class="fw-bold">${user.username}</td>
-                    <td data-label="Rol"><span class="badge ${badge}">${user.rol}</span></td>
-                    <td class="text-end">
-                        <button onclick="resetPassword(${user.id}, '${user.username}')" class="btn btn-outline-warning btn-sm me-1" title="Cambiar Contraseña">
-                            <i class="bi bi-key-fill"></i>
-                        </button>
-                        <button onclick="eliminarUsuario(${user.id})" class="btn btn-outline-danger btn-sm" title="Eliminar">
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-3 shadow-sm" 
+                                 style="width: 40px; height: 40px; background-color: ${bgAvatar}; color: ${colorAvatar};">
+                                ${inicial}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">@${u.username}</div>
+                                <div class="small text-muted" style="font-size: 0.75rem;">ID: #${u.id}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge ${badgeClass} border border-opacity-10 rounded-pill px-3 py-2">
+                            ${iconRol} ${u.rol.toUpperCase()}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center text-success small fw-bold">
+                            <i class="bi bi-dot fs-3 me-n1"></i> Activo
+                        </div>
+                    </td>
+                    <td class="text-end pe-4">
+                        <button onclick="eliminarUsuario(${u.id})" class="btn btn-sm btn-light border text-danger shadow-sm" title="Revocar Acceso">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
-                </tr>`;
+                </tr>
+            `;
         });
-    } catch (e) { console.error(e); }
+
+    } catch (error) {
+        console.error(error);
+        if(tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">Error de conexión</td></tr>`;
+    }
 }
+
+// 2. ABRIR MODAL (Función auxiliar)
+window.abrirModalUsuario = () => {
+    document.getElementById('formCrearUsuario').reset();
+    new bootstrap.Modal(document.getElementById('modalUsuario')).show();
+}
+
+// 3. CREAR USUARIO (Nueva Lógica con Modal)
+const formCrearUsuario = document.getElementById('formCrearUsuario');
+if (formCrearUsuario) {
+    formCrearUsuario.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('usrNombre').value;
+        const password = document.getElementById('usrPass').value;
+        const rol = document.getElementById('usrRol').value;
+        const btn = formCrearUsuario.querySelector('button');
+
+        const textoOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Creando...';
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/usuarios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                body: JSON.stringify({ username, password, rol })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                // Cerrar modal
+                const modalEl = document.getElementById('modalUsuario');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                
+                // Recargar y notificar
+                cargarUsuarios();
+                Swal.fire({ icon: 'success', title: 'Usuario Creado', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+            } else {
+                Swal.fire('Error', data.error || 'No se pudo crear', 'error');
+            }
+        } catch (error) {
+            Swal.fire('Error', 'Fallo de conexión', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
+    });
+}
+
+// 4. ELIMINAR USUARIO (Mantener lógica existente)
+window.eliminarUsuario = async (id) => {
+    const confirm = await Swal.fire({
+        title: '¿Revocar acceso?',
+        text: "Este usuario ya no podrá iniciar sesión.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Sí, eliminar'
+    });
+
+    if (confirm.isConfirmed) {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`/api/usuarios/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': token }
+            });
+            cargarUsuarios();
+            Swal.fire('Eliminado', 'El acceso ha sido revocado.', 'success');
+        } catch (e) {
+            Swal.fire('Error', 'No se pudo eliminar', 'error');
+        }
+    }
+};
 
 window.resetPassword = async (id, username) => {
     const { value: newPassword } = await Swal.fire({
