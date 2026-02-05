@@ -58,7 +58,7 @@ window.cambiarVista = (vista) => {
     // ---------------------------------------------
 
     // A. Ocultar TODAS las vistas (contenedores principales)
-    const vistas = ['vistaPlanner', 'vistaUsuarios', 'vistaMiembros', 'vistaEquipo', 'vistaFinanzas'];
+    const vistas = ['vistaPlanner', 'vistaUsuarios', 'vistaMiembros', 'vistaEquipo', 'vistaFinanzas', 'vistaCalendario'];
     vistas.forEach(id => {
         const el = document.getElementById(id);
         if(el) el.style.display = 'none';
@@ -129,6 +129,13 @@ window.cambiarVista = (vista) => {
     const sidebar = document.querySelector('.sidebar');
     if(sidebar && sidebar.classList.contains('show') && window.innerWidth < 768) {
         sidebar.classList.remove('show');
+    }
+    else if (vista === 'calendario') {
+        document.getElementById('vistaCalendario').style.display = 'block';
+        // Llamamos a la función que está en calendar.js
+        if (typeof cargarCalendario === 'function') {
+            cargarCalendario();
+        }
     }
 };
 
