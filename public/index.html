@@ -33,7 +33,7 @@
 
         h1, h2, h3, h4, h5 { font-family: 'Poppins', sans-serif; }
 
-        /* --- SIDEBAR (PANEL LATERAL FIJO) --- */
+        /* --- SIDEBAR (PANEL LATERAL) --- */
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
@@ -43,8 +43,12 @@
             border-right: 1px solid #e5e7eb;
             display: flex; flex-direction: column;
             padding: 1.5rem 1rem;
-            z-index: 1000;
+            z-index: 1040; /* Por encima del contenido */
             transition: transform 0.3s ease-in-out;
+        }
+
+        .sidebar.show {
+            transform: translateX(0) !important; /* Forzar mostrar al activar */
         }
 
         .brand {
@@ -52,12 +56,6 @@
             padding: 0 0.8rem 2rem 0.8rem;
             margin-bottom: 1rem;
             border-bottom: 1px solid #f3f4f6;
-        }
-        .brand-icon {
-            width: 40px; height: 40px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
         }
 
         .nav-link {
@@ -87,6 +85,18 @@
             display: flex; align-items: center; gap: 10px;
         }
 
+        /* --- BARRA MÓVIL (Nuevo Estilo) --- */
+        .mobile-nav {
+            display: none; /* Oculto en PC */
+            padding: 1rem;
+            background: var(--surface);
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            align-items: center;
+        }
+
         /* --- CONTENIDO PRINCIPAL --- */
         .main-content {
             margin-left: var(--sidebar-width);
@@ -95,7 +105,7 @@
             transition: margin-left 0.3s ease-in-out;
         }
 
-        /* --- TARJETAS (SAAS CARDS) --- */
+        /* --- TARJETAS --- */
         .saas-card {
             background: var(--surface);
             border-radius: var(--radius);
@@ -105,188 +115,118 @@
             height: 100%; 
         }
 
-        /* --- WIDGET CUMPLEAÑEROS --- */
-        .birthday-card {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            color: white;
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            position: relative;
-            overflow: hidden;
-            /* Altura mínima para que no se vea aplastado si solo hay 1 cumple */
-            min-height: 220px; 
-        }
-        .birthday-card::after {
-            content: "\F1FD"; /* Icono de pastel de Bootstrap */
-            font-family: bootstrap-icons;
-            position: absolute; right: -10px; bottom: -20px;
-            font-size: 8rem; opacity: 0.1; transform: rotate(-15deg);
-        }
-
-        /* ================================================== */
-    /* MODO RESPONSIVO ACTUALIZADO (5 COLUMNAS) */
-    /* ================================================== */
-    @media (max-width: 768px) {
-        #vistaMiembros .d-flex.flex-md-row { gap: 15px !important; }
-        #vistaMiembros .input-group, #vistaMiembros button { width: 100% !important; }
-        #vistaMiembros thead { display: none; }
-
-        #vistaMiembros tbody tr {
-            display: flex; flex-direction: column;
-            background: white; border: 1px solid #e5e7eb; border-radius: 16px;
-            margin-bottom: 1rem; padding: 1.25rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-
-        #vistaMiembros tbody td {
-            display: flex; justify-content: space-between; align-items: center;
-            border: none; padding: 0.5rem 0; width: 100%;
-        }
-
-        /* Col 1: Nombre */
-        #vistaMiembros tbody td:nth-child(1) { padding-bottom: 1rem; border-bottom: 1px dashed #f0f0f0; }
-        
-        /* Col 2: Congregación */
-        #vistaMiembros tbody td:nth-child(2)::before { content: "Congregación:"; font-weight: 600; color: #9ca3af; }
-        
-        /* Col 3: Bautizo (NUEVO) */
-        #vistaMiembros tbody td:nth-child(3)::before { content: "Bautizado:"; font-weight: 600; color: #9ca3af; }
-        
-        /* Col 4: Confirmado (NUEVO) */
-        #vistaMiembros tbody td:nth-child(4)::before { content: "Confirmado:"; font-weight: 600; color: #9ca3af; }
-        
-        /* Col 5: Acciones */
-        #vistaMiembros tbody td:nth-child(5) { margin-top: 0.5rem; justify-content: flex-end; gap: 10px; }
-    }
-        .mobile-nav { display: none; }
-
-        /* Utilitarios */
+        /* --- UTILITARIOS --- */
         .form-control, .form-select {
             background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 14px;
         }
         .form-control:focus { background: white; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
         .btn-custom { border-radius: 10px; padding: 10px 20px; font-weight: 600; border: none; }
-
+        .birthday-card {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white; border-radius: var(--radius); padding: 1.5rem;
+            position: relative; overflow: hidden; min-height: 220px; 
+        }
 
         /* ================================================== */
-    /* MODO RESPONSIVO PARA MIEMBROS (TRANSFORMACIÓN A TARJETAS) */
-    /* ================================================== */
-    @media (max-width: 768px) {
-        
-        /* 1. Ajustar Cabecera (Buscador y Título) */
-        #vistaMiembros .d-flex.flex-md-row {
-            gap: 15px !important;
-        }
-        #vistaMiembros .input-group, 
-        #vistaMiembros button {
-            width: 100% !important; /* Botones y buscador ancho completo */
-        }
+        /* MEDIA QUERIES (MÓVIL)                */
+        /* ================================================== */
+        @media (max-width: 768px) {
+            
+            /* 1. Ajustes de Layout General */
+            .sidebar {
+                transform: translateX(-100%); /* Ocultar sidebar por defecto */
+                box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            }
+            
+            .main-content {
+                margin-left: 0; /* Contenido ocupa todo el ancho */
+                padding: 1rem; /* Menos padding en los bordes */
+                padding-top: 1rem;
+            }
 
-        /* 2. Ocultar encabezados de la tabla (No sirven en modo tarjeta) */
-        #vistaMiembros thead { display: none; }
+            .mobile-nav {
+                display: flex !important; /* Mostrar barra superior */
+            }
 
-        /* 3. Convertir cada FILA (tr) en una TARJETA */
-        #vistaMiembros tbody tr {
-            display: flex;
-            flex-direction: column;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px; /* Bordes redondeados */
-            margin-bottom: 1rem; /* Espacio entre tarjetas */
-            padding: 1.25rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03); /* Sombra suave */
-        }
+            /* 2. Ajustes de Tablas a Tarjetas (Miembros) */
+            #vistaMiembros .d-flex.flex-md-row { gap: 15px !important; }
+            #vistaMiembros .input-group, #vistaMiembros button { width: 100% !important; }
+            #vistaMiembros thead { display: none; }
 
-        /* 4. Ajustar las CELDAS (td) */
-        #vistaMiembros tbody td {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: none;
-            padding: 0.5rem 0;
-            width: 100%;
-        }
+            #vistaMiembros tbody tr {
+                display: flex; flex-direction: column;
+                background: white; border: 1px solid #e5e7eb; border-radius: 16px;
+                margin-bottom: 1rem; padding: 1.25rem;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            }
 
-        /* 5. Estilos Específicos por Columna */
-        
-        /* Columna 1: Nombre y Avatar (La hacemos destacar) */
-        #vistaMiembros tbody td:nth-child(1) {
-            padding-bottom: 1rem;
-            margin-bottom: 0.5rem;
-            border-bottom: 1px dashed #f0f0f0;
-        }
+            #vistaMiembros tbody td {
+                display: flex; justify-content: space-between; align-items: center;
+                border: none; padding: 0.5rem 0; width: 100%;
+            }
 
-        /* Columna 2: Congregación (Agregamos etiqueta manual) */
-        #vistaMiembros tbody td:nth-child(2)::before {
-            content: "Congregación:";
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #9ca3af; /* Gris suave */
+            /* Etiquetas para las "celdas" en modo móvil */
+            #vistaMiembros tbody td:nth-child(1) { padding-bottom: 1rem; border-bottom: 1px dashed #f0f0f0; margin-bottom: 0.5rem; font-weight: bold; }
+            #vistaMiembros tbody td:nth-child(2)::before { content: "Congregación:"; font-weight: 600; color: #9ca3af; font-size: 0.85rem; }
+            #vistaMiembros tbody td:nth-child(3)::before { content: "Bautizado:"; font-weight: 600; color: #9ca3af; font-size: 0.85rem; }
+            #vistaMiembros tbody td:nth-child(4)::before { content: "Confirmado:"; font-weight: 600; color: #9ca3af; font-size: 0.85rem; }
+            
+            #vistaMiembros tbody td:nth-child(5) { 
+                margin-top: 0.5rem; justify-content: flex-end; gap: 10px; 
+            }
         }
-
-        /* Columna 3: Sacramentos (Agregamos etiqueta manual) */
-        #vistaMiembros tbody td:nth-child(3)::before {
-            content: "Estado:";
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #9ca3af;
-        }
-
-        /* Columna 4: Acciones (Botones al final) */
-        #vistaMiembros tbody td:nth-child(4) {
-            margin-top: 0.5rem;
-            padding-top: 1rem;
-            justify-content: flex-end; /* Botones a la derecha */
-            gap: 10px;
-        }
-        
-        /* Hacemos los botones de acción un poco más grandes en móvil para el dedo */
-        #vistaMiembros tbody td:nth-child(4) button {
-            padding: 8px 16px;
-        }
-    }
     </style>
 </head>
 <body>
 
-    <div class="mobile-nav justify-content-between">
+    <div class="mobile-nav justify-content-between shadow-sm">
         <div class="d-flex align-items-center gap-2">
             <button class="btn btn-light border-0" onclick="document.querySelector('.sidebar').classList.toggle('show')">
                 <i class="bi bi-list fs-4"></i>
             </button>
-            <span class="fw-bold">Buen Pastor</span>
+            <span class="fw-bold fs-5">Buen Pastor</span>
         </div>
-        <img src="img/LogoICLEB.svg" alt="Logo" style="width: 35px; height: 35px; object-fit: contain;">
+        <div class="bg-primary text-white rounded p-1 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+            <i class="bi bi-church"></i>
+        </div>
     </div>
 
     <nav class="sidebar">
+        <div class="d-md-none text-end mb-2">
+            <button class="btn btn-sm btn-light" onclick="document.querySelector('.sidebar').classList.remove('show')">
+                <i class="bi bi-x-lg"></i> Cerrar
+            </button>
+        </div>
+
         <div class="brand">
-            <img src="img/LogoICLEB.svg" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;">
+            <div class="brand-icon">
+                <i class="bi bi-church"></i>
+            </div>
             <div>
                 <h5 class="m-0 fw-bold" style="font-size: 1rem;">El Buen Pastor</h5>
                 <small class="text-muted" style="font-size: 0.75rem;">Panel Administrativo</small>
             </div>
         </div>
 
-        <div class="d-flex flex-column gap-1" id="navAdmin" style="display:none !important;">
-            <button onclick="cambiarVista('planner')" class="nav-link active" id="btnPlanner">
+        <div class="d-flex flex-column gap-1" id="navAdmin">
+            <button onclick="cambiarVista('planner'); cerrarMenuMovil()" class="nav-link active" id="btnPlanner">
                 <i class="bi bi-calendar4-week"></i> Agenda
             </button>
-            <button onclick="cambiarVista('finanzas')" class="nav-link" id="btnFinanzas">
+            <button onclick="cambiarVista('finanzas'); cerrarMenuMovil()" class="nav-link" id="btnFinanzas">
                 <i class="bi bi-wallet2"></i> Finanzas
             </button>
-            <button onclick="cambiarVista('miembros')" class="nav-link" id="btnMiembros">
+            <button onclick="cambiarVista('miembros'); cerrarMenuMovil()" class="nav-link" id="btnMiembros">
                 <i class="bi bi-people"></i> Miembros
             </button>
-            <button onclick="cambiarVista('equipo')" class="nav-link" id="btnEquipo">
+            <button onclick="cambiarVista('equipo'); cerrarMenuMovil()" class="nav-link" id="btnEquipo">
                 <i class="bi bi-diagram-3"></i> Equipo Pastoral
             </button>
-            <button onclick="cambiarVista('usuarios')" class="nav-link" id="btnUsuarios">
+            <button onclick="cambiarVista('usuarios'); cerrarMenuMovil()" class="nav-link" id="btnUsuarios">
                 <i class="bi bi-shield-lock"></i> Usuarios
             </button>
-           <button onclick="cambiarVista('calendario')" class="nav-link" id="btnCalendario">
-    <i class="bi bi-cake2-fill"></i> Celebraciones
-</button>
+            <button onclick="cambiarVista('calendario'); cerrarMenuMovil()" class="nav-link" id="btnCalendario">
+                <i class="bi bi-cake2-fill"></i> Celebraciones
+            </button>
         </div>
 
         <div class="user-profile">
@@ -307,33 +247,28 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h3 class="fw-bold m-0">Panel Principal</h3>
-                    <p class="text-muted small m-0">Resumen de actividades y eventos.</p>
+                    <p class="text-muted small m-0">Resumen de actividades.</p>
                 </div>
                 <button class="btn btn-primary btn-custom shadow-sm" onclick="document.getElementById('fecha').focus()">
-                    <i class="bi bi-plus-lg me-1"></i> Nueva Actividad
+                    <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-md-inline">Nueva Actividad</span><span class="d-md-none">Nueva</span>
                 </button>
             </div>
 
             <div class="row g-4 mb-5">
-                
                 <div class="col-lg-4">
                     <div id="contenedorCumpleaneros" class="h-100">
-                        
                         <div id="seccionCumpleaneros" style="display: none;" class="h-100">
                             <div class="birthday-card shadow h-100 d-flex flex-column">
                                 <h5 class="fw-bold mb-3">🎉 Cumpleañeros</h5>
-                                <div id="listaCumpleaneros" class="d-flex flex-column gap-2" style="overflow-y: auto; max-height: 200px;">
-                                    </div>
+                                <div id="listaCumpleaneros" class="d-flex flex-column gap-2" style="overflow-y: auto; max-height: 200px;"></div>
                             </div>
                         </div>
-                        
                         <div id="noBirthdays" class="saas-card align-items-center justify-content-center text-muted h-100" style="display: none; border-style: dashed;">
                             <div class="text-center opacity-50">
                                 <i class="bi bi-calendar-heart fs-1"></i>
                                 <p class="small fw-bold mt-2 m-0">Sin cumpleaños este mes</p>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -341,7 +276,7 @@
                     <div class="saas-card h-100">
                         <div class="d-flex align-items-center mb-3">
                             <div class="bg-primary bg-opacity-10 text-primary p-2 rounded me-3"><i class="bi bi-calendar-plus-fill"></i></div>
-                            <h6 class="fw-bold m-0 text-dark">Agendar Evento Rápido</h6>
+                            <h6 class="fw-bold m-0 text-dark">Agendar Evento</h6>
                         </div>
                         
                         <form id="actividadForm">
@@ -351,15 +286,15 @@
                                     <input type="date" id="fecha" class="form-control" required>
                                 </div>
                                 <div class="col-md-8">
-                                    <label class="form-label small fw-bold">Nombre Actividad</label>
-                                    <input type="text" id="actividad" class="form-control" placeholder="Ej: Ayuno Congregacional" required>
+                                    <label class="form-label small fw-bold">Nombre</label>
+                                    <input type="text" id="actividad" class="form-control" placeholder="Ej: Ayuno..." required>
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label small fw-bold">Detalles Adicionales</label>
-                                    <textarea id="detalles" class="form-control" rows="2" placeholder="Encargado, hora, notas..."></textarea>
+                                    <label class="form-label small fw-bold">Detalles</label>
+                                    <textarea id="detalles" class="form-control" rows="2" placeholder="Notas..."></textarea>
                                 </div>
                                 <div class="col-12 text-end mt-3">
-                                    <button type="submit" class="btn btn-primary btn-custom px-4 shadow-sm">
+                                    <button type="submit" class="btn btn-primary btn-custom px-4 shadow-sm w-100 w-md-auto">
                                         Guardar Evento
                                     </button>
                                 </div>
@@ -373,20 +308,18 @@
                 <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white">
                     <div>
                         <h6 class="fw-bold m-0">Próximas Actividades</h6>
-                        <small class="text-muted">Eventos pendientes y completados</small>
                     </div>
                     <button onclick="generarPDF()" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">
-                        <i class="bi bi-file-pdf me-1"></i> Descargar PDF
+                        <i class="bi bi-file-pdf me-1"></i> PDF
                     </button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
-                        <thead class="bg-light">
+                    <table class="table table-hover align-middle mb-0" style="min-width: 600px;"> <thead class="bg-light">
                             <tr>
-                                <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold" style="width: 15%;">Fecha</th>
-                                <th class="py-3 text-secondary small text-uppercase fw-bold" style="width: 25%;">Actividad</th>
-                                <th class="py-3 text-secondary small text-uppercase fw-bold" style="width: 40%;">Detalles</th>
-                                <th class="pe-4 py-3 text-end text-secondary small text-uppercase fw-bold" style="width: 20%;">Acciones</th>
+                                <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold">Fecha</th>
+                                <th class="py-3 text-secondary small text-uppercase fw-bold">Actividad</th>
+                                <th class="py-3 text-secondary small text-uppercase fw-bold">Detalles</th>
+                                <th class="pe-4 py-3 text-end text-secondary small text-uppercase fw-bold">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaActividades"></tbody>
@@ -401,46 +334,44 @@
         <div id="vistaFinanzas" style="display:none;"></div>
 
         <div id="vistaMiembros" style="display:none;">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
-        <div>
-            <h3 class="fw-bold m-0">Directorio de Miembros</h3>
-            <p class="text-muted small m-0">Gestión de la congregación</p>
-        </div>
-        
-        <div class="d-flex gap-2 w-100 w-md-auto">
-            <div class="input-group">
-                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                <input type="text" id="busquedaMiembro" class="form-control border-start-0 ps-0" placeholder="Buscar por nombre..." onkeyup="filtrarMiembros()">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+                <div>
+                    <h3 class="fw-bold m-0">Directorio</h3>
+                    <p class="text-muted small m-0">Gestión de miembros</p>
+                </div>
+                
+                <div class="d-flex gap-2 w-100 w-md-auto">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" id="busquedaMiembro" class="form-control border-start-0 ps-0" placeholder="Buscar..." onkeyup="filtrarMiembros()">
+                    </div>
+                    <button class="btn btn-primary btn-custom d-flex align-items-center gap-2" onclick="abrirModalCrearMiembro()">
+                        <i class="bi bi-person-plus-fill"></i> <span>Nuevo</span>
+                    </button>
+                </div>
             </div>
-            
-           <button class="btn btn-primary btn-custom d-flex align-items-center gap-2" onclick="abrirModalCrearMiembro()">
-    <i class="bi bi-person-plus-fill"></i> <span class="d-none d-md-inline">Nuevo</span>
-</button>
-        </div>
-    </div>
 
-    <div class="saas-card p-0 overflow-hidden shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-               <thead class="bg-light">
-    <tr>
-        <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold" style="width: 35%;">Miembro</th>
-        <th class="py-3 text-secondary small text-uppercase fw-bold">Congregación</th>
-        <th class="py-3 text-center text-secondary small text-uppercase fw-bold">Bautizo</th>
-        <th class="py-3 text-center text-secondary small text-uppercase fw-bold">Confirm.</th>
-        <th class="text-end pe-4 py-3 text-secondary small text-uppercase fw-bold">Acciones</th>
-    </tr>
-</thead>
-                <tbody id="tablaMiembros">
-                    </tbody>
-            </table>
+            <div class="saas-card p-0 overflow-hidden shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                       <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold" style="width: 35%;">Miembro</th>
+                                <th class="py-3 text-secondary small text-uppercase fw-bold">Congregación</th>
+                                <th class="py-3 text-center text-secondary small text-uppercase fw-bold">Bautizo</th>
+                                <th class="py-3 text-center text-secondary small text-uppercase fw-bold">Confirm.</th>
+                                <th class="text-end pe-4 py-3 text-secondary small text-uppercase fw-bold">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaMiembros"></tbody>
+                    </table>
+                </div>
+                <div id="noMiembros" class="text-center py-5 text-muted" style="display:none;">
+                    <i class="bi bi-people fs-1 opacity-25"></i>
+                    <p class="mt-2 small">No se encontraron miembros.</p>
+                </div>
+            </div>
         </div>
-        <div id="noMiembros" class="text-center py-5 text-muted" style="display:none;">
-            <i class="bi bi-people fs-1 opacity-25"></i>
-            <p class="mt-2 small">No se encontraron miembros.</p>
-        </div>
-    </div>
-</div>
 
         <div id="vistaEquipo" style="display:none;">
              <div class="text-center mb-5">
@@ -449,181 +380,99 @@
             </div>
             <div id="contenedorEquipo" class="d-flex flex-column align-items-center gap-4"></div>
         </div>
-    <div id="vistaCalendario" style="display:none;">
-    
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="fw-bold m-0">Celebraciones</h3>
-            <p class="text-muted small m-0">Calendario de cumpleaños y eventos.</p>
-        </div>
-    </div>
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="saas-card h-100">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="fw-bold m-0 text-primary" id="mesCalendarioTitulo">Cargando...</h4>
-                    <div class="btn-group shadow-sm">
-                        <button onclick="cambiarMes(-1)" class="btn btn-light border"><i class="bi bi-chevron-left"></i></button>
-                        <button onclick="cambiarMes(1)" class="btn btn-light border"><i class="bi bi-chevron-right"></i></button>
-                    </div>
+        <div id="vistaCalendario" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="fw-bold m-0">Celebraciones</h3>
                 </div>
-
-                <div class="calendar-header small text-uppercase mb-2">
-                    <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
-                </div>
-                
-                <div id="gridCalendario" class="calendar-grid">
-                    </div>
             </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="saas-card bg-white border h-100">
-                <div class="text-center mb-4">
-                    <h6 class="fw-bold text-uppercase text-muted small">Vista Previa</h6>
-                    <h5 class="fw-bold text-dark">Tarjeta Digital</h5>
-                </div>
-
-                <div id="areaTarjeta" class="mb-4 d-flex justify-content-center bg-light rounded-4 p-2 border border-dashed">
-                    <div class="d-flex flex-column align-items-center justify-content-center text-muted p-5" style="aspect-ratio: 9/16; width: 100%; max-width: 300px;">
-                        <i class="bi bi-cursor-fill fs-1 mb-3 opacity-25"></i>
-                        <p class="small text-center m-0">Selecciona un cumpleañero en el calendario para ver su tarjeta.</p>
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="saas-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="fw-bold m-0 text-primary" id="mesCalendarioTitulo">Cargando...</h4>
+                            <div class="btn-group shadow-sm">
+                                <button onclick="cambiarMes(-1)" class="btn btn-light border"><i class="bi bi-chevron-left"></i></button>
+                                <button onclick="cambiarMes(1)" class="btn btn-light border"><i class="bi bi-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="calendar-header small text-uppercase mb-2">
+                            <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
+                        </div>
+                        <div id="gridCalendario" class="calendar-grid"></div>
                     </div>
                 </div>
-
-                <div class="d-grid">
-                    <button id="btnDescargarTarjeta" class="btn btn-primary btn-custom py-3 shadow-sm" disabled onclick="descargarTarjeta()">
-                        <i class="bi bi-download me-2"></i>Descargar Imagen
-                    </button>
+                <div class="col-lg-4">
+                    <div class="saas-card bg-white border h-100">
+                        <div class="text-center mb-4">
+                            <h5 class="fw-bold text-dark">Tarjeta Digital</h5>
+                        </div>
+                        <div id="areaTarjeta" class="mb-4 d-flex justify-content-center bg-light rounded-4 p-2 border border-dashed">
+                            <div class="d-flex flex-column align-items-center justify-content-center text-muted p-5" style="aspect-ratio: 9/16; width: 100%; max-width: 300px;">
+                                <i class="bi bi-cursor-fill fs-1 mb-3 opacity-25"></i>
+                                <p class="small text-center m-0">Selecciona un cumpleañero</p>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button id="btnDescargarTarjeta" class="btn btn-primary btn-custom py-3 shadow-sm" disabled onclick="descargarTarjeta()">
+                                <i class="bi bi-download me-2"></i>Descargar
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    </div>
 
         <div id="vistaUsuarios" style="display:none;">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
-        <div>
-            <h3 class="fw-bold m-0">Control de Acceso</h3>
-            <p class="text-muted small m-0">Administra quién puede entrar al sistema.</p>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+                <div>
+                    <h3 class="fw-bold m-0">Usuarios</h3>
+                </div>
+                <button class="btn btn-primary btn-custom shadow-sm w-100 w-md-auto" onclick="abrirModalUsuario()">
+                    <i class="bi bi-shield-plus me-2"></i>Nuevo
+                </button>
+            </div>
+            <div class="saas-card p-0 overflow-hidden shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="min-width: 500px;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold">Usuario</th>
+                                <th class="py-3 text-secondary small text-uppercase fw-bold">Rol</th>
+                                <th class="py-3 text-secondary small text-uppercase fw-bold">Estado</th>
+                                <th class="text-end pe-4 py-3 text-secondary small text-uppercase fw-bold">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaUsuarios"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        <button class="btn btn-primary btn-custom shadow-sm" onclick="abrirModalUsuario()">
-            <i class="bi bi-shield-plus me-2"></i>Nuevo Usuario
-        </button>
-    </div>
-
-    <div class="saas-card p-0 overflow-hidden shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold">Usuario</th>
-                        <th class="py-3 text-secondary small text-uppercase fw-bold">Rol</th>
-                        <th class="py-3 text-secondary small text-uppercase fw-bold">Estado</th>
-                        <th class="text-end pe-4 py-3 text-secondary small text-uppercase fw-bold">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaUsuarios">
-                    </tbody>
-            </table>
-        </div>
-        <div id="noUsuarios" class="text-center py-5 text-muted" style="display:none;">
-            <div class="spinner-border text-primary" role="status"></div>
-        </div>
-    </div>
-</div>
     </main>
 
     <div class="modal fade" id="modalCrearMiembro" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow rounded-4">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold text-success">
-                    <i class="bi bi-person-plus-fill me-2"></i>Nuevo Miembro
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="miembroForm">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Nombre Completo</label>
-                        <input type="text" id="mNombre" class="form-control" placeholder="Ej: Maria Lopez" required>
-                    </div>
-                    
-                    <div class="row g-3 mb-3">
-                        <div class="col-6">
-                            <label class="form-label small fw-bold">F. Nacimiento</label>
-                            <input type="date" id="mFecha" class="form-control" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small fw-bold">Congregación</label>
-                            <input type="text" id="mCongregacion" class="form-control" placeholder="Central">
-                        </div>
-                    </div>
-
-                    <div class="p-3 bg-light rounded-3 mb-4 border">
-                        <label class="form-label small fw-bold mb-2 text-muted">Sacramentos</label>
-                        <div class="d-flex gap-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="mBautizado">
-                                <label class="form-check-label small" for="mBautizado">Bautizado</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="mConfirmado">
-                                <label class="form-check-label small" for="mConfirmado">Confirmado</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success btn-custom py-2 fw-bold">Guardar Registro</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-    <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow rounded-4">
                 <div class="modal-header border-bottom-0 pb-0">
-                    <h5 class="modal-title fw-bold">Editar Actividad</h5>
+                    <h5 class="modal-title fw-bold text-success"><i class="bi bi-person-plus-fill me-2"></i>Nuevo Miembro</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <form id="formEditar">
-                        <input type="hidden" id="editId"> 
-                        <div class="mb-3"><label class="form-label small fw-bold">Fecha</label><input type="date" id="editFecha" class="form-control" required></div>
-                        <div class="mb-3"><label class="form-label small fw-bold">Actividad</label><input type="text" id="editActividad" class="form-control" required></div>
-                        <div class="mb-3"><label class="form-label small fw-bold">Detalles</label><textarea id="editDetalles" class="form-control" rows="2"></textarea></div>
-                        <div class="d-grid"><button type="submit" class="btn btn-primary btn-custom">Guardar Cambios</button></div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <div class="modal fade" id="modalEditarMiembro" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow rounded-4">
-                <div class="modal-header border-bottom-0 pb-0"> 
-                    <h5 class="modal-title fw-bold">Editar Miembro</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <form id="formEditarMiembro">
-                        <input type="hidden" id="editMemId">
-                        <div class="mb-3"><label class="form-label small fw-bold">Nombre</label><input type="text" id="editMemNombre" class="form-control" required></div>
-                        <div class="mb-3"><label class="form-label small fw-bold">Fecha Nac.</label><input type="date" id="editMemFecha" class="form-control" required></div>
-                        <div class="mb-3"><label class="form-label small fw-bold">Congregación</label><input type="text" id="editMemCongregacion" class="form-control"></div>
-                        <div class="d-flex gap-3 mb-4 p-3 bg-light rounded-3">
-                            <div class="form-check"><input class="form-check-input" type="checkbox" id="editMemBautizado"><label class="form-check-label">Bautizado</label></div>
-                            <div class="form-check"><input class="form-check-input" type="checkbox" id="editMemConfirmado"><label class="form-check-label">Confirmado</label></div>
+                    <form id="miembroForm">
+                        <div class="mb-3"><label class="form-label small fw-bold">Nombre</label><input type="text" id="mNombre" class="form-control" required></div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-6"><label class="form-label small fw-bold">F. Nac.</label><input type="date" id="mFecha" class="form-control" required></div>
+                            <div class="col-6"><label class="form-label small fw-bold">Congregación</label><input type="text" id="mCongregacion" class="form-control"></div>
                         </div>
-                        <div class="d-grid"><button type="submit" class="btn btn-success btn-custom">Actualizar</button></div>
+                        <div class="p-3 bg-light rounded-3 mb-4 border">
+                             <label class="form-label small fw-bold mb-2 text-muted">Sacramentos</label>
+                             <div class="d-flex gap-4">
+                                <div class="form-check"><input class="form-check-input" type="checkbox" id="mBautizado"><label class="form-check-label small" for="mBautizado">Bautizado</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" id="mConfirmado"><label class="form-check-label small" for="mConfirmado">Confirmado</label></div>
+                            </div>
+                        </div>
+                        <div class="d-grid"><button type="submit" class="btn btn-success btn-custom py-2 fw-bold">Guardar</button></div>
                     </form>
                 </div>
             </div>
@@ -631,55 +480,45 @@
     </div>
 
     <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow rounded-4">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold text-primary">
-                    <i class="bi bi-person-badge-fill me-2"></i>Credenciales
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="formCrearUsuario">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Nombre de Usuario</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-person"></i></span>
-                            <input type="text" id="usrNombre" class="form-control border-start-0" placeholder="Ej: pastor_juan" required>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold text-primary">Credenciales</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formCrearUsuario">
+                        <div class="mb-3"><label class="form-label small fw-bold">Usuario</label><input type="text" id="usrNombre" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label small fw-bold">Pass</label><input type="password" id="usrPass" class="form-control" required></div>
+                        <div class="mb-4"><label class="form-label small fw-bold">Rol</label>
+                            <select id="usrRol" class="form-select">
+                                <option value="admin">Administrador</option>
+                                <option value="invitado">Invitado</option>
+                            </select>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Contraseña</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-key"></i></span>
-                            <input type="password" id="usrPass" class="form-control border-start-0" placeholder="******" required>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold">Rol de Acceso</label>
-                        <select id="usrRol" class="form-select">
-                            <option value="admin">Administrador (Total)</option>
-                            <option value="invitado">Invitado (Solo ver)</option>
-                        </select>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-custom py-2">Crear Acceso</button>
-                    </div>
-                </form>
+                        <div class="d-grid"><button type="submit" class="btn btn-primary btn-custom py-2">Crear</button></div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
-</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="calendar.js?v=1"></script> <script src="script.js?v=12"></script>
-    <script src="finance.js?v=21"></script> 
+    <script src="calendar.js?v=1"></script> 
+    <script src="script.js?v=12"></script>
+    <script src="finance.js?v=21"></script>
+    
+    <script>
+        // Función extra para mejorar la UX en móvil
+        function cerrarMenuMovil() {
+            // Si estamos en móvil (pantalla < 768px), cerrar el menú al hacer clic en una opción
+            if (window.innerWidth < 768) {
+                document.querySelector('.sidebar').classList.remove('show');
+            }
+        }
+    </script>
 </body>
 </html>
