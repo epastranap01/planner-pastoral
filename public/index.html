@@ -43,12 +43,12 @@
             border-right: 1px solid #e5e7eb;
             display: flex; flex-direction: column;
             padding: 1.5rem 1rem;
-            z-index: 1040; /* Por encima del contenido */
+            z-index: 1040;
             transition: transform 0.3s ease-in-out;
         }
 
         .sidebar.show {
-            transform: translateX(0) !important; /* Forzar mostrar al activar */
+            transform: translateX(0) !important;
         }
 
         .brand {
@@ -85,7 +85,7 @@
             display: flex; align-items: center; gap: 10px;
         }
 
-        /* --- BARRA MÓVIL (Nuevo Estilo) --- */
+        /* --- BARRA MÓVIL --- */
         .mobile-nav {
             display: none; /* Oculto en PC */
             padding: 1rem;
@@ -132,23 +132,23 @@
         /* ================================================== */
         @media (max-width: 768px) {
             
-            /* 1. Ajustes de Layout General */
+            /* Ajustes de Layout */
             .sidebar {
-                transform: translateX(-100%); /* Ocultar sidebar por defecto */
+                transform: translateX(-100%);
                 box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             }
             
             .main-content {
-                margin-left: 0; /* Contenido ocupa todo el ancho */
-                padding: 1rem; /* Menos padding en los bordes */
+                margin-left: 0;
+                padding: 1rem;
                 padding-top: 1rem;
             }
 
             .mobile-nav {
-                display: flex !important; /* Mostrar barra superior */
+                display: flex !important;
             }
 
-            /* 2. Ajustes de Tablas a Tarjetas (Miembros) */
+            /* Ajustes de Tablas a Tarjetas (Miembros) */
             #vistaMiembros .d-flex.flex-md-row { gap: 15px !important; }
             #vistaMiembros .input-group, #vistaMiembros button { width: 100% !important; }
             #vistaMiembros thead { display: none; }
@@ -165,7 +165,6 @@
                 border: none; padding: 0.5rem 0; width: 100%;
             }
 
-            /* Etiquetas para las "celdas" en modo móvil */
             #vistaMiembros tbody td:nth-child(1) { padding-bottom: 1rem; border-bottom: 1px dashed #f0f0f0; margin-bottom: 0.5rem; font-weight: bold; }
             #vistaMiembros tbody td:nth-child(2)::before { content: "Congregación:"; font-weight: 600; color: #9ca3af; font-size: 0.85rem; }
             #vistaMiembros tbody td:nth-child(3)::before { content: "Bautizado:"; font-weight: 600; color: #9ca3af; font-size: 0.85rem; }
@@ -186,9 +185,7 @@
             </button>
             <span class="fw-bold fs-5">Buen Pastor</span>
         </div>
-        <div class="bg-primary text-white rounded p-1 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
-            <i class="bi bi-church"></i>
-        </div>
+        <img src="img/LogoICLEB.svg" alt="Logo" style="width: 35px; height: 35px; object-fit: contain;">
     </div>
 
     <nav class="sidebar">
@@ -199,9 +196,7 @@
         </div>
 
         <div class="brand">
-            <div class="brand-icon">
-                <i class="bi bi-church"></i>
-            </div>
+            <img src="img/LogoICLEB.svg" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;">
             <div>
                 <h5 class="m-0 fw-bold" style="font-size: 1rem;">El Buen Pastor</h5>
                 <small class="text-muted" style="font-size: 0.75rem;">Panel Administrativo</small>
@@ -314,7 +309,8 @@
                     </button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="min-width: 600px;"> <thead class="bg-light">
+                    <table class="table table-hover align-middle mb-0" style="min-width: 600px;">
+                        <thead class="bg-light">
                             <tr>
                                 <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold">Fecha</th>
                                 <th class="py-3 text-secondary small text-uppercase fw-bold">Actividad</th>
@@ -478,6 +474,51 @@
             </div>
         </div>
     </div>
+    
+    <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold">Editar Actividad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formEditar">
+                        <input type="hidden" id="editId"> 
+                        <div class="mb-3"><label class="form-label small fw-bold">Fecha</label><input type="date" id="editFecha" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label small fw-bold">Actividad</label><input type="text" id="editActividad" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label small fw-bold">Detalles</label><textarea id="editDetalles" class="form-control" rows="2"></textarea></div>
+                        <div class="d-grid"><button type="submit" class="btn btn-primary btn-custom">Guardar Cambios</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="modalEditarMiembro" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-bottom-0 pb-0"> 
+                    <h5 class="modal-title fw-bold">Editar Miembro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formEditarMiembro">
+                        <input type="hidden" id="editMemId">
+                        <div class="mb-3"><label class="form-label small fw-bold">Nombre</label><input type="text" id="editMemNombre" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label small fw-bold">Fecha Nac.</label><input type="date" id="editMemFecha" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label small fw-bold">Congregación</label><input type="text" id="editMemCongregacion" class="form-control"></div>
+                        <div class="d-flex gap-3 mb-4 p-3 bg-light rounded-3">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="editMemBautizado"><label class="form-check-label">Bautizado</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="editMemConfirmado"><label class="form-check-label">Confirmado</label></div>
+                        </div>
+                        <div class="d-grid"><button type="submit" class="btn btn-success btn-custom">Actualizar</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -512,9 +553,7 @@
     <script src="finance.js?v=21"></script>
     
     <script>
-        // Función extra para mejorar la UX en móvil
         function cerrarMenuMovil() {
-            // Si estamos en móvil (pantalla < 768px), cerrar el menú al hacer clic en una opción
             if (window.innerWidth < 768) {
                 document.querySelector('.sidebar').classList.remove('show');
             }
