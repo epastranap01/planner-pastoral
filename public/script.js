@@ -139,7 +139,6 @@ window.cambiarVista = (vista) => {
     }
 };
 
-// --- 4. GESTIÓN DE USUARIOS (¡ESTA ES LA QUE FALTABA!) ---
 async function cargarUsuarios() {
     const tbody = document.getElementById('tablaUsuarios');
     const noData = document.getElementById('noUsuarios');
@@ -193,10 +192,18 @@ async function cargarUsuarios() {
                         </div>
                     </td>
                     <td class="text-end pe-4">
-                        <button onclick="eliminarUsuario(${u.id})" class="btn btn-sm btn-light border text-danger shadow-sm" title="Revocar Acceso">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
+    <button onclick="abrirModalPassword(${u.id}, '${u.username}')" 
+            class="btn btn-sm btn-light border text-warning shadow-sm me-1" 
+            title="Cambiar Contraseña">
+        <i class="bi bi-key-fill"></i>
+    </button>
+
+    <button onclick="eliminarUsuario(${u.id})" 
+            class="btn btn-sm btn-light border text-danger shadow-sm" 
+            title="Revocar Acceso">
+        <i class="bi bi-trash"></i>
+    </button>
+</td>
                 </tr>
             `;
         });
@@ -332,7 +339,73 @@ window.eliminarUsuario = async (id) => {
         cargarUsuarios();
     }
 };
+// 4. ABRIR MODAL DE PASSWORD
+window.abrirModalPassword = (id, username) => {
+    // 1. Guardamos el ID en el input oculto
+    document.getElementById('idUsuarioPass').value = id;
+    // 2. Mostramos el nombre para que sepa a quién edita
+    document.getElementById('lblUsuarioPass').innerText = '@' + username;
+    // 3. Limpiamos el campo de texto
+    document.getElementById('newPassword').value = '';
+    
+    // 4. Mostramos el modal
+    new bootstrap.Modal(document.getElementById('modalPassword')).show();
+}
 
+// 5. PROCESAR EL CAMBIO DE PASSWORD
+const formEditarPass = document.getElementById('formEditarPass');
+if (formEditarPass) {
+    formEditarPass.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const id = document.getElementById('idUsuarioPass').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const btn = formEditarPass.querySelector('button');
+
+        // Feedback visual de carga
+        const textoOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+
+        try {
+            const token = localStorage.getItem('token');
+            // OJO: Asegúrate que tu backend tenga esta ruta (PUT /api/usuarios/:id)
+            const res = await fetch(`/api/usuarios/${id}`, {
+                method: 'PUT', // O 'PATCH' dependiendo de tu backend
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': token 
+                },
+                body: JSON.stringify({ password: newPassword }) 
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                // Cerrar modal
+                const modalEl = document.getElementById('modalPassword');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Contraseña Actualizada',
+                    text: 'El usuario podrá ingresar con la nueva clave.',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire('Error', data.error || 'No se pudo actualizar', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'Error de conexión con el servidor', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
+    });
+}
 // --- 5. LÓGICA DE ACTIVIDADES ---
 function calcularTiempoRestante(fechaFutura) {
     const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
