@@ -3,6 +3,12 @@ console.log("Cargando sistema v9 (Usuarios corregido)...");
 
 const token = localStorage.getItem('token');
 const userRol = localStorage.getItem('rol');
+const username = localStorage.getItem('username');
+
+const sidebarUsernameEl = document.getElementById('sidebarUsername');
+if (sidebarUsernameEl && username) {
+    sidebarUsernameEl.textContent = '@' + username;
+}
 
 if (!token) {
     console.warn("No hay token, redirigiendo...");
@@ -49,6 +55,7 @@ if (btnSalir) {
 function ejecutarSalida() {
     localStorage.removeItem('token');
     localStorage.removeItem('rol');
+    localStorage.removeItem('username');
     window.location.href = 'login.html';
 }
 
