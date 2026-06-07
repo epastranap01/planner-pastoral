@@ -17,6 +17,16 @@ const seccionCrear = document.getElementById('seccionCrear');
 let actividadesActuales = [];
 let miembrosActuales = []; 
 
+// --- FILTRO POR SEMESTRE ---
+function getCurrentSemester() {
+    return new Date().getMonth() < 6 ? 1 : 2;
+}
+let filtroSemestre = {
+    anio: new Date().getFullYear(),
+    sem: getCurrentSemester()
+};
+
+
 // Ocultar formulario a invitados
 if (seccionCrear && userRol !== 'admin') {
     seccionCrear.style.display = 'none';
@@ -216,6 +226,7 @@ async function cargarUsuarios() {
 
 // 2. ABRIR MODAL (Función auxiliar)
 window.abrirModalUsuario = () => {
+    if (userRol !== 'admin') { Swal.fire('Acceso denegado', 'No tienes permisos para realizar esta acción.', 'error'); return; }
     document.getElementById('formCrearUsuario').reset();
     new bootstrap.Modal(document.getElementById('modalUsuario')).show();
 }
@@ -268,6 +279,7 @@ if (formCrearUsuario) {
 
 // 4. ELIMINAR USUARIO (Mantener lógica existente)
 window.eliminarUsuario = async (id) => {
+    if (userRol !== 'admin') { Swal.fire('Acceso denegado', 'No tienes permisos para realizar esta acción.', 'error'); return; }
     const confirm = await Swal.fire({
         title: '¿Revocar acceso?',
         text: "Este usuario ya no podrá iniciar sesión.",
@@ -334,6 +346,7 @@ if(formUsuario) {
 }
 
 window.eliminarUsuario = async (id) => {
+    if (userRol !== 'admin') { Swal.fire('Acceso denegado', 'No tienes permisos para realizar esta acción.', 'error'); return; }
     if(confirm("¿Eliminar usuario?")) {
         await fetch(`/api/usuarios/${id}`, { method: 'DELETE', headers: { 'Authorization': token } });
         cargarUsuarios();
@@ -341,6 +354,7 @@ window.eliminarUsuario = async (id) => {
 };
 // 4. ABRIR MODAL DE PASSWORD
 window.abrirModalPassword = (id, username) => {
+    if (userRol !== 'admin') { Swal.fire('Acceso denegado', 'No tienes permisos para realizar esta acción.', 'error'); return; }
     // 1. Guardamos el ID en el input oculto
     document.getElementById('idUsuarioPass').value = id;
     // 2. Mostramos el nombre para que sepa a quién edita
@@ -412,10 +426,79 @@ function calcularTiempoRestante(fechaFutura) {
     const futuro = new Date(fechaFutura);
     const futuroAjustado = new Date(futuro.getTime() + futuro.getTimezoneOffset() * 60000);
     const dias = Math.ceil((futuroAjustado - hoy) / (1000 * 60 * 60 * 24));
-    if (dias < 0) return { texto: `Pasó hace ${Math.abs(dias)} días`, color: 'text-muted' };
-    if (dias === 0) return { texto: '¡Es hoy!', color: 'text-danger fw-bold' };
-    if (dias === 1) return { texto: 'Mañana', color: 'text-warning fw-bold' };
-    return { texto: `Faltan ${dias} días`, color: 'text-primary' };
+    if (dias < 0) return { texto: `Paso hace ${Math.abs(dias)} dias`, color: 'text-muted' };
+    if (dias === 0) return { texto: 'Es hoy', color: 'text-danger fw-bold' };
+    if (dias === 1) return { texto: 'Manana', color: 'text-warning fw-bold' };
+    return { texto: `Faltan ${dias} dias`, color: 'text-primary' };
+}
+
+function renderActividadItem(item) {
+    const f = new Date(item.fecha);
+    const fUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
+    const dia   = String(fUser.getDate()).padStart(2, '0');
+    const mes   = fUser.toLocaleDateString('es-ES', { month: 'short' });
+    const anio  = fUser.getFullYear();
+
+    // Calcular diferencia de dias
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const fCopy = new Date(fUser); fCopy.setHours(0, 0, 0, 0);
+    const diasDiff = Math.ceil((fCopy - hoy) / (1000 * 60 * 60 * 24));
+
+    // Color de acento y clase de pill segun estado
+    let accentColor, pillClass, badgeText;
+    if (item.completado) {
+        accentColor = '#22c55e'; pillClass = 'pill-green'; badgeText = 'Completado';
+    } else if (diasDiff < 0) {
+        accentColor = '#e2e8f0'; pillClass = 'pill-gray';
+        badgeText = `Paso hace ${Math.abs(diasDiff)} d`;
+    } else if (diasDiff === 0) {
+        accentColor = '#ef4444'; pillClass = 'pill-red'; badgeText = 'Hoy';
+    } else if (diasDiff === 1) {
+        accentColor = '#f97316'; pillClass = 'pill-orange'; badgeText = 'Manana';
+    } else if (diasDiff <= 14) {
+        accentColor = '#3b82f6'; pillClass = 'pill-blue'; badgeText = `${diasDiff} dias`;
+    } else {
+        accentColor = '#a5b4fc'; pillClass = 'pill-indigo'; badgeText = `${diasDiff} dias`;
+    }
+
+    // Botones de accion
+    let acciones = '';
+    if (userRol === 'admin') {
+        const iconoCheck = item.completado ? 'bi-check-circle-fill text-success' : 'bi-circle text-secondary';
+        acciones = `
+            <div class="activity-btn-group">
+                <button onclick="abrirModalEditar(${item.id})" class="btn btn-sm btn-light border" title="Editar">
+                    <i class="bi bi-pencil text-primary"></i>
+                </button>
+                <button onclick="cambiarEstado(${item.id}, ${!item.completado})" class="btn btn-sm btn-light border" title="${item.completado ? 'Marcar pendiente' : 'Completar'}">
+                    <i class="bi ${iconoCheck}"></i>
+                </button>
+                <button onclick="eliminarActividad(${item.id})" class="btn btn-sm btn-light border" title="Eliminar">
+                    <i class="bi bi-trash text-danger"></i>
+                </button>
+            </div>`;
+    } else {
+        acciones = item.completado
+            ? `<span class="activity-time-pill pill-green">Listo</span>`
+            : `<span class="activity-time-pill pill-gray">Pendiente</span>`;
+    }
+
+    return `
+        <div class="activity-item ${item.completado ? 'is-completado' : ''}">
+            <div class="activity-accent" style="background-color: ${accentColor};"></div>
+            <div class="activity-date-block">
+                <span class="activity-day-num">${dia}</span>
+                <span class="activity-month-lbl">${mes}</span>
+                <span class="activity-year-lbl">${anio}</span>
+            </div>
+            <div class="activity-divider"></div>
+            <div class="activity-info">
+                <div class="activity-name">${item.actividad}</div>
+                <div class="activity-detail-text">${item.detalles || '<span style="color:#e2e8f0;">Sin detalles</span>'}</div>
+            </div>
+            <span class="activity-time-pill ${pillClass}">${badgeText}</span>
+            ${acciones}
+        </div>`;
 }
 
 async function cargarActividades() {
@@ -427,21 +510,124 @@ async function cargarActividades() {
         if (res.status === 401 || res.status === 403) { ejecutarSalida(); return; }
         const datos = await res.json();
         actividadesActuales = datos;
-        if(datos.length === 0) { tabla.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No hay actividades</td></tr>'; return; }
-        datos.forEach(item => {
-            const tiempo = calcularTiempoRestante(item.fecha);
-            const estiloFila = item.completado ? 'opacity-50 text-decoration-line-through' : '';
-            const f = new Date(item.fecha); const fUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
-            let botonesAccion = '';
-            if (userRol === 'admin') {
-                const iconoCheck = item.completado ? 'bi-check-circle-fill' : 'bi-circle';
-                const claseBoton = item.completado ? 'btn-success' : 'btn-outline-secondary';
-                botonesAccion = `<div class="btn-group" role="group"><button onclick="abrirModalEditar(${item.id})" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-square"></i></button><button onclick="cambiarEstado(${item.id}, ${!item.completado})" class="btn ${claseBoton} btn-sm"><i class="bi ${iconoCheck}"></i></button><button onclick="eliminarActividad(${item.id})" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button></div>`;
-            } else { botonesAccion = item.completado ? `<span class="badge bg-success">Listo</span>` : `<span class="badge bg-light text-muted border">Pendiente</span>`; }
-            tabla.innerHTML += `<tr class="${estiloFila}"><td data-label="Fecha"><div class="d-flex flex-column"><span class="badge-date text-center">${fUser.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span><small class="${tiempo.color} mt-1 text-center" style="font-size: 0.75rem;">${item.completado ? 'Completado' : tiempo.texto}</small></div></td><td data-label="Actividad" class="fw-bold text-dark align-middle">${item.actividad}</td><td data-label="Detalles" class="text-muted align-middle">${item.detalles || '-'}</td><td class="align-middle text-end">${botonesAccion}</td></tr>`;
-        });
+
+        // Aplicar filtro de semestre
+        const filtradas = filtrarPorSemestre(datos);
+        actualizarKPIs(filtradas);
+        actualizarUIFiltro();
+        inicializarHero();
+
+        // Actualizar subtitulo de la tabla
+        const subtitulo = document.getElementById('subtituloActividades');
+        if (subtitulo) {
+            if (filtroSemestre.sem === 0) {
+                subtitulo.textContent = `${filtradas.length} actividades en total`;
+            } else {
+                const semNombre = filtroSemestre.sem === 1 ? 'Enero - Junio' : 'Julio - Diciembre';
+                subtitulo.textContent = `${filtradas.length} actividades · ${semNombre} ${filtroSemestre.anio}`;
+            }
+        }
+
+        if(filtradas.length === 0) {
+            tabla.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-2"></i>Sin actividades en este periodo</div>';
+            return;
+        }
+        let html = '';
+        filtradas.forEach(item => { html += renderActividadItem(item); });
+        tabla.innerHTML = html;
     } catch (error) { console.error(error); } finally { loading.style.display = 'none'; }
 }
+
+// --- FUNCIONES DEL FILTRO POR SEMESTRE ---
+function filtrarPorSemestre(actividades) {
+    if (filtroSemestre.sem === 0) return actividades;
+    const inicioMes = filtroSemestre.sem === 1 ? 0 : 6;
+    const finMes    = filtroSemestre.sem === 1 ? 5 : 11;
+    return actividades.filter(item => {
+        const f = new Date(item.fecha);
+        const fUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
+        return fUser.getFullYear() === filtroSemestre.anio &&
+               fUser.getMonth() >= inicioMes &&
+               fUser.getMonth() <= finMes;
+    });
+}
+
+function actualizarKPIs(actividades) {
+    const total       = actividades.length;
+    const completadas = actividades.filter(a => a.completado).length;
+    const pendientes  = total - completadas;
+
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    let proximaDias = null;
+    actividades
+        .filter(a => !a.completado)
+        .forEach(a => {
+            const f = new Date(a.fecha);
+            const fUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
+            const dias = Math.ceil((fUser - hoy) / (1000 * 60 * 60 * 24));
+            if (dias >= 0 && (proximaDias === null || dias < proximaDias)) proximaDias = dias;
+        });
+
+    const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setEl('kpiTotal',       total);
+    setEl('kpiCompletadas', completadas);
+    setEl('kpiPendientes',  pendientes);
+    setEl('kpiProxima',     proximaDias !== null ? (proximaDias === 0 ? 'Hoy' : proximaDias + ' d') : '—');
+
+    // Actualizar badge del hero
+    const heroLabel = document.getElementById('heroSemestreLabel');
+    if (heroLabel) {
+        if (filtroSemestre.sem === 0) {
+            heroLabel.textContent = 'Todos los periodos';
+        } else {
+            heroLabel.textContent = `Semestre ${filtroSemestre.sem} · ${filtroSemestre.anio}`;
+        }
+    }
+}
+
+function inicializarHero() {
+    const heroSaludo = document.getElementById('heroSaludo');
+    const heroFecha  = document.getElementById('heroFecha');
+    if (heroSaludo) {
+        const hora = new Date().getHours();
+        let saludo = hora < 12 ? 'Buenos dias' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+        try {
+            const payload = JSON.parse(atob(localStorage.getItem('token').split('.')[1]));
+            if (payload.username) saludo += ', ' + payload.username;
+        } catch(e) { /* no interrumpir si falla el decode */ }
+        heroSaludo.textContent = saludo;
+    }
+    if (heroFecha) {
+        heroFecha.textContent = new Date().toLocaleDateString('es-ES', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        });
+    }
+}
+
+function actualizarUIFiltro() {
+    const lblAnio = document.getElementById('lblAnioFiltro');
+    if (lblAnio) lblAnio.textContent = filtroSemestre.anio;
+
+    ['btnSem0', 'btnSem1', 'btnSem2'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.remove('active');
+    });
+    const activeId = filtroSemestre.sem === 0 ? 'btnSem0' :
+                     filtroSemestre.sem === 1 ? 'btnSem1' : 'btnSem2';
+    const activeBtn = document.getElementById(activeId);
+    if (activeBtn) activeBtn.classList.add('active');
+}
+
+window.cambiarAnioFiltro = (delta) => {
+    filtroSemestre.anio += delta;
+    cargarActividades();
+};
+
+window.cambiarSemestre = (sem) => {
+    filtroSemestre.sem = sem;
+    cargarActividades();
+};
+
 
 window.abrirModalEditar = (id) => {
     if (userRol !== 'admin') return;
@@ -468,16 +654,45 @@ if (form) {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nueva = { fecha: document.getElementById('fecha').value, actividad: document.getElementById('actividad').value, detalles: document.getElementById('detalles').value };
-        await fetch('/api/actividades', { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': token}, body: JSON.stringify(nueva) });
-        form.reset(); cargarActividades(); Swal.fire({ icon: 'success', title: 'Guardado', timer: 1500, showConfirmButton: false });
+        const btn = form.querySelector('button[type="submit"]');
+        const textoOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+        try {
+            const res = await fetch('/api/actividades', { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': token}, body: JSON.stringify(nueva) });
+            if (res.ok) {
+                const modalEl = document.getElementById('modalNuevaActividad');
+                const modalInst = bootstrap.Modal.getInstance(modalEl);
+                if (modalInst) modalInst.hide();
+                form.reset();
+                cargarActividades();
+                Swal.fire({ icon: 'success', title: 'Actividad guardada', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+            } else {
+                const data = await res.json();
+                Swal.fire('Error', data.error || 'No se pudo guardar', 'error');
+            }
+        } catch(err) {
+            Swal.fire('Error', 'Fallo de conexion', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
     });
 }
+
+window.abrirModalNuevaActividad = () => {
+    if (userRol !== 'admin') { Swal.fire('Acceso denegado', 'No tienes permisos para realizar esta acción.', 'error'); return; }
+    const f = document.getElementById('actividadForm');
+    if (f) f.reset();
+    new bootstrap.Modal(document.getElementById('modalNuevaActividad')).show();
+};
 window.cambiarEstado = async (id, nuevoEstado) => {
     await fetch(`/api/actividades/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json', 'Authorization': token}, body: JSON.stringify({ completado: nuevoEstado }) });
     const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
     nuevoEstado ? Toast.fire({ icon: 'success', title: '¡Gloria a Dios!' }) : Toast.fire({ icon: 'info', title: 'Pendiente' }); cargarActividades();
 };
 window.eliminarActividad = async (id) => {
+    if (userRol !== 'admin') { Swal.fire('Acceso denegado', 'No tienes permisos para realizar esta acción.', 'error'); return; }
     if ((await Swal.fire({ title: '¿Borrar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí' })).isConfirmed) {
         await fetch(`/api/actividades/${id}`, { method: 'DELETE', headers: { 'Authorization': token } }); cargarActividades(); Swal.fire('Eliminado', '', 'success');
     }
@@ -641,6 +856,7 @@ if (formCrearMiembro) {
 // 4. LOGICA DE EDITAR (CORREGIDA)
 // A. Abrir Modal de Creación (Manual para evitar error de backdrop)
 window.abrirModalCrearMiembro = () => {
+    if (userRol !== 'admin') { Swal.fire('Acceso denegado', 'No tienes permisos para realizar esta acción.', 'error'); return; }
     // 1. Limpiamos el formulario por si quedaron datos viejos
     const form = document.getElementById('miembroForm');
     if(form) form.reset();
@@ -652,6 +868,7 @@ window.abrirModalCrearMiembro = () => {
 };
 // A. Abrir el modal con los datos cargados
 window.prepararEdicionMiembro = (id) => {
+    if (userRol !== 'admin') { Swal.fire('Acceso denegado', 'No tienes permisos para realizar esta acción.', 'error'); return; }
     // Buscar en caché (más rápido que llamar a la API de nuevo)
     const m = listaMiembrosCache.find(x => x.id === id);
     if (!m) return;
@@ -721,6 +938,7 @@ if (formEditarMiembro) {
 
 // 5. LOGICA DE ELIMINAR (Ya funcionaba, pero la incluimos para mantener todo junto)
 window.eliminarMiembro = async (id) => {
+    if (userRol !== 'admin') { Swal.fire('Acceso denegado', 'No tienes permisos para realizar esta acción.', 'error'); return; }
     const result = await Swal.fire({
         title: '¿Estás seguro?',
         text: "Se eliminará permanentemente.",
@@ -838,18 +1056,12 @@ async function cargarCumpleaneros() {
 
                 // CAMBIO 2: Diseño flexible (sin text-truncate y sin max-width fijo)
                 // Usamos 'lh-sm' para que si el nombre cae en 2 líneas, no se vea separado.
-                contenedor.innerHTML += `
-                    <div class="d-flex align-items-center bg-white bg-opacity-25 p-2 rounded border border-white border-opacity-25">
-                        <div class="bg-white text-primary rounded-3 text-center me-3 d-flex flex-column justify-content-center p-1 flex-shrink-0" style="width: 45px; height: 45px;">
-                            <span class="fw-bold" style="line-height: 1; font-size: 1.1rem;">${dia}</span>
-                            <span class="small text-uppercase" style="font-size: 0.6rem; line-height: 1;">${nombresMeses[mesActual].substring(0,3)}</span>
-                        </div>
-                        <div class="text-white flex-grow-1" style="min-width: 0;">
-                            <div class="fw-bold lh-sm" style="font-size: 0.95rem;">${nombreCompleto}</div>
-                            <div class="small opacity-75 mt-1"><i class="bi bi-gift-fill me-1"></i>Cumple ${edad}</div>
-                        </div>
-                    </div>
-                `;
+            contenedor.innerHTML += `
+                <div class="birthday-chip">
+                    <span class="birthday-chip-day">${dia}</span>
+                    <span>${nombreCompleto} &middot; ${edad} a&ntilde;os</span>
+                </div>
+            `;
             });
         }
 
@@ -859,160 +1071,219 @@ async function cargarCumpleaneros() {
 }
 
 // --- 9. GENERAR PDF (CORREGIDO: DIBUJO DE ESTADOS) ---
-window.generarPDF = () => {
+window.generarPDF = async () => {
     if (!window.jspdf) {
         Swal.fire('Error', 'Librerías PDF no cargadas.', 'error');
         return;
     }
 
+    // Feedback visual porque la carga de imagen puede tomar milisegundos extra
+    Swal.fire({
+        title: 'Generando PDF',
+        text: 'Por favor espera un momento...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    // Formato Carta
+    const doc = new jsPDF({ format: 'letter' }); 
 
-    // --- COLORES ---
-    const azulBrand = [13, 110, 253];
-    const azulOscuro = [10, 88, 202];
-    const grisTexto = [80, 80, 80];
-    const grisLight = [245, 247, 250];
-    const verdeExito = [25, 135, 84];
-    const naranjaPend = [253, 126, 20];
+    // --- COLORES MODERNOS ---
+    const primary = [79, 70, 229]; // Indigo-600 #4f46e5
+    const textMain = [15, 23, 42]; // Slate-900 #0f172a
+    const textMuted = [100, 116, 139]; // Slate-500 #64748b
+    const bgLight = [248, 250, 252]; // Slate-50 #f8fafc
+    const border = [226, 232, 240]; // Slate-200 #e2e8f0
+    const green = [22, 163, 74]; // Green-600
+    const orange = [234, 88, 12]; // Orange-600
 
-    // Márgenes
-    const margin = 15;
+    const margin = 14;
     const pageWidth = doc.internal.pageSize.width;
     const contentWidth = pageWidth - (margin * 2);
 
-    // --- 1. ENCABEZADO ---
+    // --- CARGAR LOGO (Conversión SVG a PNG on-the-fly) ---
+    const logoData = await new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const scale = 3; // Escalamos para que el PNG tenga buena resolución
+            canvas.width = img.width * scale || 300;
+            canvas.height = img.height * scale || 300;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve({ url: canvas.toDataURL('image/png'), aspect: img.width / img.height });
+        };
+        img.onerror = () => {
+            console.warn("No se pudo cargar el logo para el PDF");
+            resolve(null);
+        };
+        img.src = '/img/LogoICLEB.svg';
+    });
+
+    // --- 1. ENCABEZADO MODERNO ---
+    // Acento superior
+    doc.setFillColor(...primary);
+    doc.rect(0, 0, pageWidth, 6, 'F');
+
+    let textStartX = margin;
+
+    // Dibujar logo si cargó
+    if (logoData) {
+        const logoH = 16;
+        const logoW = logoH * (logoData.aspect || 1);
+        doc.addImage(logoData.url, 'PNG', margin, 12, logoW, logoH);
+        textStartX = margin + logoW + 4; // Empujar el texto a la derecha
+    }
+
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.setTextColor(...azulBrand);
-    doc.text("EL BUEN PASTOR", margin, 20);
+    doc.setFontSize(22);
+    doc.setTextColor(...textMain);
+    doc.text("Plan de Actividades", textStartX, 22);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.setTextColor(...grisTexto);
-    doc.text("IGLESIA CRISTIANA LUTERANA", margin, 26);
+    doc.setTextColor(...textMuted);
+    doc.text("El Buen Pastor - Iglesia Cristiana Luterana", textStartX, 28);
 
     const fechaImpresion = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-    const usuario = localStorage.getItem('username') || 'Admin';
+    let periodoTexto = "Todos los periodos";
+    if (filtroSemestre && filtroSemestre.sem !== 0) {
+        periodoTexto = `Semestre ${filtroSemestre.sem} · ${filtroSemestre.anio}`;
+    }
 
     doc.setFontSize(9);
-    doc.text("REPORTE DE ACTIVIDADES", pageWidth - margin, 20, { align: "right" });
-    doc.text(`Fecha: ${fechaImpresion}`, pageWidth - margin, 25, { align: "right" });
-    doc.text(`Generado por: ${usuario}`, pageWidth - margin, 30, { align: "right" });
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...primary);
+    doc.text(periodoTexto.toUpperCase(), pageWidth - margin, 22, { align: "right" });
+    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...textMuted);
+    doc.text(`Generado: ${fechaImpresion}`, pageWidth - margin, 28, { align: "right" });
 
-    doc.setDrawColor(220, 220, 220);
+    // Línea divisoria
+    doc.setDrawColor(...border);
     doc.setLineWidth(0.5);
-    doc.line(margin, 35, pageWidth - margin, 35);
+    doc.line(margin, 34, pageWidth - margin, 34);
 
     // --- 2. RESUMEN (KPIs) ---
-    const total = actividadesActuales.length;
-    const completadas = actividadesActuales.filter(a => a.completado).length;
+    const actividadesFiltradas = filtrarPorSemestre(actividadesActuales);
+    const total = actividadesFiltradas.length;
+    const completadas = actividadesFiltradas.filter(a => a.completado).length;
     const pendientes = total - completadas;
 
-    const startY = 45;
-    const cardWidth = contentWidth / 3 - 4;
-
+    const startY = 40;
+    
+    // Draw KPI Function
     const drawKpi = (x, label, value, color) => {
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(label.toUpperCase(), x, startY);
-        doc.setFontSize(18);
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(...border);
+        doc.roundedRect(x, startY, 45, 18, 2, 2, 'FD'); // Box
+
+        doc.setFontSize(7);
         doc.setFont("helvetica", "bold");
+        doc.setTextColor(...textMuted);
+        doc.text(label.toUpperCase(), x + 4, startY + 6);
+        
+        doc.setFontSize(14);
         doc.setTextColor(...color);
-        doc.text(String(value), x, startY + 9);
-        doc.setDrawColor(...color);
-        doc.setLineWidth(1);
-        doc.line(x, startY + 12, x + 15, startY + 12);
+        doc.text(String(value), x + 4, startY + 14);
     };
 
-    drawKpi(margin, "Total Planificado", total, azulBrand);
-    drawKpi(margin + cardWidth + 5, "Actividades Listas", completadas, verdeExito);
-    drawKpi(margin + (cardWidth * 2) + 10, "Pendientes", pendientes, naranjaPend);
+    drawKpi(margin, "Total", total, primary);
+    drawKpi(margin + 50, "Completadas", completadas, green);
+    drawKpi(margin + 100, "Pendientes", pendientes, orange);
 
     // --- 3. TABLA ---
-    const datosOrdenados = actividadesActuales.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    const datosOrdenados = [...actividadesFiltradas].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     const cuerpoTabla = datosOrdenados.map(item => {
         const f = new Date(item.fecha);
         const fUser = new Date(f.getTime() + f.getTimezoneOffset() * 60000);
         const fechaTexto = fUser.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
         
-        // Pasamos un string vacío en la última columna, porque vamos a DIBUJAR ahí
         return [
             fechaTexto,
             item.actividad,
-            item.detalles || '',
-            item.completado ? 'SI' : 'NO' // Dato oculto para saber qué dibujar
+            item.detalles || '-',
+            item.completado ? 'Completado' : 'Pendiente' 
         ];
     });
 
-doc.autoTable({
-        startY: 70,
+    doc.autoTable({
+        startY: 66,
         head: [['FECHA', 'ACTIVIDAD', 'DETALLES', 'ESTADO']],
         body: cuerpoTabla,
         theme: 'plain',
         
-        // Estilos Cabecera
+        // Estilos Cabecera (Sólido y elegante)
         headStyles: { 
-            fillColor: azulOscuro, 
-            textColor: 255, 
+            fillColor: primary, // Fondo índigo fuerte
+            textColor: 255,     // Texto blanco
             fontStyle: 'bold', 
             halign: 'left', 
-            cellPadding: 3 
+            cellPadding: { top: 6, bottom: 6, left: 5, right: 5 },
+            fontSize: 8
         },
         
-        // Estilos Cuerpo
+        // Estilos Cuerpo (Limpio)
         styles: { 
             font: 'helvetica', 
             fontSize: 9, 
-            cellPadding: 5, 
+            cellPadding: { top: 6, bottom: 6, left: 5, right: 5 }, 
             valign: 'middle', 
-            textColor: grisTexto,
-            // Quitamos las líneas globales para que solo manden las de los grises
-            lineWidth: 0 
+            textColor: textMain,
+            lineWidth: 0 // Sin bordes
         },
 
+        // Filas intercaladas súper sutiles (Gris Slate-50)
+        alternateRowStyles: {
+            fillColor: [248, 250, 252] 
+        },
+
+        // Estilos por columna para jerarquía visual
         columnStyles: {
-            0: { cellWidth: 30, fontStyle: 'bold' },
-            1: { cellWidth: 60, fontStyle: 'bold', textColor: [0,0,0] },
-            2: { cellWidth: 'auto' },
-            3: { cellWidth: 25, halign: 'center' }
+            0: { cellWidth: 28, fontStyle: 'normal', textColor: textMuted }, // Fecha más suave
+            1: { cellWidth: 55, fontStyle: 'bold', textColor: textMain },    // Nombre fuerte
+            2: { cellWidth: 'auto', textColor: textMuted },                  // Detalles suaves
+            3: { cellWidth: 32, halign: 'center' }                           // Estado centrado
         },
         
-        // --- 1. FONDO Y LÍNEAS EN FILAS GRISES ---
-        didParseCell: function(data) {
-            if (data.section === 'body' && data.row.index % 2 === 0) {
-                data.cell.styles.fillColor = grisLight;
-                // Borde gris visible arriba y abajo
-                data.cell.styles.lineWidth = { top: 0.1, bottom: 0.1 };
-                data.cell.styles.lineColor = [200, 200, 200];
-            }
-        },
-        
-        // --- 2. DIBUJO DE CÍRCULOS (ESTADO) ---
+        // --- 1. DIBUJO DE ESTADO TIPO "PILL" MEJORADO ---
         didDrawCell: function(data) {
             if (data.section === 'body' && data.column.index === 3) {
-                const esCompletado = data.cell.raw === 'SI';
-                const x = data.cell.x + (data.cell.width / 2);
-                const y = data.cell.y + (data.cell.height / 2);
+                const text = data.cell.raw;
+                const isDone = text === 'Completado';
                 
-                if (esCompletado) {
-                    doc.setFillColor(...verdeExito);
-                    doc.circle(x, y, 3, 'F');
-                } else {
-                    doc.setDrawColor(...naranjaPend);
-                    doc.setLineWidth(0.5);
-                    doc.circle(x, y, 3, 'S');
-                    doc.setFillColor(...naranjaPend);
-                    doc.circle(x, y, 1, 'F');
-                }
+                // Colores pastel más vibrantes para el pill
+                const pillColor = isDone ? [220, 252, 231] : [241, 245, 249]; // green-100 / slate-100
+                const textColor = isDone ? [22, 163, 74] : [71, 85, 105];     // green-600 / slate-600
+                const borderColor = isDone ? [134, 239, 172] : [203, 213, 225]; // green-300 / slate-300
+
+                // Dimensiones pill
+                const w = 24;
+                const h = 6.5;
+                const x = data.cell.x + (data.cell.width / 2) - (w / 2);
+                const y = data.cell.y + (data.cell.height / 2) - (h / 2);
+                
+                // Dibujar pill
+                doc.setFillColor(...pillColor);
+                doc.setDrawColor(...borderColor);
+                doc.setLineWidth(0.3);
+                doc.roundedRect(x, y, w, h, 3, 3, 'FD');
+                
+                // Dibujar texto centrado perfecto
+                doc.setFontSize(7);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(...textColor);
+                doc.text(text, x + (w/2), y + 4.5, { align: 'center' });
             }
         },
         
-        // --- 3. LIMPIEZA DE TEXTO OCULTO ---
+        // --- 2. LIMPIEZA DE TEXTO OCULTO ---
         willDrawCell: function(data) {
             if (data.section === 'body' && data.column.index === 3) {
-                data.cell.text = ''; 
+                data.cell.text = ''; // Ocultamos el texto por defecto para dibujarlo nosotros
             }
         }
     });
@@ -1021,13 +1292,21 @@ doc.autoTable({
     const paginas = doc.internal.getNumberOfPages();
     for (let i = 1; i <= paginas; i++) {
         doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(180, 180, 180);
-        doc.text("Sistema de planificacion de actividades - Uso interno", margin, 285);
-        doc.text(`Página ${i} de ${paginas}`, pageWidth - margin, 285, { align: "right" });
+        doc.setFontSize(7);
+        doc.setTextColor(...textMuted);
+        doc.text("Sistema de Planificación - Uso interno", margin, doc.internal.pageSize.height - margin);
+        doc.text(`Página ${i} de ${paginas}`, pageWidth - margin, doc.internal.pageSize.height - margin, { align: "right" });
     }
 
-    doc.save(`Planner_BuenPastor_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`Planner_Semestre_${filtroSemestre.sem}_${filtroSemestre.anio}.pdf`);
+    
+    Swal.fire({
+        icon: 'success',
+        title: '¡PDF Generado!',
+        text: 'La descarga comenzará automáticamente.',
+        timer: 2000,
+        showConfirmButton: false
+    });
 };
 // === IMPORTANTE: AGREGAR ESTO AL FINAL DE TU SCRIPT ===
 // Busca donde dice: // Carga Inicial
