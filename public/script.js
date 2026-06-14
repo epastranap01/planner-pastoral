@@ -184,6 +184,17 @@ async function cargarUsuarios() {
             const bgAvatar = esAdmin ? '#eff6ff' : '#f3f4f6'; // Azulito o Gris
             const colorAvatar = esAdmin ? '#2563eb' : '#4b5563';
 
+            // Estado
+            const isActivo = u.activo !== false;
+            const estadoHtml = isActivo 
+                ? `<div class="d-flex align-items-center text-success small fw-bold"><i class="bi bi-dot fs-3 me-n1"></i> Activo</div>`
+                : `<div class="d-flex align-items-center text-danger small fw-bold"><i class="bi bi-dot fs-3 me-n1"></i> Inactivo</div>`;
+            
+            // Botón de estado
+            const btnEstado = isActivo
+                ? `<button onclick="toggleEstadoUsuario(${u.id}, false)" class="btn btn-sm btn-light border text-secondary shadow-sm me-1" title="Desactivar Usuario"><i class="bi bi-person-x-fill"></i></button>`
+                : `<button onclick="toggleEstadoUsuario(${u.id}, true)" class="btn btn-sm btn-light border text-success shadow-sm me-1" title="Activar Usuario"><i class="bi bi-person-check-fill"></i></button>`;
+
             tbody.innerHTML += `
                 <tr>
                     <td class="ps-4">
@@ -204,9 +215,7 @@ async function cargarUsuarios() {
                         </span>
                     </td>
                     <td>
-                        <div class="d-flex align-items-center text-success small fw-bold">
-                            <i class="bi bi-dot fs-3 me-n1"></i> Activo
-                        </div>
+                        ${estadoHtml}
                     </td>
                     <td class="text-end pe-4">
     <button onclick="abrirModalPassword(${u.id}, '${u.username}')" 
@@ -214,11 +223,11 @@ async function cargarUsuarios() {
             title="Cambiar Contraseña">
         <i class="bi bi-key-fill"></i>
     </button>
-
+    ${btnEstado}
     <button onclick="eliminarUsuario(${u.id})" 
             class="btn btn-sm btn-light border text-danger shadow-sm" 
             title="Revocar Acceso">
-        <i class="bi bi-trash"></i>
+        <i class="bi bi-trash-fill"></i>
     </button>
 </td>
                 </tr>
@@ -308,6 +317,31 @@ window.eliminarUsuario = async (id) => {
         } catch (e) {
             Swal.fire('Error', 'No se pudo eliminar', 'error');
         }
+    }
+};
+
+window.toggleEstadoUsuario = async (id, nuevoEstado) => {
+    if (userRol !== 'admin') { Swal.fire('Acceso denegado', 'No tienes permisos.', 'error'); return; }
+    
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`/api/usuarios/${id}/estado`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': token },
+            body: JSON.stringify({ activo: nuevoEstado })
+        });
+        if (res.ok) {
+            cargarUsuarios();
+            Swal.fire({
+                icon: 'success', 
+                title: nuevoEstado ? 'Usuario Activado' : 'Usuario Desactivado', 
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 
+            });
+        } else {
+            Swal.fire('Error', 'No se pudo cambiar el estado', 'error');
+        }
+    } catch (e) {
+        Swal.fire('Error', 'Fallo de conexión', 'error');
     }
 };
 

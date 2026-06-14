@@ -64,8 +64,12 @@ app.post('/api/login', async (req, res) => {
         if (result.rows.length === 0) return res.status(400).json({ error: 'Usuario no encontrado' });
         
         const user = result.rows[0];
-        const valida = await bcrypt.compare(password, user.password);
-        if (!valida) return res.status(400).json({ error: 'Contraseña incorrecta' });
+        if (user.activo === false) {
+            return res.status(403).json({ error: 'Tu cuenta ha sido desactivada. Contacta al administrador.' });
+        }
+        
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return res.status(400).json({ error: 'Contraseña incorrecta' });
 
         const token = jwt.sign({ id: user.id, username: user.username, rol: user.rol }, SECRET_KEY, { expiresIn: '8h' });
         res.json({ token, username: user.username, rol: user.rol });
@@ -76,7 +80,7 @@ app.post('/api/login', async (req, res) => {
 app.get('/api/usuarios', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
     try {
-        const result = await client.query('SELECT id, username, rol FROM usuarios ORDER BY id ASC');
+        const result = await client.query('SELECT id, username, rol, activo FROM usuarios ORDER BY id ASC');
         res.json(result.rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -99,6 +103,15 @@ app.put('/api/usuarios/:id', verificarToken, async (req, res) => {
         res.json({ message: 'Contraseña actualizada' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
+app.put('/api/usuarios/:id/estado', verificarToken, async (req, res) => {
+    if (req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+    const { id } = req.params; const { activo } = req.body;
+    try {
+        await client.query('UPDATE usuarios SET activo = $1 WHERE id = $2', [activo, id]);
+        res.json({ message: 'Estado actualizado' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.delete('/api/usuarios/:id', verificarToken, async (req, res) => {
     if(req.user.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
     try {
