@@ -338,7 +338,8 @@ window.toggleEstadoUsuario = async (id, nuevoEstado) => {
                 toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 
             });
         } else {
-            Swal.fire('Error', 'No se pudo cambiar el estado', 'error');
+            const errData = await res.json();
+            Swal.fire('Error', errData.error || 'No se pudo cambiar el estado', 'error');
         }
     } catch (e) {
         Swal.fire('Error', 'Fallo de conexión', 'error');
