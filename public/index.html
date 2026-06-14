@@ -874,11 +874,12 @@
         </div>
 
         <div id="vistaUsuarios" style="display:none;">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+            <div class="d-flex justify-content-between align-items-end mb-4">
                 <div>
-                    <h3 class="fw-bold m-0">Usuarios</h3>
+                    <h3 class="fw-bold m-0 text-dark">Usuarios</h3>
+                    <p class="text-muted small m-0 mt-1">Gestiona los accesos y credenciales</p>
                 </div>
-                <button class="btn btn-primary btn-custom shadow-sm w-100 w-md-auto" onclick="abrirModalUsuario()">
+                <button class="btn btn-primary btn-custom shadow-sm px-4" onclick="abrirModalUsuario()">
                     <i class="bi bi-shield-plus me-2"></i>Nuevo
                 </button>
             </div>
@@ -887,10 +888,10 @@
                     <table class="table table-hover align-middle mb-0" style="min-width: 500px;">
                         <thead class="bg-light">
                             <tr>
-                                <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold">Usuario</th>
-                                <th class="py-3 text-secondary small text-uppercase fw-bold">Rol</th>
-                                <th class="py-3 text-secondary small text-uppercase fw-bold">Estado</th>
-                                <th class="text-end pe-4 py-3 text-secondary small text-uppercase fw-bold">Acciones</th>
+                                <th class="ps-4 py-3 text-secondary small text-uppercase fw-bold border-0">Usuario</th>
+                                <th class="py-3 text-secondary small text-uppercase fw-bold border-0">Rol</th>
+                                <th class="py-3 text-secondary small text-uppercase fw-bold border-0">Estado</th>
+                                <th class="text-end pe-4 py-3 text-secondary small text-uppercase fw-bold border-0">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaUsuarios"></tbody>
