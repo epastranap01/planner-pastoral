@@ -201,6 +201,74 @@ try {
         .saas-table tr:hover td { background-color: #f8fafc; }
     `;
     document.head.appendChild(styleSheet);
+
+    // === MODAL OVERLAY STYLES ===
+    const modalStyle = document.createElement('style');
+    modalStyle.innerText = `
+        #fin-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            backdrop-filter: blur(10px) saturate(0.8);
+            -webkit-backdrop-filter: blur(10px) saturate(0.8);
+            background: rgba(15, 23, 42, 0.45);
+            animation: finOverlayIn 0.2s ease;
+        }
+        @keyframes finOverlayIn {
+            from { opacity: 0; backdrop-filter: blur(0px); }
+            to   { opacity: 1; backdrop-filter: blur(10px); }
+        }
+        #fin-modal-overlay .fin-modal-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.15);
+            width: 100%;
+            max-width: 500px;
+            animation: finCardIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+        @keyframes finCardIn {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .fin-modal-header {
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .fin-modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        .fin-modal-body {
+            padding: 1.5rem;
+            background: #f8fafc;
+        }
+        .fin-modal-close {
+            width: 32px; height: 32px;
+            border-radius: 8px; border: none;
+            background: #f1f5f9; color: #64748b;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1rem;
+            transition: all 0.15s;
+        }
+        .fin-modal-close:hover { background: #e2e8f0; color: #0f172a; }
+        .fin-talonario-bar {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 0.85rem 1rem;
+            background: #fff; border-radius: 12px;
+            border: 1.5px solid #e2e8f0; margin-bottom: 1rem;
+        }
+    `;
+    document.head.appendChild(modalStyle);
 } catch (e) { console.error(e); }
 
 // ==========================================
@@ -216,6 +284,33 @@ async function authFetch(url, opts={}) {
     const r = await fetch(url,{...opts,headers:h});
     if(!r.ok) throw new Error((await r.json()).error || 'Error');
     return r.json();
+}
+
+// ==========================================
+// HELPERS: MODAL OVERLAY CON BLUR
+// ==========================================
+function mostrarModalFinanza(htmlContent, onReady) {
+    if (!document.getElementById('fin-modal-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'fin-modal-overlay';
+        overlay.innerHTML = `<div class="fin-modal-card">${htmlContent}</div>`;
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) cerrarModalFinanza();
+        });
+        document.body.appendChild(overlay);
+        if (onReady) onReady();
+    }
+}
+
+function cerrarModalFinanza() {
+    const overlay = document.getElementById('fin-modal-overlay');
+    if (overlay) {
+        overlay.style.animation = 'finOverlayOut 0.18s ease forwards';
+        const styleEl = document.createElement('style');
+        styleEl.textContent = '@keyframes finOverlayOut { to { opacity: 0; } }';
+        document.head.appendChild(styleEl);
+        setTimeout(() => { overlay.remove(); styleEl.remove(); }, 180);
+    }
 }
 
 // ==========================================
@@ -420,107 +515,143 @@ function renderRegistrarIngreso() {
     const next = tal ? tal.actual + 1 : '';
     const optsMem = miembrosFinanzas.map(m => `<option value="${m.nombre}">${m.nombre}</option>`).join('');
 
-    document.getElementById('vistaFinanzas').innerHTML = `
-    <div class="container d-flex justify-content-center pt-5">
-        <div class="saas-card p-0 col-md-6 shadow-lg border-0">
-            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white rounded-top">
-                <h5 class="fw-bold m-0 text-primary">Registrar Ingreso</h5>
-                <button class="btn-close" onclick="cargarDashboardFinanzas()"></button>
-            </div>
-            <div class="p-4 bg-light">
-                <form id="fIng">
-                    <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded border">
-                        <div><label class="input-label mb-1">Talonario Activo</label><span class="badge-saas bg-green-light fs-6">${tal ? tal.nombre : 'Ninguno'}</span></div>
-                        <div style="width: 140px;"><label class="input-label">No. Recibo</label><input type="number" id="nRec" class="form-saas text-end fw-bold" value="${next}" ${!tal?'disabled':''}><div id="reciboFeedback" class="text-end small mt-1 fw-bold"></div></div>
-                    </div>
-                    <div class="row g-3 mb-3">
-                        <div class="col-6">
-                            <label class="input-label">Tipo</label>
-                            <select class="form-saas" id="tIng" onchange="toggleCampos(this.value)">
-                                <option value="Ofrenda">Ofrenda</option><option value="Diezmo">Diezmo</option><option value="Actividad">Actividad</option><option value="Donacion">Donación</option>
-                            </select>
-                        </div>
-                        <div class="col-6"><label class="input-label">Monto (L.)</label><input type="number" step="0.01" class="form-saas fw-bold text-success" id="mIng" required placeholder="0.00"></div>
-                    </div>
-                    <div id="boxCul" class="row g-3 mb-3">
-                        <div class="col-8"><label class="input-label">Culto</label><select id="sCul" class="form-saas">${tiposCultos.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div>
-                        <div class="col-4"><label class="input-label">Comulgantes</label><input type="number" id="nCom" class="form-saas text-center" placeholder="0"></div>
-                    </div>
-                    <div id="boxDon" class="mb-3" style="display:none">
-                        <label class="input-label">Donante</label>
-                        <div class="d-flex gap-2"><select id="sMem" class="form-saas"><option value="">-- Seleccionar --</option>${optsMem}</select><button type="button" class="btn-saas btn-saas-secondary" onclick="addMem()"><i class="bi bi-person-plus"></i></button></div>
-                    </div>
-                    <div class="mb-4"><label class="input-label">Nota</label><input type="text" id="detIng" class="form-saas" placeholder="Opcional..."></div>
-                    <div class="d-grid"><button type="submit" id="btnGuardar" class="btn-saas btn-saas-primary justify-content-center py-3">Guardar</button></div>
-                </form>
-            </div>
+    const html = `
+        <div class="fin-modal-header">
+            <h5 class="fin-modal-title" style="color:#2563eb;"><i class="bi bi-plus-circle me-2"></i>Registrar Ingreso</h5>
+            <button class="fin-modal-close" onclick="cerrarModalFinanza()"><i class="bi bi-x"></i></button>
         </div>
-    </div>`;
-    toggleCampos('Ofrenda');
-    setupValidacionRecibo(tal, 'nRec', 'reciboFeedback', 'btnGuardar');
-    document.getElementById('fIng').onsubmit = async(e) => {
-        e.preventDefault();
-        const nr = parseInt(document.getElementById('nRec').value);
-        if(tal && (isNaN(nr) || nr < tal.inicio || nr > tal.fin || tal.usados.includes(nr))) return Swal.fire('Error','Recibo inválido','error');
-        const tipo = document.getElementById('tIng').value;
-        const culto = document.getElementById('sCul').value;
-        const mem = document.getElementById('sMem').value;
-        let desc = (tipo==='Ofrenda'||tipo==='Actividad') ? ((tipo==='Actividad'?'Actividad: ':'')+culto) : (tipo+(mem?` - ${mem}`:''));
-        if(document.getElementById('detIng').value) desc += ` (${document.getElementById('detIng').value})`;
-        try {
-            await authFetch('/api/finanzas/transacciones',{method:'POST',body:JSON.stringify({fecha:new Date().toISOString(),tipo:'ingreso',categoria:tipo,descripcion:desc,monto:parseFloat(document.getElementById('mIng').value),recibo_no:nr?String(nr).padStart(6,'0'):'S/N',comulgantes:parseInt(document.getElementById('nCom').value)||0})});
-            if(tal && nr > tal.actual) await authFetch(`/api/finanzas/talonarios/${tal.id}`,{method:'PUT',body:JSON.stringify({actual:nr,tipo:'ingreso'})});
-            Swal.fire({icon:'success',title:'Guardado',toast:true,position:'top-end',showConfirmButton:false,timer:1500});
-            cargarDashboardFinanzas();
-        } catch(err){Swal.fire('Error',err.message,'error')}
-    };
+        <div class="fin-modal-body">
+            <form id="fIng">
+                <div class="fin-talonario-bar">
+                    <div>
+                        <div class="fin-label mb-1">Talonario Activo</div>
+                        <span class="fin-badge fin-badge-green" style="font-size:0.82rem;">${tal ? tal.nombre : 'Ninguno'}</span>
+                    </div>
+                    <div style="width:130px;">
+                        <label class="fin-label">No. Recibo</label>
+                        <input type="number" id="nRec" class="fin-input text-end fw-bold" value="${next}" ${!tal ? 'disabled' : ''}>
+                        <div id="reciboFeedback" class="text-end small mt-1 fw-bold"></div>
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="fin-label">Tipo</label>
+                        <select class="fin-input" id="tIng" onchange="toggleCampos(this.value)">
+                            <option value="Ofrenda">Ofrenda</option>
+                            <option value="Diezmo">Diezmo</option>
+                            <option value="Actividad">Actividad</option>
+                            <option value="Donacion">Donación</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="fin-label">Monto (L.)</label>
+                        <input type="number" step="0.01" class="fin-input fw-bold" style="color:#16a34a;" id="mIng" required placeholder="0.00">
+                    </div>
+                </div>
+                <div id="boxCul" class="row g-3 mb-3">
+                    <div class="col-8">
+                        <label class="fin-label">Culto</label>
+                        <select id="sCul" class="fin-input">${tiposCultos.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+                    </div>
+                    <div class="col-4">
+                        <label class="fin-label">Comulgantes</label>
+                        <input type="number" id="nCom" class="fin-input text-center" placeholder="0">
+                    </div>
+                </div>
+                <div id="boxDon" class="mb-3" style="display:none">
+                    <label class="fin-label">Donante</label>
+                    <div class="d-flex gap-2">
+                        <select id="sMem" class="fin-input"><option value="">-- Seleccionar --</option>${optsMem}</select>
+                        <button type="button" class="fin-btn fin-btn-outline" onclick="addMem()"><i class="bi bi-person-plus"></i></button>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="fin-label">Nota</label>
+                    <input type="text" id="detIng" class="fin-input" placeholder="Opcional...">
+                </div>
+                <button type="submit" id="btnGuardar" class="fin-btn fin-btn-primary w-100 justify-content-center py-3" style="font-size:0.95rem;">Guardar Ingreso</button>
+            </form>
+        </div>`;
+
+    mostrarModalFinanza(html, () => {
+        toggleCampos('Ofrenda');
+        setupValidacionRecibo(tal, 'nRec', 'reciboFeedback', 'btnGuardar');
+        document.getElementById('fIng').onsubmit = async (e) => {
+            e.preventDefault();
+            const nr = parseInt(document.getElementById('nRec').value);
+            if (tal && (isNaN(nr) || nr < tal.inicio || nr > tal.fin || tal.usados.includes(nr))) return Swal.fire('Error', 'Recibo inválido', 'error');
+            const tipo = document.getElementById('tIng').value;
+            const culto = document.getElementById('sCul').value;
+            const mem = document.getElementById('sMem').value;
+            let desc = (tipo === 'Ofrenda' || tipo === 'Actividad') ? ((tipo === 'Actividad' ? 'Actividad: ' : '') + culto) : (tipo + (mem ? ` - ${mem}` : ''));
+            if (document.getElementById('detIng').value) desc += ` (${document.getElementById('detIng').value})`;
+            try {
+                await authFetch('/api/finanzas/transacciones', { method: 'POST', body: JSON.stringify({ fecha: new Date().toISOString(), tipo: 'ingreso', categoria: tipo, descripcion: desc, monto: parseFloat(document.getElementById('mIng').value), recibo_no: nr ? String(nr).padStart(6, '0') : 'S/N', comulgantes: parseInt(document.getElementById('nCom').value) || 0 }) });
+                if (tal && nr > tal.actual) await authFetch(`/api/finanzas/talonarios/${tal.id}`, { method: 'PUT', body: JSON.stringify({ actual: nr, tipo: 'ingreso' }) });
+                cerrarModalFinanza();
+                Swal.fire({ icon: 'success', title: 'Guardado', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+                cargarDashboardFinanzas();
+            } catch (err) { Swal.fire('Error', err.message, 'error'); }
+        };
+    });
 }
 
 function renderRegistrarEgreso() {
     const tal = talonariosEgreso.find(t => t.activo);
     const next = tal ? tal.actual + 1 : '';
-    
-    // --- CORRECCIÓN AQUÍ: Usamos c.nombre en lugar del objeto completo ---
     const opts = categoriasEgresos.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
 
-    document.getElementById('vistaFinanzas').innerHTML = `
-    <div class="container d-flex justify-content-center pt-5">
-        <div class="saas-card p-0 col-md-6 shadow-lg border-0">
-            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white rounded-top">
-                <h5 class="fw-bold m-0 text-danger">Registrar Gasto</h5>
-                <button class="btn-close" onclick="cargarDashboardFinanzas()"></button>
-            </div>
-            <div class="p-4 bg-light">
-                <form id="fEgr">
-                     <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded border">
-                        <div><label class="input-label mb-1">Chequera Activa</label><span class="badge-saas bg-red-light fs-6">${tal ? tal.nombre : 'Ninguna'}</span></div>
-                        <div style="width: 140px;"><label class="input-label">No. Doc</label><input type="number" id="nDoc" class="form-saas text-end fw-bold" value="${next}" ${!tal?'disabled':''}><div id="docFeedback" class="text-end small mt-1 fw-bold"></div></div>
-                    </div>
-                    <div class="row g-3 mb-3">
-                        <div class="col-6">
-                            <label class="input-label">Categoría</label>
-                            <select class="form-saas" id="cEgr">${opts}<option value="OTRO">OTRO</option></select>
-                        </div>
-                        <div class="col-6"><label class="input-label">Monto (L.)</label><input type="number" step="0.01" class="form-saas fw-bold text-danger" id="mEgr" required placeholder="0.00"></div>
-                    </div>
-                    <div class="mb-4"><label class="input-label">Descripción</label><textarea id="dEgr" class="form-saas" rows="2" placeholder="Detalle..."></textarea></div>
-                    <div class="d-grid"><button type="submit" id="btnGuardarEg" class="btn-saas btn-saas-danger justify-content-center py-3">Registrar</button></div>
-                </form>
-            </div>
+    const html = `
+        <div class="fin-modal-header">
+            <h5 class="fin-modal-title" style="color:#dc2626;"><i class="bi bi-dash-circle me-2"></i>Registrar Gasto</h5>
+            <button class="fin-modal-close" onclick="cerrarModalFinanza()"><i class="bi bi-x"></i></button>
         </div>
-    </div>`;
-    setupValidacionRecibo(tal, 'nDoc', 'docFeedback', 'btnGuardarEg');
-    document.getElementById('fEgr').onsubmit = async(e) => {
-        e.preventDefault();
-        const nd = parseInt(document.getElementById('nDoc').value);
-        if(tal && (isNaN(nd) || nd < tal.inicio || nd > tal.fin || tal.usados.includes(nd))) return Swal.fire('Error','Doc inválido','error');
-        try {
-            await authFetch('/api/finanzas/transacciones',{method:'POST',body:JSON.stringify({fecha:new Date().toISOString(),tipo:'egreso',categoria:document.getElementById('cEgr').value,descripcion:document.getElementById('dEgr').value,monto:parseFloat(document.getElementById('mEgr').value),recibo_no:nd?String(nd).padStart(6,'0'):'-'})});
-            if(tal && nd > tal.actual) await authFetch(`/api/finanzas/talonarios/${tal.id}`,{method:'PUT',body:JSON.stringify({actual:nd,tipo:'egreso'})});
-            Swal.fire({icon:'success',title:'Guardado',toast:true,position:'top-end',showConfirmButton:false,timer:1500});
-            cargarDashboardFinanzas();
-        } catch(err){Swal.fire('Error',err.message,'error')}
-    };
+        <div class="fin-modal-body">
+            <form id="fEgr">
+                <div class="fin-talonario-bar">
+                    <div>
+                        <div class="fin-label mb-1">Chequera Activa</div>
+                        <span class="fin-badge fin-badge-red" style="font-size:0.82rem;">${tal ? tal.nombre : 'Ninguna'}</span>
+                    </div>
+                    <div style="width:130px;">
+                        <label class="fin-label">No. Doc</label>
+                        <input type="number" id="nDoc" class="fin-input text-end fw-bold" value="${next}" ${!tal ? 'disabled' : ''}>
+                        <div id="docFeedback" class="text-end small mt-1 fw-bold"></div>
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="fin-label">Categoría</label>
+                        <select class="fin-input" id="cEgr">${opts}<option value="OTRO">OTRO</option></select>
+                    </div>
+                    <div class="col-6">
+                        <label class="fin-label">Monto (L.)</label>
+                        <input type="number" step="0.01" class="fin-input fw-bold" style="color:#dc2626;" id="mEgr" required placeholder="0.00">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="fin-label">Descripción</label>
+                    <textarea id="dEgr" class="fin-input" rows="2" placeholder="Detalle..."></textarea>
+                </div>
+                <button type="submit" id="btnGuardarEg" class="fin-btn fin-btn-danger w-100 justify-content-center py-3" style="font-size:0.95rem;">Registrar Gasto</button>
+            </form>
+        </div>`;
+
+    mostrarModalFinanza(html, () => {
+        setupValidacionRecibo(tal, 'nDoc', 'docFeedback', 'btnGuardarEg');
+        document.getElementById('fEgr').onsubmit = async (e) => {
+            e.preventDefault();
+            const nd = parseInt(document.getElementById('nDoc').value);
+            if (tal && (isNaN(nd) || nd < tal.inicio || nd > tal.fin || tal.usados.includes(nd))) return Swal.fire('Error', 'Doc inválido', 'error');
+            try {
+                await authFetch('/api/finanzas/transacciones', { method: 'POST', body: JSON.stringify({ fecha: new Date().toISOString(), tipo: 'egreso', categoria: document.getElementById('cEgr').value, descripcion: document.getElementById('dEgr').value, monto: parseFloat(document.getElementById('mEgr').value), recibo_no: nd ? String(nd).padStart(6, '0') : '-' }) });
+                if (tal && nd > tal.actual) await authFetch(`/api/finanzas/talonarios/${tal.id}`, { method: 'PUT', body: JSON.stringify({ actual: nd, tipo: 'egreso' }) });
+                cerrarModalFinanza();
+                Swal.fire({ icon: 'success', title: 'Guardado', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+                cargarDashboardFinanzas();
+            } catch (err) { Swal.fire('Error', err.message, 'error'); }
+        };
+    });
 }
 
 function renderAperturaCuenta() {
@@ -528,30 +659,36 @@ function renderAperturaCuenta() {
     const valorActual = saldoExistente ? saldoExistente.monto : '';
     const fechaActual = saldoExistente ? new Date(saldoExistente.fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
-    document.getElementById('vistaFinanzas').innerHTML = `
-    <div class="container d-flex justify-content-center pt-5">
-        <div class="saas-card p-0 col-md-5 shadow-lg border-0">
-            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white rounded-top">
-                <h5 class="fw-bold m-0 text-warning">Apertura / Ajuste</h5>
-                <button class="btn-close" onclick="cargarDashboardFinanzas()"></button>
-            </div>
-            <div class="p-4 bg-light">
-                <form id="formApertura">
-                    <div class="mb-3"><label class="input-label">Monto Inicial</label><input type="number" step="0.01" id="montoApertura" class="form-saas fw-bold" value="${valorActual}" required placeholder="0.00"></div>
-                    <div class="mb-4"><label class="input-label">Fecha de Corte</label><input type="date" id="fechaApertura" class="form-saas" value="${fechaActual}"></div>
-                    <div class="d-grid"><button type="submit" class="btn-saas btn-saas-secondary justify-content-center text-warning fw-bold py-3">Guardar</button></div>
-                </form>
-            </div>
+    const html = `
+        <div class="fin-modal-header">
+            <h5 class="fin-modal-title" style="color:#d97706;"><i class="bi bi-sliders me-2"></i>Apertura / Ajuste de Saldo</h5>
+            <button class="fin-modal-close" onclick="cerrarModalFinanza()"><i class="bi bi-x"></i></button>
         </div>
-    </div>`;
-    document.getElementById('formApertura').onsubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await authFetch('/api/finanzas/transacciones', { method: 'POST', body: JSON.stringify({ fecha: document.getElementById('fechaApertura').value, tipo: 'ingreso', categoria: 'SALDO INICIAL', descripcion: 'Apertura / Ajuste', monto: parseFloat(document.getElementById('montoApertura').value), recibo_no: 'APERTURA' }) });
-            Swal.fire({ title: 'Guardado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-            cargarDashboardFinanzas();
-        } catch (err) { Swal.fire('Error', err.message, 'error'); }
-    };
+        <div class="fin-modal-body">
+            <form id="formApertura">
+                <div class="mb-3">
+                    <label class="fin-label">Monto Inicial</label>
+                    <input type="number" step="0.01" id="montoApertura" class="fin-input fw-bold" value="${valorActual}" required placeholder="0.00">
+                </div>
+                <div class="mb-4">
+                    <label class="fin-label">Fecha de Corte</label>
+                    <input type="date" id="fechaApertura" class="fin-input" value="${fechaActual}">
+                </div>
+                <button type="submit" class="fin-btn fin-btn-warning w-100 justify-content-center py-3" style="font-size:0.95rem;font-weight:700;">Guardar Saldo Inicial</button>
+            </form>
+        </div>`;
+
+    mostrarModalFinanza(html, () => {
+        document.getElementById('formApertura').onsubmit = async (e) => {
+            e.preventDefault();
+            try {
+                await authFetch('/api/finanzas/transacciones', { method: 'POST', body: JSON.stringify({ fecha: document.getElementById('fechaApertura').value, tipo: 'ingreso', categoria: 'SALDO INICIAL', descripcion: 'Apertura / Ajuste', monto: parseFloat(document.getElementById('montoApertura').value), recibo_no: 'APERTURA' }) });
+                cerrarModalFinanza();
+                Swal.fire({ title: 'Guardado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+                cargarDashboardFinanzas();
+            } catch (err) { Swal.fire('Error', err.message, 'error'); }
+        };
+    });
 }
 
 // ==========================================
