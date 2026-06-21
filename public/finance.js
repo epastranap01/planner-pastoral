@@ -823,25 +823,150 @@ function renderConfigFinanzas() {
     mostrarModalFinanza(html, () => {
         // Asegurarnos de que los tabs funcionen y cambien de color al activarse
         const tabs = document.querySelectorAll('#fin-modal-overlay .nav-link');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                tabs.forEach(t => {
-                    t.classList.remove('active');
-                    t.style.color = '#64748b';
-                    t.style.backgroundColor = 'transparent';
-                });
-                e.target.classList.add('active');
-                e.target.style.color = ''; // volver al color por defecto del active de bootstrap
+        
+        const setActiveTabStyle = (tab) => {
+            tabs.forEach(t => {
+                t.classList.remove('active');
+                t.style.color = '#64748b';
+                t.style.backgroundColor = 'transparent';
             });
+            tab.classList.add('active');
+            tab.style.color = '#2563eb';
+            tab.style.backgroundColor = '#eff6ff';
+        };
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => setActiveTabStyle(e.target));
         });
+        
+        // Inicializar el primer tab activo
+        const activeTab = document.querySelector('#fin-modal-overlay .nav-link.active');
+        if (activeTab) setActiveTabStyle(activeTab);
     });
 }
 
 // Helpers Config
-async function nuevoTalonario(tp){const{value:f}=await Swal.fire({title:`Nuevo (${tp})`,html:`<div class="text-start"><label class="small fw-bold">Nombre</label><input id="n" class="form-control mb-2"><div class="row"><div class="col"><label class="small fw-bold">Inicio</label><input id="i" type="number" class="form-control"></div><div class="col"><label class="small fw-bold">Fin</label><input id="f" type="number" class="form-control"></div></div></div>`,showCancelButton:true,preConfirm:()=>[document.getElementById('n').value,document.getElementById('i').value,document.getElementById('f').value]});if(f)await authFetch('/api/finanzas/talonarios',{method:'POST',body:JSON.stringify({nombre:f[0],inicio:f[1],fin:f[2],actual:f[1]-1,tipo:tp})});renderConfigFinanzas(); const d=await authFetch('/api/finanzas/datos'); /*Recarga*/ const mapped=d.talonarios.map(t=>({...t,inicio:t.rango_inicio,fin:t.rango_fin})); talonariosIngreso=mapped.filter(t=>t.tipo==='ingreso'); talonariosEgreso=mapped.filter(t=>t.tipo==='egreso'); renderConfigFinanzas();}
-async function editarTalonario(tp,i){const t=(tp==='ingreso'?talonariosIngreso:talonariosEgreso)[i];const{value:f}=await Swal.fire({title:'Editar',html:`<div class="text-start"><label class="small fw-bold">Nombre</label><input id="n" class="form-control mb-2" value="${t.nombre}"><div class="row"><div class="col"><label class="small fw-bold">Inicio</label><input id="i" type="number" class="form-control" value="${t.inicio}"></div><div class="col"><label class="small fw-bold">Fin</label><input id="f" type="number" class="form-control" value="${t.fin}"></div></div></div>`,showCancelButton:true,preConfirm:()=>[document.getElementById('n').value,document.getElementById('i').value,document.getElementById('f').value]});if(f){await authFetch(`/api/finanzas/talonarios/${t.id}`,{method:'PUT',body:JSON.stringify({nombre:f[0],inicio:f[1],fin:f[2]})}); t.nombre=f[0];t.inicio=f[1];t.fin=f[2]; renderConfigFinanzas();}}
-async function actTal(id,tp){await authFetch(`/api/finanzas/talonarios/${id}`,{method:'PUT',body:JSON.stringify({activo:true,tipo:tp})});cargarDashboardFinanzas();setTimeout(renderConfigFinanzas,300);}
-async function delTal(id){if((await Swal.fire({title:'¿Borrar?',icon:'warning',showCancelButton:true})).isConfirmed){await authFetch(`/api/finanzas/talonarios/${id}`,{method:'DELETE'});renderConfigFinanzas(); const d=await authFetch('/api/finanzas/datos'); /*Recarga*/ const mapped=d.talonarios.map(t=>({...t,inicio:t.rango_inicio,fin:t.rango_fin})); talonariosIngreso=mapped.filter(t=>t.tipo==='ingreso'); talonariosEgreso=mapped.filter(t=>t.tipo==='egreso'); renderConfigFinanzas();}}
+async function nuevoTalonario(tp) {
+    const isIng = tp === 'ingreso';
+    const color = isIng ? '#2563eb' : '#dc2626';
+    const titleText = isIng ? 'Nuevo Talonario' : 'Nueva Chequera';
+    
+    const { value: f } = await Swal.fire({
+        title: `<h5 style="color:${color};margin:0;font-weight:700;">${titleText}</h5>`,
+        html: `
+            <div class="text-start mt-3">
+                <label class="fin-label">Nombre / Serie</label>
+                <input id="sw-n" class="fin-input mb-3" placeholder="Ej. Serie A">
+                <div class="row g-2">
+                    <div class="col">
+                        <label class="fin-label">No. Inicio</label>
+                        <input id="sw-i" type="number" class="fin-input" placeholder="1">
+                    </div>
+                    <div class="col">
+                        <label class="fin-label">No. Fin</label>
+                        <input id="sw-f" type="number" class="fin-input" placeholder="100">
+                    </div>
+                </div>
+            </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        customClass: {
+            popup: 'fin-modal-card',
+            confirmButton: `fin-btn ${isIng ? 'fin-btn-primary' : 'fin-btn-danger'} px-4 py-2 me-2`,
+            cancelButton: 'fin-btn fin-btn-outline px-4 py-2'
+        },
+        buttonsStyling: false,
+        didOpen: () => {
+            const container = document.querySelector('.swal2-container');
+            if (container) container.style.zIndex = '10000';
+        },
+        preConfirm: () => [document.getElementById('sw-n').value, document.getElementById('sw-i').value, document.getElementById('sw-f').value]
+    });
+    
+    if (f && f[0] && f[1] && f[2]) {
+        await authFetch('/api/finanzas/talonarios', { method: 'POST', body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]), actual: parseInt(f[1]) - 1, tipo: tp }) });
+        const d = await authFetch('/api/finanzas/datos');
+        const mapped = d.talonarios.map(t => ({...t, inicio: t.rango_inicio, fin: t.rango_fin}));
+        talonariosIngreso = mapped.filter(t => t.tipo === 'ingreso');
+        talonariosEgreso = mapped.filter(t => t.tipo === 'egreso');
+        renderConfigFinanzas();
+    }
+}
+
+async function editarTalonario(tp, i) {
+    const t = (tp === 'ingreso' ? talonariosIngreso : talonariosEgreso)[i];
+    const isIng = tp === 'ingreso';
+    const color = isIng ? '#2563eb' : '#dc2626';
+    
+    const { value: f } = await Swal.fire({
+        title: `<h5 style="color:${color};margin:0;font-weight:700;">Editar ${t.nombre}</h5>`,
+        html: `
+            <div class="text-start mt-3">
+                <label class="fin-label">Nombre / Serie</label>
+                <input id="sw-n" class="fin-input mb-3" value="${t.nombre}">
+                <div class="row g-2">
+                    <div class="col">
+                        <label class="fin-label">No. Inicio</label>
+                        <input id="sw-i" type="number" class="fin-input" value="${t.inicio}">
+                    </div>
+                    <div class="col">
+                        <label class="fin-label">No. Fin</label>
+                        <input id="sw-f" type="number" class="fin-input" value="${t.fin}">
+                    </div>
+                </div>
+            </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Actualizar',
+        cancelButtonText: 'Cancelar',
+        customClass: {
+            popup: 'fin-modal-card',
+            confirmButton: `fin-btn ${isIng ? 'fin-btn-primary' : 'fin-btn-danger'} px-4 py-2 me-2`,
+            cancelButton: 'fin-btn fin-btn-outline px-4 py-2'
+        },
+        buttonsStyling: false,
+        didOpen: () => {
+            const container = document.querySelector('.swal2-container');
+            if (container) container.style.zIndex = '10000';
+        },
+        preConfirm: () => [document.getElementById('sw-n').value, document.getElementById('sw-i').value, document.getElementById('sw-f').value]
+    });
+    
+    if (f && f[0] && f[1] && f[2]) {
+        await authFetch(`/api/finanzas/talonarios/${t.id}`, { method: 'PUT', body: JSON.stringify({ nombre: f[0], inicio: parseInt(f[1]), fin: parseInt(f[2]) }) });
+        t.nombre = f[0]; t.inicio = parseInt(f[1]); t.fin = parseInt(f[2]);
+        renderConfigFinanzas();
+    }
+}
+
+async function actTal(id,tp){
+    await authFetch(`/api/finanzas/talonarios/${id}`,{method:'PUT',body:JSON.stringify({activo:true,tipo:tp})});
+    cargarDashboardFinanzas();
+    setTimeout(renderConfigFinanzas,300);
+}
+
+async function delTal(id) {
+    if ((await Swal.fire({
+        title: '<h5 style="color:#dc2626;margin:0;font-weight:700;">¿Eliminar Talonario?</h5>',
+        html: '<p style="color:#64748b;margin-top:10px;">Esta acción no se puede deshacer.</p>',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        customClass: { popup: 'fin-modal-card', confirmButton: 'fin-btn fin-btn-danger px-4 py-2 me-2', cancelButton: 'fin-btn fin-btn-outline px-4 py-2' },
+        buttonsStyling: false,
+        didOpen: () => {
+            const container = document.querySelector('.swal2-container');
+            if (container) container.style.zIndex = '10000';
+        }
+    })).isConfirmed) {
+        await authFetch(`/api/finanzas/talonarios/${id}`,{method:'DELETE'});
+        const d = await authFetch('/api/finanzas/datos');
+        const mapped = d.talonarios.map(t=>({...t,inicio:t.rango_inicio,fin:t.rango_fin}));
+        talonariosIngreso = mapped.filter(t=>t.tipo==='ingreso');
+        talonariosEgreso = mapped.filter(t=>t.tipo==='egreso');
+        renderConfigFinanzas();
+    }
+}
 
 // CORRECCIÓN MANEJO DE ERROR CATEGORÍAS
 async function addCat(){
