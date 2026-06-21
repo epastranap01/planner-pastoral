@@ -14,48 +14,191 @@ const tiposCultos = ['Culto Dominical', 'Escuela Dominical', 'Culto de Oración'
 try {
     const styleSheet = document.createElement("style");
     styleSheet.innerText = `
+        /* === FINANZAS REDESIGN - Consistent with main panel === */
         :root {
-            --saas-primary: #2563eb; --saas-primary-dark: #1d4ed8;
-            --saas-bg: #f3f4f6; --saas-surface: #ffffff;
-            --saas-text-main: #111827; --saas-text-muted: #6b7280;
-            --saas-border: #e5e7eb; --saas-radius: 16px;
-            --saas-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            --fin-primary: #2563eb;
+            --fin-primary-dark: #1d4ed8;
+            --fin-success: #16a34a;
+            --fin-danger: #dc2626;
+            --fin-warning: #d97706;
+            --fin-surface: #ffffff;
+            --fin-bg: #f8fafc;
+            --fin-border: #e2e8f0;
+            --fin-text: #0f172a;
+            --fin-muted: #64748b;
+            --fin-radius: 14px;
+            --fin-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
         }
-        .saas-container { font-family: 'Inter', system-ui, sans-serif; color: var(--saas-text-main); }
-        .saas-card { background: var(--saas-surface); border-radius: var(--saas-radius); box-shadow: var(--saas-shadow); border: 1px solid rgba(255,255,255,0.5); padding: 1.5rem; height: 100%; transition: transform 0.2s ease; }
-        .saas-card:hover { transform: translateY(-2px); }
-        .metric-icon-box { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: 1rem; }
-        .metric-label { font-size: 0.875rem; color: var(--saas-text-muted); font-weight: 500; }
-        .metric-value { font-size: 1.75rem; font-weight: 700; color: var(--saas-text-main); letter-spacing: -0.5px; }
-        
-        .btn-saas { border: none; border-radius: 12px; padding: 0.6rem 1.2rem; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-saas-primary { background: var(--saas-primary); color: white; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
-        .btn-saas-primary:hover { background: var(--saas-primary-dark); transform: translateY(-1px); }
-        .btn-saas-secondary { background: white; border: 1px solid var(--saas-border); color: var(--saas-text-main); }
-        .btn-saas-secondary:hover { background: #f9fafb; border-color: #d1d5db; }
-        .btn-saas-danger { background: #fee2e2; color: #991b1b; } .btn-saas-danger:hover { background: #fecaca; }
+
+        /* Container */
+        .fin-container { font-family: 'Inter', 'Poppins', system-ui, sans-serif; color: var(--fin-text); }
+
+        /* Metric Cards - Match saas-card style */
+        .fin-card {
+            background: var(--fin-surface);
+            border-radius: var(--fin-radius);
+            box-shadow: var(--fin-shadow);
+            border: 1px solid var(--fin-border);
+            padding: 1.5rem;
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        .fin-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); transform: translateY(-1px); }
+
+        .fin-metric-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+        .fin-metric-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fin-muted); margin-bottom: 0.35rem; }
+        .fin-metric-value { font-size: 1.6rem; font-weight: 800; color: var(--fin-text); letter-spacing: -0.5px; line-height: 1; }
+        .fin-metric-sub { font-size: 0.72rem; color: var(--fin-muted); margin-top: 0.4rem; }
+
+        /* Buttons */
+        .fin-btn {
+            border: none; border-radius: 10px;
+            padding: 0.55rem 1.1rem; font-weight: 600;
+            font-size: 0.875rem; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.18s ease; text-decoration: none;
+        }
+        .fin-btn-primary { background: var(--fin-primary); color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.25); }
+        .fin-btn-primary:hover { background: var(--fin-primary-dark); box-shadow: 0 4px 12px rgba(37,99,235,0.35); transform: translateY(-1px); }
+        .fin-btn-danger  { background: #fef2f2; color: var(--fin-danger); border: 1.5px solid #fecaca; }
+        .fin-btn-danger:hover  { background: #fee2e2; }
+        .fin-btn-outline { background: #fff; color: var(--fin-text); border: 1.5px solid var(--fin-border); }
+        .fin-btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .fin-btn-warning { background: #fffbeb; color: var(--fin-warning); border: 1.5px solid #fde68a; }
+        .fin-btn-warning:hover { background: #fef3c7; }
+        .fin-btn-icon {
+            width: 34px; height: 34px; border-radius: 8px;
+            padding: 0; display: inline-flex; align-items: center;
+            justify-content: center; font-size: 0.85rem; flex-shrink: 0;
+        }
+
+        /* Table - consistent with usuarios table */
+        .fin-table { width: 100%; border-collapse: collapse; }
+        .fin-table thead tr { background: #f8fafc; }
+        .fin-table th {
+            padding: 0.875rem 1rem; font-size: 0.7rem;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--fin-muted); font-weight: 700;
+            border-bottom: 1px solid var(--fin-border); border-top: none;
+        }
+        .fin-table th:first-child { padding-left: 1.5rem; }
+        .fin-table th:last-child  { padding-right: 1.5rem; }
+        .fin-table td {
+            padding: 0.85rem 1rem; font-size: 0.875rem;
+            border-bottom: 1px solid var(--fin-border);
+            vertical-align: middle; color: var(--fin-text);
+        }
+        .fin-table td:first-child { padding-left: 1.5rem; }
+        .fin-table td:last-child  { padding-right: 1.5rem; }
+        .fin-table tbody tr:last-child td { border-bottom: none; }
+        .fin-table tbody tr:hover td { background: #f8fafc; }
+
+        /* Badges */
+        .fin-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 50px;
+            font-size: 0.72rem; font-weight: 700;
+        }
+        .fin-badge-blue   { background: #eff6ff; color: #1d4ed8; }
+        .fin-badge-green  { background: #f0fdf4; color: #15803d; }
+        .fin-badge-red    { background: #fef2f2; color: #b91c1c; }
+        .fin-badge-gray   { background: #f1f5f9; color: #475569; }
+        .fin-badge-yellow { background: #fffbeb; color: #92400e; }
+        .fin-badge-purple { background: #f5f3ff; color: #6d28d9; }
+
+        /* Forms */
+        .fin-form-group { margin-bottom: 1rem; }
+        .fin-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--fin-muted); margin-bottom: 5px; letter-spacing: 0.02em; text-transform: uppercase; }
+        .fin-input {
+            width: 100%; background: #f8fafc; border: 1.5px solid var(--fin-border);
+            border-radius: 10px; padding: 0.65rem 0.9rem;
+            font-size: 0.9rem; color: var(--fin-text);
+            transition: all 0.18s ease; font-family: inherit;
+        }
+        .fin-input:focus { background: #fff; border-color: var(--fin-primary); outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+        textarea.fin-input { resize: vertical; min-height: 70px; }
+
+        /* Section card for table */
+        .fin-section-card {
+            background: var(--fin-surface);
+            border-radius: var(--fin-radius);
+            border: 1px solid var(--fin-border);
+            box-shadow: var(--fin-shadow);
+            overflow: hidden;
+        }
+        .fin-section-header {
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid var(--fin-border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .fin-section-title { font-size: 0.95rem; font-weight: 700; color: var(--fin-text); margin: 0; }
+
+        /* Accent strip on cards */
+        .fin-accent-strip { width: 4px; min-width: 4px; border-radius: 99px; flex-shrink: 0; }
+
+        /* Amount colors */
+        .fin-amount-pos { color: #16a34a; font-weight: 700; }
+        .fin-amount-neg { color: #dc2626; font-weight: 700; }
+
+        /* Talonario cards */
+        .fin-tal-card {
+            border: 1.5px solid var(--fin-border);
+            border-radius: 12px; padding: 1rem 1.1rem;
+            background: #fff; display: flex;
+            align-items: center; justify-content: space-between;
+            gap: 0.75rem; transition: border-color 0.15s;
+            margin-bottom: 0.75rem;
+        }
+        .fin-tal-card.active-tal { border-color: #bfdbfe; background: #eff6ff; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .fin-metric-value { font-size: 1.3rem; }
+            .fin-hide-sm { display: none !important; }
+        }
+
+        /* Amount pill */
+        .fin-amount-pill {
+            display: inline-flex; align-items: center;
+            gap: 3px; font-weight: 700; font-size: 0.875rem;
+        }
+
+        /* Disabled state */
+        .fin-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        /* Backwards compat */
+        .btn-saas { border: none; border-radius: 12px; padding: 0.6rem 1.2rem; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+        .btn-saas-primary { background: #2563eb; color: white; }
+        .btn-saas-primary:hover { background: #1d4ed8; }
+        .btn-saas-secondary { background: white; border: 1px solid #e2e8f0; color: #0f172a; }
+        .btn-saas-secondary:hover { background: #f9fafb; }
+        .btn-saas-danger { background: #fee2e2; color: #991b1b; }
+        .btn-saas-danger:hover { background: #fecaca; }
         .btn-saas-success { background: #dcfce7; color: #166534; }
-
-        /* TABLA MEJORADA */
-        .saas-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .saas-table th { text-align: left; padding: 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--saas-text-muted); border-bottom: 1px solid var(--saas-border); font-weight: 600; }
-        .saas-table td { padding: 1rem; border-bottom: 1px solid var(--saas-border); font-size: 0.9rem; vertical-align: middle; }
-        .saas-table tr:hover td { background-color: #f9fafb; }
-
-        .form-saas { background: #f9fafb; border: 1px solid var(--saas-border); border-radius: 10px; padding: 0.75rem; width: 100%; font-size: 0.95rem; transition: all 0.2s; }
-        .form-saas:focus { background: white; border-color: var(--saas-primary); outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        .input-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--saas-text-muted); margin-bottom: 6px; }
-
-        .badge-saas { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+        .saas-card { background: #fff; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; padding: 1.5rem; }
+        .form-saas { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.65rem 0.9rem; width: 100%; font-size: 0.9rem; transition: all 0.18s; }
+        .form-saas:focus { background: white; border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+        .input-label { display: block; font-size: 0.78rem; font-weight: 600; color: #64748b; margin-bottom: 5px; }
+        .badge-saas { padding: 3px 10px; border-radius: 50px; font-size: 0.72rem; font-weight: 700; display: inline-block; }
         .bg-blue-light { background: #eff6ff; color: #1d4ed8; }
         .bg-green-light { background: #f0fdf4; color: #15803d; }
         .bg-red-light { background: #fef2f2; color: #b91c1c; }
-        .bg-gray-light { background: #f3f4f6; color: #4b5563; }
-        .bg-yellow-light { background: #fffbeb; color: #b45309; }
-
-        .icon-btn { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--saas-text-muted); transition: all 0.2s; }
-        .icon-btn:hover { background: var(--saas-bg); color: var(--saas-text-main); }
-        .text-truncate-200 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; display: inline-block; vertical-align: bottom;}
+        .bg-gray-light { background: #f1f5f9; color: #475569; }
+        .bg-yellow-light { background: #fffbeb; color: #92400e; }
+        .metric-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+        .metric-value { font-size: 1.6rem; font-weight: 800; color: #0f172a; }
+        .metric-icon-box { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .icon-btn { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: #64748b; cursor: pointer; transition: all 0.2s; }
+        .icon-btn:hover { background: #f1f5f9; color: #0f172a; }
+        .text-truncate-200 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; display: inline-block; vertical-align: bottom; }
+        .saas-container { font-family: 'Inter', system-ui, sans-serif; }
+        .saas-table { width: 100%; border-collapse: collapse; }
+        .saas-table th { text-align: left; padding: 0.875rem 1rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; border-bottom: 1px solid #e2e8f0; font-weight: 700; }
+        .saas-table td { padding: 0.85rem 1rem; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; vertical-align: middle; }
+        .saas-table tr:hover td { background-color: #f8fafc; }
     `;
     document.head.appendChild(styleSheet);
 } catch (e) { console.error(e); }
@@ -124,53 +267,104 @@ function calcularMetricas() {
 // ==========================================
 function renderizarVistaPrincipal() {
     const container = document.getElementById('vistaFinanzas');
-    
+
+    // Balance ratio for progress bar
+    const totalMovimiento = ingresosMes + egresosMes;
+    const pctGasto = totalMovimiento > 0 ? Math.round((egresosMes / totalMovimiento) * 100) : 0;
+    const pctIngreso = 100 - pctGasto;
+
     container.innerHTML = `
-    <div class="saas-container container-fluid p-2 p-md-4">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 gap-3">
-            <div><h3 class="fw-bold mb-1 text-dark">Panel Financiero</h3><p class="text-muted m-0 small">Control de tesorería</p></div>
-            <div class="d-flex gap-2">
-                <button onclick="renderConfigFinanzas()" class="btn-saas btn-saas-secondary"><i class="bi bi-gear"></i></button>
-                <button onclick="renderAperturaCuenta()" class="btn-saas btn-saas-secondary text-warning"><i class="bi bi-sliders"></i> Ajuste</button>
-                <div class="vr mx-1"></div>
-                <button onclick="renderRegistrarEgreso()" class="btn-saas btn-saas-danger"><i class="bi bi-dash-lg"></i> Gasto</button>
-                <button onclick="renderRegistrarIngreso()" class="btn-saas btn-saas-primary"><i class="bi bi-plus-lg"></i> Nuevo Ingreso</button>
+    <div class="fin-container px-2 px-md-0">
+
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h3 class="fw-bold m-0" style="font-family:'Poppins',sans-serif;color:#0f172a;">Finanzas</h3>
+                <p class="text-muted small m-0 mt-1">Control de tesorería y movimientos</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap justify-content-end">
+                <button onclick="renderConfigFinanzas()" class="fin-btn fin-btn-outline fin-btn-icon" title="Configuración"><i class="bi bi-gear"></i></button>
+                <button onclick="renderAperturaCuenta()" class="fin-btn fin-btn-warning" title="Ajuste de saldo"><i class="bi bi-sliders"></i><span class="fin-hide-sm"> Ajuste</span></button>
+                <button onclick="renderRegistrarEgreso()" class="fin-btn fin-btn-danger"><i class="bi bi-dash-lg"></i> Gasto</button>
+                <button onclick="renderRegistrarIngreso()" class="fin-btn fin-btn-primary"><i class="bi bi-plus-lg"></i> Ingreso</button>
             </div>
         </div>
 
-        <div class="row g-4 mb-5">
+        <!-- KPI CARDS -->
+        <div class="row g-3 mb-4">
+            <!-- Saldo -->
             <div class="col-12 col-md-4">
-                <div class="saas-card d-flex flex-column justify-content-between">
-                    <div class="d-flex justify-content-between align-items-start"><div><div class="metric-label">Saldo Total</div><div class="metric-value">${formatoMoneda(saldoActual)}</div></div><div class="metric-icon-box bg-blue-light text-primary"><i class="bi bi-wallet2"></i></div></div>
-                    <div class="mt-3"><span class="badge-saas bg-gray-light text-muted"><i class="bi bi-shield-check me-1"></i>Disponible</span></div>
+                <div class="fin-card h-100">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fin-metric-label">Saldo disponible</div>
+                            <div class="fin-metric-value" style="color:${saldoActual >= 0 ? '#0f172a' : '#dc2626'}">${formatoMoneda(saldoActual)}</div>
+                            <div class="fin-metric-sub"><i class="bi bi-shield-check me-1"></i>Balance acumulado</div>
+                        </div>
+                        <div class="fin-metric-icon" style="background:#eff6ff;color:#2563eb;">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3" style="border-top:1px solid #f1f5f9;">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-success fw-bold"><i class="bi bi-arrow-up-right me-1"></i>${pctIngreso}% entradas</span>
+                            <span class="text-danger fw-bold">${pctGasto}% salidas <i class="bi bi-arrow-down-left ms-1"></i></span>
+                        </div>
+                        <div class="progress" style="height:5px;border-radius:99px;">
+                            <div class="progress-bar bg-success" style="width:${pctIngreso}%;border-radius:99px 0 0 99px;"></div>
+                            <div class="progress-bar bg-danger" style="width:${pctGasto}%;border-radius:0 99px 99px 0;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
+            <!-- Ingresos Mes -->
             <div class="col-6 col-md-4">
-                <div class="saas-card">
-                    <div class="d-flex justify-content-between align-items-start"><div><div class="metric-label">Ingresos (Mes)</div><div class="metric-value text-success">${formatoMoneda(ingresosMes)}</div></div><div class="metric-icon-box bg-green-light text-success"><i class="bi bi-arrow-up-right"></i></div></div>
+                <div class="fin-card h-100">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fin-metric-label">Ingresos del mes</div>
+                            <div class="fin-metric-value" style="color:#16a34a;">${formatoMoneda(ingresosMes)}</div>
+                            <div class="fin-metric-sub">${new Date().toLocaleDateString('es-ES',{month:'long',year:'numeric'})}</div>
+                        </div>
+                        <div class="fin-metric-icon" style="background:#f0fdf4;color:#16a34a;">
+                            <i class="bi bi-arrow-up-right"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
+            <!-- Gastos Mes -->
             <div class="col-6 col-md-4">
-                <div class="saas-card">
-                    <div class="d-flex justify-content-between align-items-start"><div><div class="metric-label">Gastos (Mes)</div><div class="metric-value text-danger">${formatoMoneda(egresosMes)}</div></div><div class="metric-icon-box bg-red-light text-danger"><i class="bi bi-arrow-down-left"></i></div></div>
+                <div class="fin-card h-100">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fin-metric-label">Gastos del mes</div>
+                            <div class="fin-metric-value" style="color:#dc2626;">${formatoMoneda(egresosMes)}</div>
+                            <div class="fin-metric-sub">${new Date().toLocaleDateString('es-ES',{month:'long',year:'numeric'})}</div>
+                        </div>
+                        <div class="fin-metric-icon" style="background:#fef2f2;color:#dc2626;">
+                            <i class="bi bi-arrow-down-left"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="saas-card p-0 overflow-hidden">
-            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white">
-                <h6 class="fw-bold m-0">Transacciones Recientes</h6>
-                <span class="badge-saas bg-gray-light">${transacciones.length} registros</span>
+        <!-- TRANSACTIONS TABLE -->
+        <div class="fin-section-card">
+            <div class="fin-section-header">
+                <h6 class="fin-section-title"><i class="bi bi-list-ul me-2 text-primary"></i>Movimientos</h6>
+                <span class="fin-badge fin-badge-gray">${transacciones.length} registros</span>
             </div>
             <div class="table-responsive">
-                <table class="saas-table">
+                <table class="fin-table">
                     <thead>
                         <tr>
-                            <th class="ps-4">Fecha</th>
-                            <th>Recibo / Doc</th>
+                            <th>Fecha</th>
+                            <th>Recibo</th>
                             <th>Categoría</th>
                             <th>Descripción</th>
-                            <th class="text-center">Comulg.</th> <th class="text-end pe-4">Monto</th>
+                            <th class="text-center fin-hide-sm">Comulg.</th>
+                            <th class="text-end">Monto</th>
                             <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
@@ -178,37 +372,40 @@ function renderizarVistaPrincipal() {
                 </table>
             </div>
         </div>
+
     </div>`;
 }
 
 function generarFilasTabla() {
-    if(!transacciones.length) return '<tr><td colspan="7" class="text-center py-5 text-muted">No hay movimientos registrados</td></tr>';
+    if(!transacciones.length) return `<tr><td colspan="7" class="text-center py-5" style="color:#94a3b8;"><i class="bi bi-receipt fs-1 d-block mb-2 opacity-25"></i>No hay movimientos registrados</td></tr>`;
     
     return transacciones.map((t, idx) => {
         const esIng = t.tipo === 'ingreso';
         const signo = esIng ? '+' : '-';
-        const colorClass = esIng ? 'text-success fw-bold' : 'text-danger fw-bold';
-        const bgCat = esIng ? 'bg-green-light' : 'bg-red-light';
+        const amountClass = esIng ? 'fin-amount-pos' : 'fin-amount-neg';
+        const catBadge = esIng ? 'fin-badge-green' : 'fin-badge-red';
         
-        let recibo = '<span class="text-muted small">-</span>';
-        if(t.recibo_no === 'APERTURA') recibo = '<span class="badge-saas bg-yellow-light text-warning border">INICIO</span>';
-        else if(t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') recibo = `<span class="fw-bold text-dark small">#${t.recibo_no}</span>`;
+        let reciboBadge = `<span style="color:#94a3b8;font-size:0.8rem;">—</span>`;
+        if(t.recibo_no === 'APERTURA') reciboBadge = `<span class="fin-badge fin-badge-yellow"><i class="bi bi-flag me-1"></i>INICIO</span>`;
+        else if(t.recibo_no && t.recibo_no !== 'S/N' && t.recibo_no !== '-') reciboBadge = `<span style="font-weight:700;font-size:0.8rem;color:#334155;font-family:'Poppins',sans-serif;">#${t.recibo_no}</span>`;
         
-        // Columna separada para Comulgantes
-        const comulgantesVal = (t.comulgantes && t.comulgantes > 0) 
-            ? `<span class="badge-saas bg-blue-light text-primary"><i class="bi bi-people-fill me-1"></i>${t.comulgantes}</span>` 
-            : '<span class="text-muted small">-</span>';
+        const comulgantesCol = (t.comulgantes && t.comulgantes > 0) 
+            ? `<span class="fin-badge fin-badge-blue"><i class="bi bi-people-fill"></i> ${t.comulgantes}</span>` 
+            : `<span style="color:#cbd5e1;font-size:0.8rem;">—</span>`;
 
         return `
         <tr>
-            <td class="ps-4"><span class="fw-medium text-dark">${formatoFecha(t.fecha)}</span></td>
-            <td>${recibo}</td>
-            <td><span class="badge-saas ${bgCat}">${t.categoria}</span></td>
-            <td><span class="text-truncate-200 text-muted" title="${t.descripcion}">${t.descripcion}</span></td>
-            <td class="text-center">${comulgantesVal}</td> <td class="text-end pe-4"><span class="${colorClass}">${signo} ${formatoMoneda(t.monto)}</span></td>
+            <td><span style="font-weight:600;font-size:0.82rem;color:#0f172a;letter-spacing:0.01em;">${formatoFecha(t.fecha)}</span></td>
+            <td>${reciboBadge}</td>
+            <td><span class="fin-badge ${catBadge}">${t.categoria}</span></td>
+            <td><span class="text-truncate-200" style="color:#64748b;font-size:0.85rem;" title="${t.descripcion}">${t.descripcion}</span></td>
+            <td class="text-center fin-hide-sm">${comulgantesCol}</td>
+            <td class="text-end"><span class="${amountClass}">${signo} ${formatoMoneda(t.monto)}</span></td>
             <td class="text-center">
-                <button class="icon-btn d-inline-flex" onclick="editarTransaccion(${idx})" title="Editar"><i class="bi bi-pencil-square"></i></button>
-                <button class="icon-btn d-inline-flex text-danger" onclick="eliminarTransaccion(${t.id})" title="Eliminar"><i class="bi bi-trash3"></i></button>
+                <div class="d-flex gap-1 justify-content-center">
+                    <button class="fin-btn fin-btn-outline fin-btn-icon" onclick="editarTransaccion(${idx})" title="Editar"><i class="bi bi-pencil" style="font-size:0.8rem;"></i></button>
+                    <button class="fin-btn fin-btn-danger fin-btn-icon" onclick="eliminarTransaccion(${t.id})" title="Eliminar"><i class="bi bi-trash3" style="font-size:0.8rem;"></i></button>
+                </div>
             </td>
         </tr>`;
     }).join('');
