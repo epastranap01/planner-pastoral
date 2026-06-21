@@ -284,7 +284,7 @@ function renderizarVistaPrincipal() {
             </div>
             <div class="d-flex gap-2 flex-wrap justify-content-end">
                 <button onclick="renderConfigFinanzas()" class="fin-btn fin-btn-outline fin-btn-icon" title="Configuración"><i class="bi bi-gear"></i></button>
-                <button onclick="renderAperturaCuenta()" class="fin-btn fin-btn-warning" title="Ajuste de saldo"><i class="bi bi-sliders"></i><span class="fin-hide-sm"> Ajuste</span></button>
+                <button onclick="renderAperturaCuenta()" class="fin-btn fin-btn-warning" title="Apertura / Ajuste de saldo"><i class="bi bi-sliders"></i> Apertura</button>
                 <button onclick="renderRegistrarEgreso()" class="fin-btn fin-btn-danger"><i class="bi bi-dash-lg"></i> Gasto</button>
                 <button onclick="renderRegistrarIngreso()" class="fin-btn fin-btn-primary"><i class="bi bi-plus-lg"></i> Ingreso</button>
             </div>
