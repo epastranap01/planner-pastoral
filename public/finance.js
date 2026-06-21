@@ -290,16 +290,19 @@ async function authFetch(url, opts={}) {
 // HELPERS: MODAL OVERLAY CON BLUR
 // ==========================================
 function mostrarModalFinanza(htmlContent, onReady) {
-    if (!document.getElementById('fin-modal-overlay')) {
-        const overlay = document.createElement('div');
+    let overlay = document.getElementById('fin-modal-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
         overlay.id = 'fin-modal-overlay';
-        overlay.innerHTML = `<div class="fin-modal-card">${htmlContent}</div>`;
+        overlay.innerHTML = `<div class="fin-modal-card" id="fin-modal-card-content">${htmlContent}</div>`;
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) cerrarModalFinanza();
         });
         document.body.appendChild(overlay);
-        if (onReady) onReady();
+    } else {
+        document.getElementById('fin-modal-card-content').innerHTML = htmlContent;
     }
+    if (onReady) onReady();
 }
 
 function cerrarModalFinanza() {
@@ -752,45 +755,86 @@ async function editarTransaccion(idx) {
 // ==========================================
 function renderConfigFinanzas() {
     const card = (t, i, tp) => `
-    <div class="col-md-6 mb-3">
-        <div class="saas-card p-3 d-flex justify-content-between align-items-center">
-            <div>
-                <div class="d-flex align-items-center gap-2 mb-1"><span class="fw-bold">${t.nombre}</span>${t.activo?'<span class="badge-saas bg-green-light">Activo</span>':'<span class="badge-saas bg-gray-light">Inactivo</span>'}</div>
-                <div class="small text-muted">Rango: ${t.inicio} - ${t.fin} &bull; Último: <strong>#${t.actual}</strong></div>
+    <div class="fin-tal-card ${t.activo ? 'active-tal' : ''} mb-2" style="border-radius:12px;padding:1rem;background:#fff;border:1.5px solid ${t.activo ? '#bfdbfe' : '#e2e8f0'};display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span style="font-weight:700;color:#0f172a;font-size:0.95rem;">${t.nombre}</span>
+                ${t.activo?'<span class="fin-badge fin-badge-green">Activo</span>':'<span class="fin-badge fin-badge-gray">Inactivo</span>'}
             </div>
-            <div class="d-flex gap-1">
-                ${!t.activo?`<button onclick="actTal(${t.id},'${tp}')" class="icon-btn text-success"><i class="bi bi-power"></i></button>`:''}
-                <button onclick="editarTalonario('${tp}',${i})" class="icon-btn text-primary"><i class="bi bi-pencil"></i></button>
-                <button onclick="delTal(${t.id})" class="icon-btn text-danger"><i class="bi bi-trash"></i></button>
-            </div>
+            <div style="font-size:0.75rem;color:#64748b;">Rango: ${t.inicio} - ${t.fin} &bull; Último: <strong style="color:#0f172a;">#${t.actual}</strong></div>
+        </div>
+        <div class="d-flex gap-1">
+            ${!t.activo?`<button onclick="actTal(${t.id},'${tp}')" class="fin-btn fin-btn-outline fin-btn-icon" title="Activar"><i class="bi bi-power text-success"></i></button>`:''}
+            <button onclick="editarTalonario('${tp}',${i})" class="fin-btn fin-btn-outline fin-btn-icon" title="Editar"><i class="bi bi-pencil text-primary"></i></button>
+            <button onclick="delTal(${t.id})" class="fin-btn fin-btn-danger fin-btn-icon" title="Eliminar"><i class="bi bi-trash3"></i></button>
         </div>
     </div>`;
     
-    document.getElementById('vistaFinanzas').innerHTML = `
-    <div class="container pt-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold m-0">Configuración</h4>
-            <button onclick="cargarDashboardFinanzas()" class="btn-saas btn-saas-secondary">Volver al Panel</button>
+    const html = `
+        <div class="fin-modal-header">
+            <h5 class="fin-modal-title" style="color:#0f172a;"><i class="bi bi-gear-fill me-2 text-primary"></i>Configuración Financiera</h5>
+            <button class="fin-modal-close" onclick="cerrarModalFinanza()"><i class="bi bi-x"></i></button>
         </div>
-        <div class="row g-4">
-            <div class="col-lg-7">
-                <div class="saas-card p-4">
-                    <ul class="nav nav-tabs mb-4 border-bottom-0" role="tablist"><li class="nav-item"><a class="nav-link active fw-bold border-0 bg-transparent" data-bs-toggle="tab" href="#tIng" style="color:var(--saas-primary)">Ingresos</a></li><li class="nav-item"><a class="nav-link fw-bold border-0 bg-transparent text-muted" data-bs-toggle="tab" href="#tEgr">Egresos</a></li></ul>
-                    <div class="tab-content">
-                        <div class="tab-pane active" id="tIng"><button onclick="nuevoTalonario('ingreso')" class="btn-saas btn-saas-primary w-100 mb-4 justify-content-center">Crear Nuevo Talonario</button><div class="row g-0">${talonariosIngreso.map((t,i)=>card(t,i,'ingreso')).join('')}</div></div>
-                        <div class="tab-pane" id="tEgr"><button onclick="nuevoTalonario('egreso')" class="btn-saas btn-saas-danger w-100 mb-4 justify-content-center">Crear Nueva Chequera</button><div class="row g-0">${talonariosEgreso.map((t,i)=>card(t,i,'egreso')).join('')}</div></div>
+        <div class="fin-modal-body" style="max-height: 75vh; overflow-y: auto;">
+            <!-- Navegación por pestañas -->
+            <ul class="nav nav-pills nav-fill bg-white border rounded-3 p-1 mb-4 shadow-sm" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active fw-bold py-2" data-bs-toggle="pill" href="#tabIng" style="border-radius:8px;font-size:0.85rem;">Ingresos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-bold py-2" data-bs-toggle="pill" href="#tabEgr" style="border-radius:8px;font-size:0.85rem;color:#64748b;">Egresos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-bold py-2" data-bs-toggle="pill" href="#tabCat" style="border-radius:8px;font-size:0.85rem;color:#64748b;">Categorías</a>
+                </li>
+            </ul>
+            
+            <div class="tab-content">
+                <!-- Ingresos -->
+                <div class="tab-pane fade show active" id="tabIng">
+                    <button onclick="nuevoTalonario('ingreso')" class="fin-btn fin-btn-primary w-100 justify-content-center mb-3 py-2"><i class="bi bi-plus-lg"></i> Crear Talonario de Ingreso</button>
+                    <div class="d-flex flex-column">${talonariosIngreso.map((t,i)=>card(t,i,'ingreso')).join('')}</div>
+                </div>
+                
+                <!-- Egresos -->
+                <div class="tab-pane fade" id="tabEgr">
+                    <button onclick="nuevoTalonario('egreso')" class="fin-btn fin-btn-danger w-100 justify-content-center mb-3 py-2" style="background:#ef4444;color:white;border:none;"><i class="bi bi-plus-lg"></i> Crear Chequera de Egreso</button>
+                    <div class="d-flex flex-column">${talonariosEgreso.map((t,i)=>card(t,i,'egreso')).join('')}</div>
+                </div>
+                
+                <!-- Categorías -->
+                <div class="tab-pane fade" id="tabCat">
+                    <div class="fin-card p-3 mb-4" style="background:#fff;">
+                        <label class="fin-label text-primary"><i class="bi bi-tags me-1"></i>Nueva Categoría</label>
+                        <div class="d-flex gap-2">
+                            <input id="nCat" class="fin-input" placeholder="Ej. Mantenimiento, Ofrendas Especiales...">
+                            <button onclick="addCat()" class="fin-btn fin-btn-primary px-3"><i class="bi bi-plus-lg"></i></button>
+                        </div>
+                    </div>
+                    
+                    <label class="fin-label mb-2">Categorías Actuales</label>
+                    <div class="d-flex flex-wrap gap-2 p-3 bg-white border rounded-3">
+                        ${categoriasEgresos.map(c=>`<span class="fin-badge fin-badge-gray" style="padding:8px 14px;font-size:0.8rem;border:1px solid #e2e8f0;background:#f8fafc;box-shadow:0 1px 2px rgba(0,0,0,0.05);">${c.nombre} <i class="bi bi-x-circle-fill ms-2 text-danger opacity-75" style="cursor:pointer;font-size:1rem;transition:0.2s;" onmouseover="this.classList.remove('opacity-75')" onmouseout="this.classList.add('opacity-75')" onclick="delCat(${c.id})"></i></span>`).join('')}
                     </div>
                 </div>
             </div>
-            <div class="col-lg-5">
-                <div class="saas-card p-4">
-                    <h6 class="fw-bold mb-3">Categorías de Gastos</h6>
-                    <div class="d-flex gap-2 mb-3"><input id="nCat" class="form-saas" placeholder="Nueva categoría..."><button onclick="addCat()" class="btn-saas btn-saas-secondary"><i class="bi bi-plus-lg"></i></button></div>
-                    <div>${categoriasEgresos.map(c=>`<span class="badge-saas bg-gray-light me-1 mb-2 border">${c.nombre} <i class="bi bi-x text-danger ms-1 cursor-pointer" onclick="delCat(${c.id})"></i></span>`).join('')}</div>
-                </div>
-            </div>
-        </div>
-    </div>`;
+        </div>`;
+
+    mostrarModalFinanza(html, () => {
+        // Asegurarnos de que los tabs funcionen y cambien de color al activarse
+        const tabs = document.querySelectorAll('#fin-modal-overlay .nav-link');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.style.color = '#64748b';
+                    t.style.backgroundColor = 'transparent';
+                });
+                e.target.classList.add('active');
+                e.target.style.color = ''; // volver al color por defecto del active de bootstrap
+            });
+        });
+    });
 }
 
 // Helpers Config
